@@ -4,8 +4,8 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
-import 'package:ganithamithura/screens/measurements/units/question_practice_screen.dart';
-import 'package:ganithamithura/screens/measurements/units/unit_chat_screen.dart';
+import 'package:ganithamithura/screens/measurements/learn/units/question_practice_screen.dart';
+import 'package:ganithamithura/screens/measurements/learn/units/unit_chat_screen.dart';
 
 class UnitHomeScreen extends StatefulWidget {
   final Unit unit;
