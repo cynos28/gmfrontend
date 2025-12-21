@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/ar_measurement.dart';
-import '../../services/unit_progress_service.dart';
-import '../../utils/constants.dart';
+import 'package:ganithamithura/models/ar_measurement.dart';
+import 'package:ganithamithura/services/unit_progress_service.dart';
+import 'package:ganithamithura/utils/constants.dart';
 
 class ARQuestionsScreen extends StatefulWidget {
   const ARQuestionsScreen({Key? key}) : super(key: key);

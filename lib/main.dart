@@ -5,8 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/screens/splash/splash_screen.dart';
-import 'package:ganithamithura/screens/measurements/ar_measurement_screen.dart';
-import 'package:ganithamithura/screens/measurements/ar_questions_screen.dart';
+import 'package:ganithamithura/screens/measurements/ar_challenges/ar_measurement_screen.dart';
+import 'package:ganithamithura/screens/measurements/ar_challenges/ar_questions_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

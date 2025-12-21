@@ -7,11 +7,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/ar_measurement.dart';
-import '../../services/ar_learning_service.dart';
-import '../../services/ar_camera_service.dart';
-import '../../widgets/measurements/ar_camera_widget.dart';
-import '../../utils/constants.dart';
+import 'package:ganithamithura/models/ar_measurement.dart';
+import 'package:ganithamithura/services/ar_learning_service.dart';
+import 'package:ganithamithura/services/ar_camera_service.dart';
+import 'package:ganithamithura/widgets/measurements/ar_camera_widget.dart';
+import 'package:ganithamithura/utils/constants.dart';
 import 'ar_questions_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
