@@ -280,17 +280,6 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             ),
           ],
         ),
-        actions: [
-          // Camera mode toggle
-          IconButton(
-            icon: Icon(
-              _useCameraMode ? Icons.keyboard : Icons.camera_alt,
-              color: _borderColor,
-            ),
-            onPressed: _toggleCameraMode,
-            tooltip: _useCameraMode ? 'Manual Input' : 'Camera Mode',
-          ),
-        ],
       ),
       body: SafeArea(
         child: _useCameraMode && _isCameraInitialized
@@ -431,12 +420,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
               ],
             ),
           ),
-          if (!_useCameraMode)
-            IconButton(
-              icon: Icon(Icons.camera_alt, color: _borderColor),
-              onPressed: _toggleCameraMode,
-              tooltip: 'Use Camera',
-            ),
+          
         ],
       ),
     );
@@ -460,6 +444,14 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'e.g., pencil, water bottle, table',
             prefixIcon: Icon(Icons.label_outline, color: _borderColor),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _useCameraMode ? Icons.keyboard : Icons.camera_alt,
+                color: _borderColor,
+              ),
+              onPressed: _toggleCameraMode,
+              tooltip: _useCameraMode ? 'Manual Input' : 'Camera Mode',
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -499,6 +491,14 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'Enter measurement',
             prefixIcon: Icon(Icons.straighten, color: _borderColor),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _useCameraMode ? Icons.keyboard : Icons.camera_alt,
+                color: _borderColor,
+              ),
+              onPressed: _toggleCameraMode,
+              tooltip: _useCameraMode ? 'Manual Input' : 'Camera Mode',
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
