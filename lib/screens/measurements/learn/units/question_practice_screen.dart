@@ -4,6 +4,8 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
+import 'package:ganithamithura/services/user_service.dart';
+import 'package:ganithamithura/services/user_service.dart';
 
 class QuestionPracticeScreen extends StatefulWidget {
   final Unit unit;
@@ -56,39 +58,29 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     });
 
     try {
-      Question question;
+      // Get student's grade from profile settings
+      final grade = await UserService.getGrade();
       
-      // Check if still in initial assessment phase
-      if (_isInitialAssessment && _answeredQuestionsCount < TOTAL_INITIAL_QUESTIONS) {
-        debugPrint('📊 Initial Assessment: Question ${_answeredQuestionsCount + 1}/$TOTAL_INITIAL_QUESTIONS');
-        
-        // Use mock/seeded questions for initial assessment
-        question = await _apiService.getNextQuestion(widget.unit.id);
-        
-      } else {
-        // Switch to adaptive RAG questions after initial assessment
-        if (_isInitialAssessment) {
-          debugPrint('✅ Initial assessment complete! Switching to adaptive questions...');
-          _isInitialAssessment = false;
-        }
-        
-        debugPrint('🎯 Loading adaptive question from RAG service...');
-        
-        try {
-          // Get adaptive question from RAG service
-          final ragQuestion = await _apiService.getAdaptiveQuestion(
-            unitId: widget.unit.id, // Use full unit_id like "unit_length_1"
-          );
-          
-          // Convert RAG question to Question model
-          question = ragQuestion.toQuestion();
-          
-        } catch (e) {
-          // Fallback to mock questions if RAG service is unavailable
-          debugPrint('⚠️ RAG service unavailable, using mock data: $e');
-          question = await _apiService.getNextQuestion(widget.unit.id);
-        }
-      }
+      // Always use adaptive questions from RAG service
+      debugPrint('🎯 Loading adaptive question from RAG service for grade $grade...');
+      
+      final ragQuestion = await _apiService.getAdaptiveQuestion(
+        unitId: widget.unit.id, // Use full unit_id like "unit_length_1"
+        gradeLevel: grade,
+      );
+      
+      debugPrint('📦 Received RAG question:');
+      debugPrint('   Question: ${ragQuestion.questionText}');
+      debugPrint('   Type: ${ragQuestion.questionType}');
+      debugPrint('   Options: ${ragQuestion.options}');
+      debugPrint('   Options count: ${ragQuestion.options?.length ?? 0}');
+      
+      // Convert RAG question to Question model
+      final question = ragQuestion.toQuestion();
+      
+      debugPrint('✅ Converted to Question:');
+      debugPrint('   Options: ${question.options}');
+      debugPrint('   Options count: ${question.options.length}');
       
       setState(() {
         _currentQuestion = question;
@@ -114,42 +106,20 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     final timeTaken = DateTime.now().difference(_questionStartTime!).inSeconds;
 
     try {
-      AnswerResponse response;
+      // Submit to adaptive endpoint
+      final adaptiveFeedback = await _apiService.submitAdaptiveAnswer(
+        questionId: _currentQuestion!.questionId,
+        unitId: widget.unit.id,
+        answer: _currentQuestion!.options[_selectedAnswer!],
+        timeTaken: timeTaken,
+      );
       
-      // Only try adaptive submission if not in initial assessment
-      if (!_isInitialAssessment) {
-        try {
-          final adaptiveFeedback = await _apiService.submitAdaptiveAnswer(
-            questionId: _currentQuestion!.questionId,
-            answer: _currentQuestion!.options[_selectedAnswer!],
-            timeTaken: timeTaken,
-          );
-          
-          // Convert to AnswerResponse
-          response = AnswerResponse(
-            isCorrect: adaptiveFeedback.isCorrect,
-            correctIndex: _currentQuestion!.options.indexOf(adaptiveFeedback.correctAnswer),
-            explanation: adaptiveFeedback.explanation,
-          );
-        } catch (e) {
-          debugPrint('Adaptive submission failed, trying regular: $e');
-          // Fallback to regular submission
-          response = await _apiService.submitAnswer(
-            questionId: _currentQuestion!.questionId,
-            selectedIndex: _selectedAnswer!,
-            unitId: widget.unit.id,
-            timeTaken: timeTaken,
-          );
-        }
-      } else {
-        // Regular submission for initial assessment
-        response = await _apiService.submitAnswer(
-          questionId: _currentQuestion!.questionId,
-          selectedIndex: _selectedAnswer!,
-          unitId: widget.unit.id,
-          timeTaken: timeTaken,
-        );
-      }
+      // Convert to AnswerResponse
+      final response = AnswerResponse(
+        isCorrect: adaptiveFeedback.isCorrect,
+        correctIndex: _currentQuestion!.options.indexOf(adaptiveFeedback.correctAnswer),
+        explanation: adaptiveFeedback.explanation,
+      );
       
       // Record progress
       await _progressService.recordAnswer(

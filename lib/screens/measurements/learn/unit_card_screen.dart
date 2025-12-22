@@ -146,10 +146,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                       onTap: () {
                         Get.to(() => UnitHomeScreen(
                           unit: Unit(
-                            id: 'unit_length_3',
+                            id: 'unit_length_1',  // Changed to grade 1 (has 45 questions in DB)
                             name: 'Length – cm and m',
                             topic: 'Length',
-                            grade: 3,
+                            grade: 1,  // Changed to grade 1
                             description: 'Learn to measure length using centimeters and meters',
                             iconName: 'straighten',
                           ),
@@ -167,10 +167,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                       onTap: () {
                         Get.to(() => UnitHomeScreen(
                           unit: Unit(
-                            id: 'unit_area_3',
+                            id: 'unit_area_1',  // Changed to grade 1 (has 15 questions in DB)
                             name: 'Area – cm² and m²',
                             topic: 'Area',
-                            grade: 3,
+                            grade: 1,  // Changed to grade 1
                             description: 'Understand how to calculate area of shapes',
                             iconName: 'crop_square',
                           ),
@@ -188,10 +188,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                       onTap: () {
                         Get.to(() => UnitHomeScreen(
                           unit: Unit(
-                            id: 'unit_capacity_3',
+                            id: 'unit_capacity_1',  // Changed to grade 1 (has 5 questions in DB)
                             name: 'Capacity – ml and l',
                             topic: 'Capacity',
-                            grade: 3,
+                            grade: 1,  // Changed to grade 1
                             description: 'Learn about volume and capacity measurements',
                             iconName: 'local_drink',
                           ),
@@ -209,10 +209,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                       onTap: () {
                         Get.to(() => UnitHomeScreen(
                           unit: Unit(
-                            id: 'unit_weight_3',
+                            id: 'unit_weight_1',  // Changed to grade 1 (has 5 questions in DB)
                             name: 'Weight – g and kg',
                             topic: 'Weight',
-                            grade: 3,
+                            grade: 1,  // Changed to grade 1
                             description: 'Understand weight measurements in grams and kilograms',
                             iconName: 'fitness_center',
                           ),

@@ -45,81 +45,6 @@ class UnitApiService {
     }
   }
   
-  /// GET /api/units/{unitId}/progress
-  /// Fetch student progress for a specific unit
-  Future<StudentUnitProgress?> getUnitProgress(String unitId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/units/$unitId/progress?studentId=$studentId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-      
-      if (response.statusCode == 200) {
-        return StudentUnitProgress.fromJson(json.decode(response.body));
-      }
-      return null;
-    } catch (e) {
-      // Return mock progress for MVP
-      return _getMockProgress(unitId);
-    }
-  }
-  
-  /// POST /api/questions/next
-  /// Get next question for practice
-  Future<Question> getNextQuestion(String unitId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/questions/next'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'studentId': studentId,
-          'unitId': unitId,
-        }),
-      ).timeout(const Duration(seconds: 10));
-      
-      if (response.statusCode == 200) {
-        return Question.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to get question: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock question for MVP
-      return _getMockQuestion(unitId);
-    }
-  }
-  
-  /// POST /api/questions/answer
-  /// Submit answer and get feedback
-  Future<AnswerResponse> submitAnswer({
-    required String questionId,
-    required int selectedIndex,
-    required String unitId,
-    required int timeTaken,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/questions/answer'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'questionId': questionId,
-          'selectedIndex': selectedIndex,
-          'studentId': studentId,
-          'unitId': unitId,
-          'timeTaken': timeTaken,
-        }),
-      ).timeout(const Duration(seconds: 10));
-      
-      if (response.statusCode == 200) {
-        return AnswerResponse.fromJson(json.decode(response.body));
-      } else {
-        throw Exception('Failed to submit answer: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock response for MVP
-      return _getMockAnswerResponse(selectedIndex);
-    }
-  }
-  
   /// POST /api/chat
   /// Send chat message and get AI response
   Future<ChatResponse> sendChatMessage({
@@ -307,6 +232,7 @@ class UnitApiService {
   /// Submit answer with adaptive feedback
   Future<AdaptiveFeedback> submitAdaptiveAnswer({
     required String questionId,
+    required String unitId,
     required String answer,
     int? timeTaken,
   }) async {
@@ -317,6 +243,7 @@ class UnitApiService {
         body: json.encode({
           'student_id': studentId,
           'question_id': questionId,
+          'unit_id': unitId,
           'answer': answer,
           if (timeTaken != null) 'time_taken': timeTaken,
         }),
@@ -337,6 +264,7 @@ class UnitApiService {
   Future<RAGQuestion> getAdaptiveQuestion({
     required String unitId,
     int? currentDifficulty,
+    int? gradeLevel,
   }) async {
     try {
       final queryParams = [
@@ -345,6 +273,9 @@ class UnitApiService {
       ];
       if (currentDifficulty != null) {
         queryParams.add('current_difficulty=$currentDifficulty');
+      }
+      if (gradeLevel != null) {
+        queryParams.add('grade_level=$gradeLevel');
       }
       
       final response = await http.get(

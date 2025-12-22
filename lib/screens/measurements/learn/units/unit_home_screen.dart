@@ -4,6 +4,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
+import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/question_practice_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/unit_chat_screen.dart';
 
@@ -21,6 +22,7 @@ class UnitHomeScreen extends StatefulWidget {
 
 class _UnitHomeScreenState extends State<UnitHomeScreen> {
   final UnitApiService _apiService = UnitApiService();
+  final UnitProgressService _progressService = UnitProgressService.instance;
   StudentUnitProgress? _progress;
   bool _isLoading = true;
   int _selectedIndex = 1; // Learn tab
@@ -33,7 +35,7 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
 
   Future<void> _loadProgress() async {
     setState(() => _isLoading = true);
-    final progress = await _apiService.getUnitProgress(widget.unit.id);
+    final progress = await _progressService.getUnitProgress(widget.unit.id);
     setState(() {
       _progress = progress;
       _isLoading = false;

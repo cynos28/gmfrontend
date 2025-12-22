@@ -4,6 +4,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
+import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/screens/measurements/units/unit_home_screen.dart';
 
 class UnitsListScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class UnitsListScreen extends StatefulWidget {
 
 class _UnitsListScreenState extends State<UnitsListScreen> {
   final UnitApiService _apiService = UnitApiService();
+  final UnitProgressService _progressService = UnitProgressService.instance;
   List<Unit> _units = [];
   Map<String, StudentUnitProgress> _progressMap = {};
   bool _isLoading = true;
@@ -52,7 +54,7 @@ class _UnitsListScreenState extends State<UnitsListScreen> {
       // Fetch progress for each unit
       final progressMap = <String, StudentUnitProgress>{};
       for (final unit in filteredUnits) {
-        final progress = await _apiService.getUnitProgress(unit.id);
+        final progress = await _progressService.getUnitProgress(unit.id);
         if (progress != null) {
           progressMap[unit.id] = progress;
         }
