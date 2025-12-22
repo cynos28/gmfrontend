@@ -1,14 +1,13 @@
-/// ARCore Measurement Screen - Pure ARCore implementation
+/// Measurement Screen - Manual measurement input
 /// 
 /// This screen allows students to:
-/// 1. Use ARCore to measure objects accurately
+/// 1. Enter measurement details manually
 /// 2. Generate personalized questions about their measurement
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../models/ar_measurement.dart';
 import '../../services/ar_learning_service.dart';
-import '../../widgets/measurements/arcore_measurement_widget.dart';
 import '../../utils/constants.dart';
 import 'ar_questions_screen.dart';
 
@@ -28,7 +27,6 @@ class _ARCoreMeasurementScreenState extends State<ARCoreMeasurementScreen> {
   MeasurementUnit? _selectedUnit;
   bool _isProcessing = false;
   String? _sessionId;
-  bool _showARView = true;
   
   late Color _primaryColor;
   late Color _borderColor;
@@ -68,22 +66,6 @@ class _ARCoreMeasurementScreenState extends State<ARCoreMeasurementScreen> {
       case MeasurementType.area:
         return Colors.purple;
     }
-  }
-
-  void _onARMeasurementComplete(double value, String objectName, String? photoPath) {
-    setState(() {
-      _objectController.text = objectName;
-      _valueController.text = value.toStringAsFixed(1);
-      _showARView = false;
-    });
-    
-    Get.snackbar(
-      'Measurement Complete',
-      '$objectName: ${value.toStringAsFixed(1)} cm',
-      backgroundColor: _primaryColor.withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
   }
 
   MeasurementType _parseMeasurementType(String type) {
@@ -156,25 +138,9 @@ class _ARCoreMeasurementScreenState extends State<ARCoreMeasurementScreen> {
       appBar: AppBar(
         title: Text('Measure ${_measurementType.displayName}'),
         backgroundColor: _primaryColor,
-        actions: [
-          if (!_showARView)
-            IconButton(
-              icon: const Icon(Icons.camera_alt),
-              onPressed: () {
-                setState(() => _showARView = true);
-              },
-              tooltip: 'Measure Again',
-            ),
-        ],
       ),
       body: SafeArea(
-        child: _showARView
-            ? ARCoreMeasurementWidget(
-                onMeasurementComplete: _onARMeasurementComplete,
-                primaryColor: _primaryColor,
-                measurementType: _measurementType,
-              )
-            : _buildResultsView(),
+        child: _buildResultsView(),
       ),
     );
   }

@@ -98,10 +98,85 @@ class ContextualQuestionService {
     int numQuestions = 5,
   }) async {
     // This will be implemented using the MeasurementApiService
-    // For now, return a placeholder
-    throw UnimplementedError(
-      'Use MeasurementApiService + ContextualQuestionService separately'
-    );
+    throw UnimplementedError('Use ARLearningService.processARMeasurement instead');
+  }
+  
+  /// Get next adaptive measurement question
+  Future<Map<String, dynamic>> getAdaptiveMeasurementQuestion({
+    required MeasurementContext measurementContext,
+    required String studentId,
+    required int grade,
+  }) async {
+    try {
+      final request = ContextualQuestionRequest(
+        studentId: studentId,
+        grade: grade,
+        numQuestions: 1,
+        measurementContext: measurementContext,
+      );
+      
+      print('🎯 Getting adaptive measurement question...');
+      
+      final baseUrl = await _getWorkingBaseUrl();
+      final response = await http.post(
+        Uri.parse('$baseUrl/adaptive-measurement-question'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(request.toJson()),
+      ).timeout(const Duration(seconds: 30));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        final question = ContextualQuestion.fromJson(data['question'] as Map<String, dynamic>);
+        final studentAbility = data['student_ability'] as double;
+        final targetDifficulty = data['target_difficulty'] as int;
+        
+        print('✅ Got adaptive question (Difficulty: $targetDifficulty, Ability: ${studentAbility.toStringAsFixed(2)})');
+        
+        return {
+          'question': question,
+          'student_ability': studentAbility,
+          'target_difficulty': targetDifficulty,
+        };
+      } else {
+        throw Exception('Failed to get adaptive question: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error getting adaptive question: $e');
+      rethrow;
+    }
+  }
+  
+  /// Submit measurement answer and get feedback
+  Future<Map<String, dynamic>> submitMeasurementAnswer({
+    required String studentId,
+    required String questionId,
+    required String answer,
+    required String measurementType,
+  }) async {
+    try {
+      print('📤 Submitting answer...');
+      
+      final baseUrl = await _getWorkingBaseUrl();
+      final response = await http.post(
+        Uri.parse('$baseUrl/submit-measurement-answer?student_id=$studentId&question_id=$questionId&answer=${Uri.encodeComponent(answer)}&measurement_type=$measurementType'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        print('✅ Answer submitted: ${data['is_correct'] ? 'Correct' : 'Incorrect'}');
+        print('   Ability change: ${data['ability_change']}');
+        
+        return data;
+      } else {
+        throw Exception('Failed to submit answer: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error submitting answer: $e');
+      rethrow;
+    }
   }
   
   /// Get previously generated contextual questions for a student

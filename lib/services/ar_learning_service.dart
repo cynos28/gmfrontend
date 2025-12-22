@@ -1,9 +1,9 @@
 /// AR Learning Service - Coordinates measurement processing and question generation
 /// 
-/// This service orchestrates the full AR learning flow:
-/// 1. Student measures object with AR camera
-/// 2. Measurement sent to measurement-service for context building
-/// 3. Context sent to RAG service for personalized question generation
+/// This service orchestrates the full learning flow:
+/// 1. Student enters measurement details
+/// 2. Measurement sent to unit-rag-service for context building
+/// 3. Context used by RAG service for personalized question generation
 /// 4. Questions displayed to student with their actual measurement
 
 import 'package:uuid/uuid.dart';

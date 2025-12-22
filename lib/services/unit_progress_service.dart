@@ -11,12 +11,35 @@ class UnitProgressService {
   UnitProgressService._();
   
   final StorageService _storage = StorageService.instance;
-  final String _baseUrl = 'http://10.0.2.2:8000/api/v1/progress';
+  
+  // Use localhost for physical devices (with ADB port forwarding)
+  final List<String> _baseUrls = [
+    'http://localhost:8000/api/v1/progress',
+    'http://10.0.2.2:8000/api/v1/progress',  // Fallback for emulator
+    'http://127.0.0.1:8000/api/v1/progress', // Alternative localhost
+  ];
   
   static const String _progressKey = 'unit_progress_data';
   
   // TODO: Replace with actual student ID from auth system
   String get _studentId => 'student_123'; // Temporary - get from login later
+  
+  /// Try multiple base URLs and return the first working one
+  Future<String> _getWorkingBaseUrl() async {
+    for (final baseUrl in _baseUrls) {
+      try {
+        final response = await http.get(
+          Uri.parse('$baseUrl/../health'),
+        ).timeout(const Duration(seconds: 2));
+        if (response.statusCode == 200) {
+          return baseUrl;
+        }
+      } catch (e) {
+        continue; // Try next URL
+      }
+    }
+    return _baseUrls.first; // Fallback to first URL
+  }
   
   /// Get progress for a specific unit
   Future<StudentUnitProgress?> getUnitProgress(String unitId) async {
@@ -130,8 +153,9 @@ class UnitProgressService {
     int grade,
     bool isCorrect,
   ) async {
+    final baseUrl = await _getWorkingBaseUrl();
     final response = await http.post(
-      Uri.parse('$_baseUrl/record-answer'),
+      Uri.parse('$baseUrl/record-answer'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'student_id': _studentId,
@@ -140,7 +164,7 @@ class UnitProgressService {
         'grade': grade,
         'is_correct': isCorrect,
       }),
-    );
+    ).timeout(const Duration(seconds: 5));
     
     if (response.statusCode != 200) {
       throw Exception('Backend sync failed: ${response.body}');
@@ -150,9 +174,10 @@ class UnitProgressService {
   /// Load progress from backend
   Future<void> loadFromBackend() async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$_baseUrl/all/$_studentId'),
-      );
+        Uri.parse('$baseUrl/all/$_studentId'),
+      ).timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

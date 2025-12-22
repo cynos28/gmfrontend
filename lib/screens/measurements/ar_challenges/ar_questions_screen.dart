@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/models/ar_measurement.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
+import 'package:ganithamithura/services/api/contextual_question_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/user_service.dart';
 
 class ARQuestionsScreen extends StatefulWidget {
   const ARQuestionsScreen({Key? key}) : super(key: key);
@@ -17,9 +19,26 @@ class ARQuestionsScreen extends StatefulWidget {
 
 class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   final UnitProgressService _progressService = UnitProgressService.instance;
+  final ContextualQuestionService _questionService = ContextualQuestionService();
   
   late ARMeasurement _measurement;
   late MeasurementType _measurementType;
+  late MeasurementContext _measurementContext;
+  
+  // Adaptive mode
+  bool _useAdaptiveMode = true;
+  int _questionsAnswered = 0;
+  final int _totalQuestions = 10;
+  double _studentAbility = 0.0;
+  int _currentDifficulty = 3;
+  
+  // Current question
+  ContextualQuestion? _currentQuestion;
+  bool _isLoadingQuestion = false;
+  
+  // Generate a unique student ID for this session to test fresh adaptive behavior
+  late final String _studentId = 'student_test_${DateTime.now().millisecondsSinceEpoch}';
+  
   int _currentQuestionIndex = 0;
   String? _selectedAnswer;
   bool _showFeedback = false;
@@ -34,18 +53,58 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     final args = Get.arguments as Map<String, dynamic>;
     _measurement = args['measurement'] as ARMeasurement;
     _measurementType = args['measurementType'] as MeasurementType;
+    _measurementContext = _measurement.context!;
     
-    // Initialize hints revealed array
-    _hintsRevealed = List.filled(currentQuestion.hints.length, false);
+    print('📝 Measurement Questions Mode: ${_useAdaptiveMode ? "Adaptive" : "Fixed"}');
     
-    print('📝 Showing ${_measurement.questions.length} questions');
-    print('   Object: ${_measurement.objectName}');
-    print('   Measurement: ${_measurement.measurementString}');
+    if (_useAdaptiveMode) {
+      _loadNextAdaptiveQuestion();
+    } else {
+      // Use pre-generated questions
+      _currentQuestion = _measurement.questions[0];
+      _hintsRevealed = List.filled(_currentQuestion!.hints.length, false);
+    }
   }
   
-  ContextualQuestion get currentQuestion => _measurement.questions[_currentQuestionIndex];
+  ContextualQuestion get currentQuestion => _currentQuestion ?? _measurement.questions[_currentQuestionIndex];
   
-  bool get isLastQuestion => _currentQuestionIndex >= _measurement.questions.length - 1;
+  bool get isLastQuestion => _questionsAnswered >= _totalQuestions - 1;
+  
+  Future<void> _loadNextAdaptiveQuestion() async {
+    setState(() {
+      _isLoadingQuestion = true;
+      _selectedAnswer = null;
+      _showFeedback = false;
+    });
+    
+    try {
+      final grade = await UserService.getGrade();
+      final response = await _questionService.getAdaptiveMeasurementQuestion(
+        measurementContext: _measurementContext,
+        studentId: _studentId, // Use session-unique student ID
+        grade: grade,
+      );
+      
+      setState(() {
+        _currentQuestion = response['question'] as ContextualQuestion;
+        _studentAbility = response['student_ability'] as double;
+        _currentDifficulty = response['target_difficulty'] as int;
+        _hintsRevealed = List.filled(_currentQuestion!.hints.length, false);
+        _isLoadingQuestion = false;
+      });
+      
+      print('🎯 Loaded question (Difficulty: $_currentDifficulty, Ability: ${_studentAbility.toStringAsFixed(2)})');
+      
+    } catch (e) {
+      print('❌ Error loading adaptive question: $e');
+      setState(() {
+        _isLoadingQuestion = false;
+      });
+      
+      // Don't show snackbar during init - will cause overlay error
+      // User will see loading failed in UI
+    }
+  }
   
   Color get _primaryColor {
     switch (_measurementType) {
@@ -73,25 +132,60 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     }
   }
   
-  void _checkAnswer() {
+  void _checkAnswer() async {
     if (_selectedAnswer == null) {
-      Get.snackbar(
-        'Select an Answer',
-        'Please select an answer before submitting',
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Don't show snackbar - just return silently or show inline error
       return;
     }
     
-    setState(() {
-      _isCorrect = currentQuestion.isCorrect(_selectedAnswer!);
-      _showFeedback = true;
-      
-      if (_isCorrect) {
-        _correctCount++;
+    if (_useAdaptiveMode) {
+      // Submit to adaptive endpoint
+      try {
+        final response = await _questionService.submitMeasurementAnswer(
+          studentId: _studentId, // Use consistent student ID
+          questionId: _currentQuestion!.questionId,
+          answer: _selectedAnswer!,
+          measurementType: _measurementType.name,
+        );
+        
+        final isCorrect = response['is_correct'] as bool;
+        final oldAbility = response['old_ability'] as double;
+        final newAbility = response['new_ability'] as double;
+        final abilityChange = response['ability_change'] as double;
+        
+        setState(() {
+          _isCorrect = isCorrect;
+          _showFeedback = true;
+          _studentAbility = newAbility;
+          _currentDifficulty = response['next_difficulty'] as int;
+          
+          if (isCorrect) {
+            _correctCount++;
+          }
+        });
+        
+        print('📊 Ability: $oldAbility → $newAbility (${abilityChange >= 0 ? "+" : ""}${abilityChange.toStringAsFixed(2)})');
+        
+      } catch (e) {
+        print('❌ Error submitting answer: $e');
+        // Don't show snackbar during widget lifecycle - just log error
+        setState(() {
+          // Show error in UI instead of snackbar
+          _showFeedback = true;
+          _isCorrect = false;
+        });
       }
-    });
+    } else {
+      // Non-adaptive mode
+      setState(() {
+        _isCorrect = currentQuestion.isCorrect(_selectedAnswer!);
+        _showFeedback = true;
+        
+        if (_isCorrect) {
+          _correctCount++;
+        }
+      });
+    }
     
     // Record progress
     _progressService.recordAnswer(
@@ -101,16 +195,32 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   }
   
   void _nextQuestion() {
+    setState(() {
+      _questionsAnswered++;
+    });
+    
     if (isLastQuestion) {
       _showResults();
     } else {
-      setState(() {
-        _currentQuestionIndex++;
-        _selectedAnswer = null;
-        _showFeedback = false;
-        _isCorrect = false;
-        _hintsRevealed = List.filled(currentQuestion.hints.length, false);
-      });
+      if (_useAdaptiveMode) {
+        // Reset UI state and load next adaptive question
+        setState(() {
+          _selectedAnswer = null;
+          _showFeedback = false;
+          _isCorrect = false;
+          _currentQuestion = null; // Clear current question
+          _hintsRevealed = [];
+        });
+        _loadNextAdaptiveQuestion();
+      } else {
+        setState(() {
+          _currentQuestionIndex++;
+          _selectedAnswer = null;
+          _showFeedback = false;
+          _isCorrect = false;
+          _hintsRevealed = List.filled(currentQuestion.hints.length, false);
+        });
+      }
     }
   }
   
@@ -173,57 +283,60 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Get.back(); // Close dialog
-                        Get.back(); // Back to measurement screen
-                        Get.back(); // Back to home
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: _borderColor, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+              // Full-width buttons stacked for better UX
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    Get.back(); // Back to measurement screen to try again
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _borderColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Try Again',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back(); // Close dialog
-                        Get.back(); // Back to measurement screen to try again
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _borderColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Try Again',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    Get.back(); // Back to measurement screen
+                    Get.back(); // Back to home
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: _borderColor, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ],
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -241,6 +354,32 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   
   @override
   Widget build(BuildContext context) {
+    // Show loading state if question isn't loaded yet (adaptive mode)
+    if (_isLoadingQuestion || (_useAdaptiveMode && _currentQuestion == null)) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7FAFA),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(AppColors.textBlack)),
+            onPressed: () => Get.back(),
+          ),
+          title: const Text(
+            'Loading Question...',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(AppColors.textBlack),
+            ),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFA),
       appBar: AppBar(
@@ -250,13 +389,29 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
           icon: const Icon(Icons.arrow_back, color: Color(AppColors.textBlack)),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          'Question ${_currentQuestionIndex + 1} of ${_measurement.questions.length}',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _useAdaptiveMode
+                  ? 'Adaptive Practice'
+                  : 'Question ${_currentQuestionIndex + 1} of ${_measurement.questions.length}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(AppColors.textBlack),
+              ),
+            ),
+            if (_useAdaptiveMode)
+              Text(
+                'Level $_currentDifficulty • Ability: ${_studentAbility.toStringAsFixed(1)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(AppColors.textBlack).withOpacity(0.6),
+                ),
+              ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -309,7 +464,9 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   }
   
   Widget _buildProgressBar() {
-    final progress = (_currentQuestionIndex + 1) / _measurement.questions.length;
+    final progress = _useAdaptiveMode
+        ? (_questionsAnswered / _totalQuestions)
+        : ((_currentQuestionIndex + 1) / _measurement.questions.length);
     
     return Container(
       height: 4,
@@ -488,6 +645,11 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   }
   
   Widget _buildHintsSection() {
+    // Safety check for hints
+    if (currentQuestion.hints.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -594,6 +756,8 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   }
   
   Widget _buildBottomButton() {
+    final bool isDisabled = !_showFeedback && _selectedAnswer == null;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -607,24 +771,31 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
         ],
       ),
       child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _showFeedback ? _nextQuestion : _checkAnswer,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _borderColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: double.infinity, // Full width
+          height: 54, // Better touch target
+          child: ElevatedButton(
+            onPressed: isDisabled ? null : (_showFeedback ? _nextQuestion : _checkAnswer),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _borderColor,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _borderColor.withOpacity(0.4),
+              disabledForegroundColor: Colors.white.withOpacity(0.6),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
             ),
-            elevation: 0,
-          ),
-          child: Text(
-            _showFeedback
-                ? (isLastQuestion ? 'View Results' : 'Next Question')
-                : 'Submit Answer',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+            child: Text(
+              _showFeedback
+                  ? (isLastQuestion ? 'View Results' : 'Next Question')
+                  : 'Submit Answer',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),

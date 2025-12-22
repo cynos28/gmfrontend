@@ -1,4 +1,4 @@
-/// AR Measurement Screen - Capture measurements and generate contextual questions
+/// Measurement Screen - Capture measurements and generate contextual questions
 /// 
 /// This screen allows students to:
 /// 1. Select what they're measuring (object name)
@@ -9,9 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/models/ar_measurement.dart';
 import 'package:ganithamithura/services/ar_learning_service.dart';
-import 'package:ganithamithura/services/ar_camera_service.dart';
-import 'package:ganithamithura/widgets/measurements/ar_camera_widget.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/user_service.dart';
 import 'ar_questions_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
@@ -23,7 +22,6 @@ class ARMeasurementScreen extends StatefulWidget {
 
 class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   final ARLearningService _arService = ARLearningService();
-  final ARCameraService _cameraService = ARCameraService();
   final TextEditingController _objectController = TextEditingController();
   final TextEditingController _valueController = TextEditingController();
   
@@ -31,11 +29,6 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   MeasurementUnit? _selectedUnit;
   bool _isProcessing = false;
   String? _sessionId;
-  
-  // Camera mode
-  bool _useCameraMode = false;
-  bool _isCameraInitialized = false;
-  String? _capturedPhotoPath;
   
   // Unit options per measurement type
   Map<MeasurementType, List<MeasurementUnit>> unitOptions = {
@@ -83,7 +76,6 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   void dispose() {
     _objectController.dispose();
     _valueController.dispose();
-    _cameraService.dispose();
     if (_sessionId != null) {
       _arService.endSession(_sessionId!);
     }
@@ -99,51 +91,6 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
-  }
-  
-  Future<void> _toggleCameraMode() async {
-    if (!_useCameraMode) {
-      // Initialize camera
-      setState(() {
-        _isProcessing = true;
-      });
-      
-      try {
-        await _cameraService.initialize();
-        setState(() {
-          _useCameraMode = true;
-          _isCameraInitialized = true;
-        });
-      } catch (e) {
-        _showSnackBar(
-          'Failed to initialize camera: $e',
-          backgroundColor: Colors.red,
-        );
-      } finally {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
-    } else {
-      // Switch back to manual mode
-      await _cameraService.dispose();
-      setState(() {
-        _useCameraMode = false;
-        _isCameraInitialized = false;
-      });
-    }
-  }
-  
-  void _onCameraMeasurementComplete(double value, String? photoPath) {
-    setState(() {
-      _valueController.text = value.toStringAsFixed(1);
-      _capturedPhotoPath = photoPath;
-      _useCameraMode = false;
-    });
-    
-    _cameraService.dispose();
-    
-    _showSnackBar('Measurement Captured: ${value.toStringAsFixed(1)} cm');
   }
   
   MeasurementType _parseMeasurementType(String type) {
@@ -221,13 +168,14 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     try {
       print('🔄 Processing AR measurement...');
       
+      final grade = await UserService.getGrade();
       final measurement = await _arService.processARMeasurement(
         sessionId: _sessionId!,
         value: value,
         unit: _selectedUnit!,
         objectName: _objectController.text.trim(),
         studentId: 'student_123', // TODO: Get from auth
-        grade: 1, // TODO: Get from student profile
+        grade: grade,
         numQuestions: 5,
       );
       
@@ -282,59 +230,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
         ),
       ),
       body: SafeArea(
-        child: _useCameraMode && _isCameraInitialized
-            ? _buildCameraMode()
-            : _buildManualMode(),
+        child: _buildManualMode(),
       ),
-    );
-  }
-  
-  Widget _buildCameraMode() {
-    return Column(
-      children: [
-        // Camera widget
-        Expanded(
-          child: ARCameraWidget(
-            cameraService: _cameraService,
-            onMeasurementComplete: _onCameraMeasurementComplete,
-            primaryColor: _primaryColor,
-            measurementType: _measurementType.displayName,
-          ),
-        ),
-        
-        // Object name input below camera
-        Container(
-          padding: const EdgeInsets.all(20),
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'What are you measuring?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(AppColors.textBlack),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _objectController,
-                decoration: InputDecoration(
-                  hintText: 'e.g., pencil, water bottle, table',
-                  prefixIcon: Icon(Icons.label_outline, color: _borderColor),
-                  filled: true,
-                  fillColor: const Color(0xFFF7FAFA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _borderColor, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
   
@@ -409,9 +306,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _useCameraMode 
-                      ? 'Use camera to measure objects with AR!'
-                      : 'Measure an object, enter the details, and get personalized questions!',
+                  'Measure an object, enter the details, and get personalized questions!',
                   style: TextStyle(
                     fontSize: 14,
                     color: const Color(AppColors.textBlack).withOpacity(0.7),
@@ -444,14 +339,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'e.g., pencil, water bottle, table',
             prefixIcon: Icon(Icons.label_outline, color: _borderColor),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _useCameraMode ? Icons.keyboard : Icons.camera_alt,
-                color: _borderColor,
-              ),
-              onPressed: _toggleCameraMode,
-              tooltip: _useCameraMode ? 'Manual Input' : 'Camera Mode',
-            ),
+            suffixIcon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -491,14 +379,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'Enter measurement',
             prefixIcon: Icon(Icons.straighten, color: _borderColor),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _useCameraMode ? Icons.keyboard : Icons.camera_alt,
-                color: _borderColor,
-              ),
-              onPressed: _toggleCameraMode,
-              tooltip: _useCameraMode ? 'Manual Input' : 'Camera Mode',
-            ),
+            suffixIcon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

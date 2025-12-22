@@ -5,6 +5,7 @@ import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
+import 'package:ganithamithura/screens/profile/profile_screen.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
@@ -38,6 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _currentNavIndex = 0;
           _tipCardKey = UniqueKey(); // Refresh tip when returning
+        });
+      });
+      return;
+    }
+    if (index == 3) {
+      // Navigate to Profile/Settings
+      Get.to(() => const ProfileScreen())?.then((_) {
+        setState(() {
+          _currentNavIndex = 0;
+          _tipCardKey = UniqueKey();
         });
       });
       return;

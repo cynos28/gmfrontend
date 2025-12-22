@@ -1,5 +1,5 @@
-/// API client for measurement-service (port 8001)
-/// Processes AR measurements and builds educational context
+/// API client for measurement processing via unit-rag-service (port 8000)
+/// Processes measurements and builds educational context
 /// Automatically tries multiple URLs for compatibility
 
 import 'dart:convert';
@@ -9,8 +9,8 @@ import '../../models/ar_measurement.dart';
 class MeasurementApiService {
   // Try URLs in order: localhost (adb reverse), then network IP
   static const List<String> _baseUrls = [
-    'http://localhost:8001/api/v1/measurements',      // USB debugging (adb reverse)
-    'http://192.168.8.145:8001/api/v1/measurements',  // WiFi network
+    'http://localhost:8000/api/v1/measurements',      // USB debugging (adb reverse)
+    'http://192.168.8.145:8000/api/v1/measurements',  // WiFi network
   ];
   
   static Future<String> _getWorkingBaseUrl() async {
