@@ -41,6 +41,7 @@ dependencies:
   camera: ^0.10.5+9
   image_picker: ^1.0.7
   image: ^4.1.7
+  tflite_flutter: ^0.11.0
   
   # Drawing/Canvas
   flutter_painter: 1.0.1
@@ -72,3 +73,5 @@ flutter:
     - assets/numbers/
     - assets/data/
     - .env
+    - assets/models/classroom.tflite
+    - assets/labels/classes.txt

@@ -6,9 +6,10 @@ import 'package:ganithamithura/models/unit_models.dart';
 /// API Service for Unit-based Learning
 /// Base URL should be configured in production
 class UnitApiService {
-  // TODO: Move to config file
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
-  static const String ragBaseUrl = 'http://127.0.0.1:8000'; // RAG Service - Changed from localhost for iOS
+  // Using WiFi IP - works on any device without ADB setup
+  // Make sure phone and Mac are on same WiFi network
+  static const String baseUrl = 'http://10.169.0.71:8000/api';
+  static const String ragBaseUrl = 'http://10.169.0.71:8000'; // RAG Service
   
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();

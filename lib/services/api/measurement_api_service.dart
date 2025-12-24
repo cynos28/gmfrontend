@@ -7,10 +7,11 @@ import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
 
 class MeasurementApiService {
-  // Try URLs in order: localhost (adb reverse), then network IP
+  // WiFi IP - works without ADB, just need same WiFi network
   static const List<String> _baseUrls = [
-    'http://localhost:8000/api/v1/measurements',      // USB debugging (adb reverse)
-    'http://192.168.8.145:8000/api/v1/measurements',  // WiFi network
+    'http://10.169.0.71:8000/api/v1/measurements',    // WiFi - Mac IP (PRIMARY)
+    'http://localhost:8000/api/v1/measurements',      // ADB reverse fallback
+    'http://10.0.2.2:8000/api/v1/measurements',       // Android Emulator fallback
   ];
   
   static Future<String> _getWorkingBaseUrl() async {

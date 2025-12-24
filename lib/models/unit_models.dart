@@ -299,11 +299,30 @@ class RAGQuestion {
   
   // Convert to Question for compatibility
   Question toQuestion() {
+    // Ensure we have options for MCQ questions
+    List<String> questionOptions = options ?? [];
+    
+    // If it's a true/false question without options, generate them
+    if (questionType == 'true_false' && questionOptions.isEmpty) {
+      questionOptions = ['True', 'False'];
+    }
+    
+    // For short_answer questions, create dummy options to prevent UI crash
+    // (This shouldn't happen as backend should filter them out)
+    if (questionType == 'short_answer' && questionOptions.isEmpty) {
+      questionOptions = [
+        'Type your answer',
+        'Short answer question',
+        'Please use MCQ format',
+        'Contact teacher'
+      ];
+    }
+    
     return Question(
       questionId: id,
       questionText: questionText,
-      options: options ?? [],
-      correctIndex: options?.indexOf(correctAnswer) ?? -1,
+      options: questionOptions,
+      correctIndex: questionOptions.indexOf(correctAnswer),
       difficulty: difficultyLevel <= 2 ? 'easy' : difficultyLevel <= 4 ? 'medium' : 'hard',
       explanation: explanation ?? '',
     );

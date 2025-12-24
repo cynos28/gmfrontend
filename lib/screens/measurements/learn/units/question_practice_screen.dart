@@ -35,11 +35,13 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   final List<Question> _questionHistory = [];
   int _currentQuestionIndex = -1;
   
-  // Initial assessment tracking
-  static const int INITIAL_QUESTIONS_PER_TOPIC = 3;
-  static const int TOTAL_INITIAL_QUESTIONS = 12; // 3 questions × 4 topics
+  // Session-based practice (limit questions per session)
+  static const int MAX_QUESTIONS_PER_SESSION = 10; // Kids practice 10 questions at a time
+  static const int INITIAL_ASSESSMENT_QUESTIONS = 5; // First 5 questions for baseline
   int _answeredQuestionsCount = 0;
+  int _correctAnswersCount = 0;
   bool _isInitialAssessment = true; // Start with baseline questions
+  bool _hasCompletedSession = false; // Track if session is complete
 
   @override
   void initState() {
@@ -48,6 +50,23 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   }
 
   Future<void> _loadNextQuestion() async {
+    // Check if session is complete
+    if (_answeredQuestionsCount >= MAX_QUESTIONS_PER_SESSION) {
+      setState(() {
+        _hasCompletedSession = true;
+        _isLoading = false;
+      });
+      return;
+    }
+    
+    // Check if initial assessment is done
+    if (_isInitialAssessment && _answeredQuestionsCount >= INITIAL_ASSESSMENT_QUESTIONS) {
+      setState(() {
+        _isInitialAssessment = false;
+      });
+      debugPrint('✅ Initial assessment complete! Moving to adaptive practice.');
+    }
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -75,6 +94,19 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       debugPrint('   Options: ${ragQuestion.options}');
       debugPrint('   Options count: ${ragQuestion.options?.length ?? 0}');
       
+      // Validate question has options (skip short_answer questions)
+      if (ragQuestion.questionType == 'short_answer') {
+        debugPrint('⚠️ Skipping short_answer question, requesting MCQ instead...');
+        // Recursively try to get another question
+        return _loadNextQuestion();
+      }
+      
+      if (ragQuestion.options == null || ragQuestion.options!.isEmpty) {
+        debugPrint('⚠️ Question has no options, requesting another question...');
+        // Recursively try to get another question
+        return _loadNextQuestion();
+      }
+      
       // Convert RAG question to Question model
       final question = ragQuestion.toQuestion();
       
@@ -91,10 +123,21 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       
     } catch (e) {
       debugPrint('❌ Error loading question: $e');
-      setState(() {
-        _error = 'Failed to load question. Please try again.';
-        _isLoading = false;
-      });
+      
+      // If error is due to no more questions, show completion
+      if (e.toString().contains('No questions available') || 
+          e.toString().contains('404') ||
+          _answeredQuestionsCount >= 5) {
+        setState(() {
+          _hasCompletedSession = true;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Failed to load question. Please try again.';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -130,6 +173,9 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       // Increment answered questions count
       setState(() {
         _answeredQuestionsCount++;
+        if (response.isCorrect) {
+          _correctAnswersCount++;
+        }
         _answerFeedback = response;
         _showingFeedback = true;
         _isSubmitting = false;
@@ -137,9 +183,11 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       
       // Log progress
       if (_isInitialAssessment) {
-        debugPrint('📊 Progress: ${_answeredQuestionsCount}/$TOTAL_INITIAL_QUESTIONS initial questions answered');
+        debugPrint('📊 Initial Assessment: ${_answeredQuestionsCount}/$INITIAL_ASSESSMENT_QUESTIONS questions');
+      } else {
+        debugPrint('📊 Practice Progress: ${_answeredQuestionsCount}/$MAX_QUESTIONS_PER_SESSION questions');
       }
-      debugPrint('✅ Progress recorded: ${response.isCorrect ? "Correct" : "Incorrect"}');
+      debugPrint('✅ Progress recorded: ${response.isCorrect ? "Correct" : "Incorrect"} (${_correctAnswersCount}/$_answeredQuestionsCount correct)');
       
     } catch (e) {
       debugPrint('❌ Error submitting answer: $e');
@@ -250,8 +298,8 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                 const SizedBox(height: 2),
                 Text(
                   _isInitialAssessment 
-                      ? 'Initial Assessment ${_answeredQuestionsCount}/$TOTAL_INITIAL_QUESTIONS'
-                      : 'Adaptive Practice',
+                      ? 'Initial Assessment: ${_answeredQuestionsCount}/$INITIAL_ASSESSMENT_QUESTIONS'
+                      : 'Practice Session: ${_answeredQuestionsCount}/$MAX_QUESTIONS_PER_SESSION',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -284,6 +332,11 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   }
 
   Widget _buildContent() {
+    // Show completion screen if session is done
+    if (_hasCompletedSession) {
+      return _buildCompletionScreen();
+    }
+    
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -674,6 +727,221 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
           ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildCompletionScreen() {
+    final percentage = _answeredQuestionsCount > 0 
+        ? ((_correctAnswersCount / _answeredQuestionsCount) * 100).round()
+        : 0;
+    final isPerfect = percentage == 100;
+    final isGreat = percentage >= 80;
+    final isGood = percentage >= 60;
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Trophy/Celebration Icon
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: isPerfect 
+                    ? const Color(0xFFFFD700).withOpacity(0.2)
+                    : isGreat
+                        ? const Color(0xFF2EB872).withOpacity(0.2)
+                        : const Color(AppColors.measurementColor).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPerfect ? Icons.emoji_events : isGreat ? Icons.star : Icons.thumb_up,
+                size: 64,
+                color: isPerfect 
+                    ? const Color(0xFFFFD700)
+                    : isGreat
+                        ? const Color(0xFF2EB872)
+                        : const Color(AppColors.measurementIcon),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Title
+            Text(
+              isPerfect 
+                  ? '🎉 Perfect Score!'
+                  : isGreat
+                      ? '⭐ Great Job!'
+                      : isGood
+                          ? '👍 Good Work!'
+                          : '💪 Keep Practicing!',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: Color(AppColors.textBlack),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            
+            // Subtitle
+            Text(
+              _isInitialAssessment
+                  ? 'Assessment Complete'
+                  : 'Practice Session Complete',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Color(AppColors.subText1),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            // Stats Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem(
+                        'Questions',
+                        _answeredQuestionsCount.toString(),
+                        Icons.quiz,
+                        const Color(AppColors.measurementIcon),
+                      ),
+                      _buildStatItem(
+                        'Correct',
+                        _correctAnswersCount.toString(),
+                        Icons.check_circle,
+                        const Color(0xFF2EB872),
+                      ),
+                      _buildStatItem(
+                        'Score',
+                        '$percentage%',
+                        Icons.stars,
+                        const Color(0xFFFFB800),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: percentage / 100,
+                      minHeight: 12,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isPerfect 
+                            ? const Color(0xFFFFD700)
+                            : isGreat
+                                ? const Color(0xFF2EB872)
+                                : const Color(AppColors.measurementIcon),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            // Action Buttons
+            Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _answeredQuestionsCount = 0;
+                        _correctAnswersCount = 0;
+                        _hasCompletedSession = false;
+                        _questionHistory.clear();
+                        _currentQuestionIndex = -1;
+                      });
+                      _loadNextQuestion();
+                    },
+                    icon: const Icon(Icons.replay),
+                    label: const Text('Practice Again'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(AppColors.measurementIcon),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.home),
+                    label: const Text('Back to Unit'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      side: const BorderSide(
+                        color: Color(AppColors.measurementIcon),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(AppColors.subText2),
+          ),
+        ),
+      ],
     );
   }
 }

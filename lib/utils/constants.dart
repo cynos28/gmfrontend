@@ -2,8 +2,9 @@
 library;
 
 class AppConstants {
-  // API Configuration
-   static const String baseUrl = 'http://localhost:8000';
+  // API Configuration - Using WiFi IP (no ADB needed)
+  // Ensure phone and Mac are on same WiFi network
+  static const String baseUrl = 'http://10.169.0.71:8000';
   
   
   // Activity Types
