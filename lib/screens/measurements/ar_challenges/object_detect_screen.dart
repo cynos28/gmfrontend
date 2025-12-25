@@ -48,7 +48,7 @@ class _ObjectDetectScreenState extends State<ObjectDetectScreen> {
 
       _controller = CameraController(
         cam,
-        ResolutionPreset.medium,
+        ResolutionPreset.low,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.yuv420,
       );

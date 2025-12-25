@@ -61,20 +61,20 @@ class YoloDetector {
       _interpreter.run(input, output);
 
       // Decode YOLO output into boxes in 640x640 space
-      final ОС = output[0]; // [24][8400]
+      final outputData = output[0]; // [24][8400]
       final raw = <_RawDet>[];
 
       for (int i = 0; i < 8400; i++) {
-        final x = ОС[0][i];
-        final y = ОС[1][i];
-        final w = ОС[2][i];
-        final h = ОС[3][i];
+        final x = outputData[0][i];
+        final y = outputData[1][i];
+        final w = outputData[2][i];
+        final h = outputData[3][i];
 
         // Find best class score among 20 classes (index 4..23)
         double best = 0.0;
         int bestId = -1;
         for (int c = 0; c < _labels.length; c++) {
-          final s = ОС[4 + c][i];
+          final s = outputData[4 + c][i];
           if (s > best) {
             best = s;
             bestId = c;
