@@ -12,7 +12,7 @@ import 'package:ganithamithura/services/ar_learning_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'ar_questions_screen.dart';
-import 'object_detect_screen.dart';
+import 'object_capture_yolo_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
   const ARMeasurementScreen({Key? key}) : super(key: key);
@@ -96,36 +96,27 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
 
   /// Opens the object detection screen using camera
   /// The detected object name will be auto-filled in the text field
-  Future<void> _openObjectDetection() async {
-    print('📷 Opening object detection screen...');
-    
-    final result = await Get.to<String?>(() => const ObjectDetectScreen());
-    
-    if (result != null && result.isNotEmpty) {
-      // Format the detected object name (capitalize first letter, replace hyphens)
-      final formattedName = result
-          .replaceAll('-', ' ')
-          .replaceAll('_', ' ')
-          .split(' ')
-          .map((word) => word.isEmpty
-              ? ''
-              : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
-          .join(' ');
-      
-      setState(() {
-        _objectController.text = formattedName;
-      });
-      
-      print('✅ Object detected and selected: $formattedName');
-      _showSnackBar(
-        'Object detected: $formattedName',
-        backgroundColor: Colors.green,
-      );
-    } else {
-      print('ℹ️ No object selected, continuing with manual input');
-    }
+ Future<void> _openObjectDetection() async {
+  final result = await Get.to<String?>(
+    () => const ObjectCaptureYoloScreen(),
+  );
+
+  if (result != null && result.trim().isNotEmpty) {
+    final formattedName = result
+        .replaceAll('-', ' ')
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
+
+    setState(() => _objectController.text = formattedName);
+
+    _showSnackBar(
+      'Object detected: $formattedName',
+      backgroundColor: Colors.green,
+    );
   }
-  
+}
   MeasurementType _parseMeasurementType(String type) {
     switch (type.toLowerCase()) {
       case 'length':

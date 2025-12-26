@@ -40,8 +40,8 @@ dependencies:
   # Camera & AR
   camera: ^0.10.5+9
   image_picker: ^1.0.7
-  image: ^4.1.7
-  tflite_flutter: ^0.11.0
+  image: ^4.2.0
+  tflite_flutter: ^0.12.1  # Updated to fix TFLite inference bugs
   
   # Drawing/Canvas
   flutter_painter: 1.0.1

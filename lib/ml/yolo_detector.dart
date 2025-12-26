@@ -1,206 +1,297 @@
+import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
-import 'package:camera/camera.dart';
+import 'dart:ui' show Rect;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-class Detection {
-  final Rect box; // in preview coordinates
-  final int classId;
-  final String label;
-  final double score;
+import 'detection.dart';
 
-  Detection({required this.box, required this.classId, required this.label, required this.score});
-}
-
-class YoloDetector {
-  static const int inputSize = 640;
-  static const double confThreshold = 0.30;
-  static const double iouThreshold = 0.45;
-
+class YoloDetectorFile {
   late final Interpreter _interpreter;
   late final List<String> _labels;
 
-  bool _busy = false;
+  late final int _inH;
+  late final int _inW;
+  late final TensorType _inType;
 
-  Future<void> load() async {
-    _interpreter = await Interpreter.fromAsset('assets/models/classroom.tflite');
+  late final List<int> _outShape; // e.g. [1, 24, 8400]
+  late final TensorType _outType;
 
-    final labelsRaw = await rootBundle.loadString('assets/labels/classes.txt');
+  bool _loaded = false;
+
+  Future<void> load({
+    String modelAsset = 'assets/models/classroom.tflite',
+    String labelsAsset = 'assets/labels/classes.txt',
+    int threads = 4,
+  }) async {
+    final opts = InterpreterOptions()
+      ..threads = threads
+      ..useNnApiForAndroid = false;
+
+    _interpreter = await Interpreter.fromAsset(modelAsset, options: opts);
+    _interpreter.allocateTensors();
+
+    final inT = _interpreter.getInputTensor(0);
+    _inType = inT.type;
+
+    final inShape = inT.shape; // usually [1, H, W, 3]
+    if (inShape.length == 4) {
+      _inH = inShape[1];
+      _inW = inShape[2];
+    } else if (inShape.length == 3) {
+      _inH = inShape[0];
+      _inW = inShape[1];
+    } else {
+      throw StateError('Unsupported input shape: $inShape');
+    }
+
+    final outT = _interpreter.getOutputTensor(0);
+    _outShape = outT.shape; // e.g. [1, 24, 8400]
+    _outType = outT.type;
+
+    final labelsRaw = await rootBundle.loadString(labelsAsset);
     _labels = labelsRaw
         .split('\n')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+
+    _loaded = true;
+
+    debugPrint('✅ YOLO loaded');
+    debugPrint('   input: ${inT.shape} type=$_inType');
+    debugPrint('   output: $_outShape type=$_outType');
+    debugPrint('   labels: ${_labels.length}');
+
+    // Helpful warning for your specific output [1, 24, 8400]
+    if (_outShape.length == 3 && _outShape[1] == 24) {
+      final maybeNcNoObj = 24 - 4; // 20
+      final maybeNcWithObj = 24 - 5; // 19
+      if (_labels.length != maybeNcNoObj && _labels.length != maybeNcWithObj) {
+        debugPrint(
+          '⚠️ labels count looks wrong for output channels=24. '
+          'Expected 19 (with objectness) or 20 (no objectness), '
+          'but got ${_labels.length}.',
+        );
+      }
+    }
   }
 
   void close() {
-    _interpreter.close();
+    if (_loaded) _interpreter.close();
   }
 
-  bool get isBusy => _busy;
+  Future<List<Detection>> detectFile(
+    String imagePath, {
+    double confThreshold = 0.35,
+    double iouThreshold = 0.45,
+    int maxRaw = 300,
+  }) async {
+    if (!_loaded) return const [];
 
-  /// Main function: CameraImage -> detections in preview coordinates
-  Future<List<Detection>> detect(CameraImage image, {required double previewW, required double previewH}) async {
-    if (_busy) return [];
-    _busy = true;
+    final bytes = await File(imagePath).readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return const [];
 
-    try {
-      final rgb = _cameraImageToImage(image);
+    // Fix camera EXIF rotation
+    final original = img.bakeOrientation(decoded);
 
-      // Resize (warp) to 640x640. Simple and works for demos.
-      final resized = img.copyResize(rgb, width: inputSize, height: inputSize);
+    final origW = original.width.toDouble();
+    final origH = original.height.toDouble();
 
-      // Build input tensor: [1, 640, 640, 3] float32
-      final input = _imageToFloat32(resized);
+    final resized = img.copyResize(original, width: _inW, height: _inH);
 
-      // Output: [1, 24, 8400]
-      final output = List.generate(1, (_) => List.generate(24, (_) => List.filled(8400, 0.0)));
-
-      _interpreter.run(input, output);
-
-      // Decode YOLO output into boxes in 640x640 space
-      final outputData = output[0]; // [24][8400]
-      final raw = <_RawDet>[];
-
-      for (int i = 0; i < 8400; i++) {
-        final x = outputData[0][i];
-        final y = outputData[1][i];
-        final w = outputData[2][i];
-        final h = outputData[3][i];
-
-        // Find best class score among 20 classes (index 4..23)
-        double best = 0.0;
-        int bestId = -1;
-        for (int c = 0; c < _labels.length; c++) {
-          final s = outputData[4 + c][i];
-          if (s > best) {
-            best = s;
-            bestId = c;
-          }
-        }
-
-        if (best < confThreshold || bestId < 0) continue;
-
-        // YOLO gives center-x, center-y, width, height (usually in input pixels)
-        final left = x - w / 2;
-        final top = y - h / 2;
-        final right = x + w / 2;
-        final bottom = y + h / 2;
-
-        // Clamp to 0..640
-        final l = left.clamp(0.0, inputSize.toDouble());
-        final t = top.clamp(0.0, inputSize.toDouble());
-        final r = right.clamp(0.0, inputSize.toDouble());
-        final b = bottom.clamp(0.0, inputSize.toDouble());
-
-        raw.add(_RawDet(
-          box640: Rect.fromLTRB(l, t, r, b),
-          classId: bestId,
-          score: best,
-        ));
-      }
-
-      // NMS (class-wise)
-      final nms = _nms(raw, iouThreshold);
-
-      // Map 640x640 coords to preview coords (because we resized with warp)
-      final sx = previewW / inputSize;
-      final sy = previewH / inputSize;
-
-      return nms.map((d) {
-        final bb = Rect.fromLTRB(
-          d.box640.left * sx,
-          d.box640.top * sy,
-          d.box640.right * sx,
-          d.box640.bottom * sy,
-        );
-        return Detection(
-          box: bb,
-          classId: d.classId,
-          label: _labels[d.classId],
-          score: d.score,
-        );
-      }).toList();
-    } finally {
-      _busy = false;
+    if (_inType != TensorType.float32 && _inType != TensorType.uint8) {
+      throw StateError('Unsupported input type: $_inType');
     }
-  }
-
-  // ---------- Helpers ----------
-
-  img.Image _cameraImageToImage(CameraImage cameraImage) {
-    // Assumes YUV420
-    final int width = cameraImage.width;
-    final int height = cameraImage.height;
-
-    final img.Image image = img.Image(width: width, height: height);
-
-    final planeY = cameraImage.planes[0];
-    final planeU = cameraImage.planes[1];
-    final planeV = cameraImage.planes[2];
-
-    final int bytesPerRowY = planeY.bytesPerRow;
-    final int bytesPerRowU = planeU.bytesPerRow;
-    final int bytesPerPixelU = planeU.bytesPerPixel ?? 1;
-
-    for (int y = 0; y < height; y++) {
-      final int rowY = y * bytesPerRowY;
-      final int rowUV = (y >> 1) * bytesPerRowU;
-
-      for (int x = 0; x < width; x++) {
-        final int yIndex = rowY + x;
-        final int uvIndex = rowUV + (x >> 1) * bytesPerPixelU;
-
-        final int Y = planeY.bytes[yIndex];
-        final int U = planeU.bytes[uvIndex];
-        final int V = planeV.bytes[uvIndex];
-
-        int r = (Y + (1.370705 * (V - 128))).round();
-        int g = (Y - (0.337633 * (U - 128)) - (0.698001 * (V - 128))).round();
-        int b = (Y + (1.732446 * (U - 128))).round();
-
-        r = r.clamp(0, 255);
-        g = g.clamp(0, 255);
-        b = b.clamp(0, 255);
-
-        image.setPixelRgba(x, y, r, g, b, 255);
-      }
+    if (_outType != TensorType.float32) {
+      throw StateError('Unsupported output type: $_outType (expected float32)');
     }
 
-    return image;
-  }
-
-  List<List<List<List<double>>>> _imageToFloat32(img.Image image) {
+    // Build 4D input: [1][H][W][3]
     final input = List.generate(
       1,
       (_) => List.generate(
-        inputSize,
+        _inH,
         (_) => List.generate(
-          inputSize,
-          (_) => List.filled(3, 0.0),
+          _inW,
+          (_) => List<double>.filled(3, 0.0),
+          growable: false,
         ),
+        growable: false,
       ),
+      growable: false,
     );
 
-    for (int y = 0; y < inputSize; y++) {
-      for (int x = 0; x < inputSize; x++) {
-        final p = image.getPixel(x, y);
-        input[0][y][x][0] = p.r / 255.0;
-        input[0][y][x][1] = p.g / 255.0;
-        input[0][y][x][2] = p.b / 255.0;
+    for (int y = 0; y < _inH; y++) {
+      for (int x = 0; x < _inW; x++) {
+        final p = resized.getPixel(x, y);
+        if (_inType == TensorType.uint8) {
+          // Even though list is double, we store 0..255 here for uint8 models.
+          input[0][y][x][0] = p.r.toDouble();
+          input[0][y][x][1] = p.g.toDouble();
+          input[0][y][x][2] = p.b.toDouble();
+        } else {
+          // float32 models expect 0..1
+          input[0][y][x][0] = p.r.toDouble() / 255.0;
+          input[0][y][x][1] = p.g.toDouble() / 255.0;
+          input[0][y][x][2] = p.b.toDouble() / 255.0;
+        }
       }
     }
-    return input;
+
+    // Build output as proper 3D list: outShape like [1][24][8400]
+    final out = List.generate(
+      _outShape[0],
+      (_) => List.generate(
+        _outShape[1],
+        (_) => List<double>.filled(_outShape[2], 0.0),
+        growable: false,
+      ),
+      growable: false,
+    );
+
+    // Run
+    _interpreter.run(input, out);
+
+    // Decode
+    final raw = _decodeYoloFrom3D(
+      out,
+      outShape: _outShape,
+      confThreshold: confThreshold,
+    );
+
+    if (raw.isEmpty) return const [];
+
+    raw.sort((a, b) => b.score.compareTo(a.score));
+    if (raw.length > maxRaw) raw.removeRange(maxRaw, raw.length);
+
+    final kept = _nms(raw, iouThreshold);
+
+    // Map input coords -> original coords
+    final sx = origW / _inW;
+    final sy = origH / _inH;
+
+    return kept.map((d) {
+      final bb = Rect.fromLTRB(
+        d.box.left * sx,
+        d.box.top * sy,
+        d.box.right * sx,
+        d.box.bottom * sy,
+      );
+
+      final label = (d.classId >= 0 && d.classId < _labels.length)
+          ? _labels[d.classId]
+          : 'class_${d.classId}';
+
+      return Detection(
+        box: bb,
+        classId: d.classId,
+        label: label,
+        score: d.score,
+      );
+    }).toList();
+  }
+
+  // Supports output shapes:
+  // [1, C, N] (channels-first) like [1, 24, 8400]
+  // [1, N, C] (channels-last)
+  List<_RawDet> _decodeYoloFrom3D(
+    List<List<List<double>>> out, {
+    required List<int> outShape,
+    required double confThreshold,
+  }) {
+    if (outShape.length != 3) return const [];
+
+    final a = outShape[1];
+    final b = outShape[2];
+    final nc = _labels.length;
+
+    final channelsFirstCandidate = (a == 4 + nc) || (a == 5 + nc);
+    final channelsLastCandidate = (b == 4 + nc) || (b == 5 + nc);
+
+    final channelsFirst = channelsFirstCandidate;
+    final channelsLast = !channelsFirstCandidate && channelsLastCandidate;
+
+    if (!channelsFirst && !channelsLast) return const [];
+
+    final ch = channelsFirst ? a : b;
+    final hasObj = (ch == 5 + nc);
+    final clsStart = hasObj ? 5 : 4;
+
+    final numPred = channelsFirst ? b : a;
+
+    double getAt(int c, int i) {
+      // out[batch][channel][pred] for channels-first
+      // out[batch][pred][channel] for channels-last
+      return channelsFirst ? out[0][c][i] : out[0][i][c];
+    }
+
+    final raw = <_RawDet>[];
+
+    for (int i = 0; i < numPred; i++) {
+      final x = getAt(0, i);
+      final y = getAt(1, i);
+      final w = getAt(2, i);
+      final h = getAt(3, i);
+
+      final obj = hasObj ? getAt(4, i) : 1.0;
+
+      double bestCls = 0.0;
+      int bestId = -1;
+      for (int c = 0; c < nc; c++) {
+        final s = getAt(clsStart + c, i);
+        if (s > bestCls) {
+          bestCls = s;
+          bestId = c;
+        }
+      }
+
+      final conf = obj * bestCls;
+      if (bestId < 0 || conf < confThreshold) continue;
+
+      // Decide whether coords are normalized
+      final normalized =
+          x >= 0 && x <= 1.2 && y >= 0 && y <= 1.2 && w >= 0 && w <= 1.2 && h >= 0 && h <= 1.2;
+
+      final sx = normalized ? _inW.toDouble() : 1.0;
+      final sy = normalized ? _inH.toDouble() : 1.0;
+
+      final cx = x * sx;
+      final cy = y * sy;
+      final bw = w * sx;
+      final bh = h * sy;
+
+      final left = cx - bw / 2;
+      final top = cy - bh / 2;
+      final right = cx + bw / 2;
+      final bottom = cy + bh / 2;
+
+      final l = left.clamp(0.0, _inW.toDouble());
+      final t = top.clamp(0.0, _inH.toDouble());
+      final r = right.clamp(0.0, _inW.toDouble());
+      final btm = bottom.clamp(0.0, _inH.toDouble());
+
+      if (r <= l || btm <= t) continue;
+
+      raw.add(
+        _RawDet(
+          box: Rect.fromLTRB(l, t, r, btm),
+          classId: bestId,
+          score: conf,
+        ),
+      );
+    }
+
+    return raw;
   }
 
   List<_RawDet> _nms(List<_RawDet> dets, double iouThr) {
-    // Sort by score desc
-    dets.sort((a, b) => b.score.compareTo(a.score));
-
     final kept = <_RawDet>[];
-    final used = List.filled(dets.length, false);
+    final used = List<bool>.filled(dets.length, false);
 
     for (int i = 0; i < dets.length; i++) {
       if (used[i]) continue;
@@ -210,15 +301,10 @@ class YoloDetector {
       for (int j = i + 1; j < dets.length; j++) {
         if (used[j]) continue;
         final b = dets[j];
-
-        // class-wise NMS
         if (a.classId != b.classId) continue;
-
-        final iou = _iou(a.box640, b.box640);
-        if (iou > iouThr) used[j] = true;
+        if (_iou(a.box, b.box) > iouThr) used[j] = true;
       }
     }
-
     return kept;
   }
 
@@ -232,19 +318,20 @@ class YoloDetector {
     final h = max(0.0, bottom - top);
     final inter = w * h;
 
-    final areaA = (a.width) * (a.height);
-    final areaB = (b.width) * (b.height);
-    final union = areaA + areaB - inter;
-
+    final union = a.width * a.height + b.width * b.height - inter;
     if (union <= 0) return 0.0;
     return inter / union;
   }
 }
 
 class _RawDet {
-  final Rect box640;
+  final Rect box;
   final int classId;
   final double score;
 
-  _RawDet({required this.box640, required this.classId, required this.score});
+  _RawDet({
+    required this.box,
+    required this.classId,
+    required this.score,
+  });
 }
