@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:ui' show Rect;
 
 class Detection {
   final Rect box; // original image coordinates

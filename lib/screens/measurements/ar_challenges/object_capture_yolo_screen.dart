@@ -1,8 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:ganithamithura/ml/detection.dart';
-import 'package:ganithamithura/ml/yolo_detector.dart';
+import '../../../ml/detection.dart';
+import '../../../ml/yolo_detector.dart';
 
 class ObjectCaptureYoloScreen extends StatefulWidget {
   const ObjectCaptureYoloScreen({super.key});
