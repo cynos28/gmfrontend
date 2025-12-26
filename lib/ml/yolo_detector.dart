@@ -155,11 +155,25 @@ class YoloDetectorFile {
       confThreshold: confThreshold,
     );
 
+    debugPrint('🔍 Raw detections: ${raw.length}');
+    for (int i = 0; i < math.min(3, raw.length); i++) {
+      final d = raw[i];
+      final label = (d.classId >= 0 && d.classId < _labels.length) ? _labels[d.classId] : 'unknown';
+      debugPrint('📊 Detection $i: $label (${d.classId}) conf=${d.score.toStringAsFixed(3)} box=${d.box}');
+    }
+
     if (raw.isEmpty) return const [];
     raw.sort((a, b) => b.score.compareTo(a.score));
     if (raw.length > maxRaw) raw.removeRange(maxRaw, raw.length);
 
     final kept = _nms(raw, iouThreshold);
+
+    debugPrint('🎯 After NMS: ${kept.length} detections');
+    for (int i = 0; i < kept.length; i++) {
+      final d = kept[i];
+      final label = (d.classId >= 0 && d.classId < _labels.length) ? _labels[d.classId] : 'unknown';
+      debugPrint('✨ Final $i: $label conf=${d.score.toStringAsFixed(3)}');
+    }
 
     final results = <Detection>[];
     for (final d in kept) {
@@ -234,6 +248,9 @@ class YoloDetectorFile {
       }
 
       final conf = obj * best;
+      if (i < 5) { // Debug first few predictions
+        debugPrint('🧮 Pred[$i]: obj=$obj, best=$best, conf=$conf, class=$bestId, thresh=$confThreshold');
+      }
       if (bestId < 0 || conf < confThreshold) continue;
 
       // normalized or pixel coords
