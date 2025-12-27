@@ -13,6 +13,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'ar_questions_screen.dart';
 import 'object_capture_yolo_screen.dart';
+import '../../../widgets/ar/ar_measure_view.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
   const ARMeasurementScreen({Key? key}) : super(key: key);
@@ -407,7 +408,32 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'Enter measurement',
             prefixIcon: Icon(Icons.straighten, color: _borderColor),
-            suffixIcon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
+              tooltip: 'Measure with AR',
+              onPressed: () async {
+                // Open AR measure view and get value
+                final measured = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ARMeasureView(),
+                  ),
+                );
+                if (measured != null && measured is double) {
+                  // If value is less than 1, show as cm, else as m
+                  final valueStr = measured >= 1.0
+                      ? measured.toStringAsFixed(2)
+                      : (measured * 100).toStringAsFixed(1);
+                  setState(() {
+                    _valueController.text = valueStr;
+                    // Optionally, auto-select unit
+                    if (_measurementType == MeasurementType.length) {
+                      _selectedUnit = measured >= 1.0 ? MeasurementUnit.m : MeasurementUnit.cm;
+                    }
+                  });
+                }
+              },
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
