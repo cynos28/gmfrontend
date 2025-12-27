@@ -6,6 +6,9 @@ plugins {
 }
 
 android {
+
+
+
     namespace = "com.example.ganithamithura"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
