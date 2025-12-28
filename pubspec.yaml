@@ -10,69 +10,54 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # -------------------------
   # State Management
-  # -------------------------
   get: ^4.6.6
 
-  # -------------------------
   # Local Storage
-  # -------------------------
   shared_preferences: ^2.2.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # -------------------------
   # Networking
-  # -------------------------
   http: ^1.2.0
   dio: ^5.4.0
   flutter_dotenv: ^5.1.0
 
-  # -------------------------
   # UI & Animations
-  # -------------------------
   lottie: ^3.0.0
   flutter_svg: ^2.0.9
   google_fonts: ^6.1.0
   shimmer: ^3.0.0
 
-  # -------------------------
   # Media
-  # -------------------------
   video_player: ^2.8.2
   chewie: ^1.7.5
 
-  # -------------------------
   # Speech & Permissions
-  # -------------------------
   speech_to_text: ^7.3.0
-  permission_handler: ^11.3.0
+  permission_handler: ^11.3.1
 
-  # -------------------------
   # Camera & Images
-  # -------------------------
   camera: ^0.10.5+9
   image_picker: ^1.0.7
   image: ^4.2.0
 
-  # -------------------------
   # Machine Learning
-  # -------------------------
   tflite_flutter: ^0.12.1
 
-  # -------------------------
+  # AR (ONLY ONE PLUGIN)
+  ar_flutter_plugin_updated: ^0.0.1
+  vector_math: ^2.1.4
+
   # Drawing / Canvas
-  # -------------------------
   flutter_painter: ^1.0.1
 
-  # -------------------------
   # Utilities
-  # -------------------------
   intl: ^0.19.0
   path_provider: ^2.1.2
   uuid: ^4.0.0
   json_annotation: ^4.8.1
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -94,4 +79,6 @@ flutter:
     - assets/data/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
+    - assets/models/ar/sphere.bin
+    - assets/models/ar/sphere.gltf
     - .env

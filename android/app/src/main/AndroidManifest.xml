@@ -6,33 +6,38 @@
     <!-- Permissions -->
     <!-- ========================= -->
 
-    <!-- Camera is REQUIRED for AR -->
+    <!-- Camera permission (REQUIRED for AR) -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Optional: media access (keep only if you use gallery/files) -->
+    <!-- Media access (Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
-    <!-- For Android < 13 -->
+    <!-- Media access (Android 12 and below) -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <!-- ========================= -->
-    <!-- ARCore Requirements -->
+    <!-- Device Features -->
     <!-- ========================= -->
 
-    <!-- Declare AR requirement -->
+    <!-- ARCore required -->
     <uses-feature
         android:name="android.hardware.camera.ar"
         android:required="true" />
 
-    <!-- Camera features -->
+    <!-- Camera hardware -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
+
     <uses-feature
         android:name="android.hardware.camera.autofocus"
         android:required="false" />
+
+    <!-- ========================= -->
+    <!-- Application -->
+    <!-- ========================= -->
 
     <application
         android:label="ganithamithura"
@@ -40,10 +45,13 @@
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
-        <!-- ========================= -->
-        <!-- Flutter Activity -->
-        <!-- ========================= -->
+        <!-- ARCore metadata (REQUIRED) -->
+       <meta-data
+    android:name="com.google.ar.core"
+    android:value="required"
+    tools:replace="android:value" />
 
+        <!-- Flutter Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -51,7 +59,18 @@
             android:theme="@style/LaunchTheme"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode">
+            android:configChanges="
+                orientation|
+                keyboardHidden|
+                keyboard|
+                screenSize|
+                smallestScreenSize|
+                locale|
+                layoutDirection|
+                fontScale|
+                screenLayout|
+                density|
+                uiMode">
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
@@ -68,19 +87,10 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- ========================= -->
-        <!-- ARCore Metadata (REQUIRED) -->
-        <!-- ========================= -->
-
-        <meta-data
-            android:name="com.google.ar.core"
-            android:value="required"
-            tools:replace="android:value" />
-
     </application>
 
     <!-- ========================= -->
-    <!-- Package visibility -->
+    <!-- Package visibility (Flutter text plugin) -->
     <!-- ========================= -->
     <queries>
         <intent>

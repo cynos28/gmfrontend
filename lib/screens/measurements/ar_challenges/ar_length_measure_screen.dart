@@ -1,7 +1,20 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:camera/camera.dart';
-import 'dart:math' as math;
+import 'package:vector_math/vector_math_64.dart' hide Colors;
+
+// AR plugin (updated fork)
+import 'package:ar_flutter_plugin_updated/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin_updated/datatypes/config_planedetection.dart';
+import 'package:ar_flutter_plugin_updated/datatypes/node_types.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
+import 'package:ar_flutter_plugin_updated/widgets/ar_view.dart';
 
 class ARLengthMeasureScreen extends StatefulWidget {
   const ARLengthMeasureScreen({Key? key}) : super(key: key);
@@ -11,123 +24,29 @@ class ARLengthMeasureScreen extends StatefulWidget {
 }
 
 class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
-  CameraController? _cameraController;
-  List<CameraDescription>? _cameras;
-  bool _isInitialized = false;
-  
-  // Measurement points
-  Offset? _startPoint;
-  Offset? _endPoint;
-  double? _measuredLength;
-  
-  // Calibration factor (pixels per cm at 1 meter distance)
-  // This is an approximation - ideally calibrated per device
-  final double _pixelsPerCmAt1m = 15.0;
-  
-  @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-  }
+  ARSessionManager? arSessionManager;
+  ARObjectManager? arObjectManager;
+  ARAnchorManager? arAnchorManager;
 
-  Future<void> _initializeCamera() async {
-    try {
-      _cameras = await availableCameras();
-      if (_cameras == null || _cameras!.isEmpty) {
-        _showError('No camera available');
-        return;
-      }
+  Vector3? startPoint;
+  Vector3? endPoint;
+  double? lengthMeters;
 
-      _cameraController = CameraController(
-        _cameras![0],
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
+  bool isStartPointSet = false;
 
-      await _cameraController!.initialize();
-      
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    } catch (e) {
-      _showError('Camera initialization failed: $e');
-    }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  void _onTap(TapDownDetails details) {
-    if (!_isInitialized) return;
-
-    setState(() {
-      if (_startPoint == null) {
-        _startPoint = details.localPosition;
-        _endPoint = null;
-        _measuredLength = null;
-      } else {
-        _endPoint = details.localPosition;
-        _calculateLength();
-      }
-    });
-  }
-
-  void _calculateLength() {
-    if (_startPoint == null || _endPoint == null) return;
-
-    // Calculate pixel distance
-    final dx = _endPoint!.dx - _startPoint!.dx;
-    final dy = _endPoint!.dy - _startPoint!.dy;
-    final pixelDistance = math.sqrt(dx * dx + dy * dy);
-
-    // Convert to cm (simplified - assumes object at ~1m distance)
-    // For better accuracy, you could add depth estimation
-    final lengthCm = pixelDistance / _pixelsPerCmAt1m;
-
-    setState(() {
-      _measuredLength = lengthCm;
-    });
-  }
-
-  void _reset() {
-    setState(() {
-      _startPoint = null;
-      _endPoint = null;
-      _measuredLength = null;
-    });
-  }
-
-  void _confirmMeasurement() {
-    if (_measuredLength == null) return;
-    
-    final valueInCm = _measuredLength!.toStringAsFixed(1);
-    Get.back(result: valueInCm);
-  }
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
+  // Nodes to visually mark start and end points
+  ARNode? startNode;
+  ARNode? endNode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Measure Length"),
+        title: const Text("AR Length Measure"),
         backgroundColor: Colors.black,
         actions: [
-          if (_startPoint != null)
+          if (isStartPointSet)
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _reset,
@@ -135,42 +54,14 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
             ),
         ],
       ),
-      body: _isInitialized
-          ? _buildCameraView()
-          : const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-      floatingActionButton: _measuredLength != null
-          ? FloatingActionButton.extended(
-              backgroundColor: Colors.green,
-              icon: const Icon(Icons.check),
-              label: const Text("Use Measurement"),
-              onPressed: _confirmMeasurement,
-            )
-          : null,
-    );
-  }
-
-  Widget _buildCameraView() {
-    return GestureDetector(
-      onTapDown: _onTap,
-      child: Stack(
+      body: Stack(
         children: [
-          // Camera preview
-          SizedBox.expand(
-            child: CameraPreview(_cameraController!),
+          ARView(
+            onARViewCreated: _onARViewCreated,
+            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
           ),
 
-          // Overlay with measurement guides
-          CustomPaint(
-            size: Size.infinite,
-            painter: MeasurementPainter(
-              startPoint: _startPoint,
-              endPoint: _endPoint,
-            ),
-          ),
-
-          // Instructions
+          // Instructions overlay
           Positioned(
             top: 20,
             left: 20,
@@ -184,11 +75,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
               child: Column(
                 children: [
                   Text(
-                    _startPoint == null
-                        ? "Tap to mark the start point"
-                        : _endPoint == null
-                            ? "Tap to mark the end point"
-                            : "Measurement complete!",
+                    _getInstructionText(),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.white,
@@ -198,7 +85,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Hold device ~1m from object for best results",
+                    "Point at a flat surface to detect planes",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white70,
@@ -211,7 +98,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
           ),
 
           // Measurement result
-          if (_measuredLength != null)
+          if (lengthMeters != null)
             Positioned(
               bottom: 100,
               left: 20,
@@ -221,6 +108,13 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -229,16 +123,25 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "${_measuredLength!.toStringAsFixed(1)} cm",
+                      "${(lengthMeters! * 100).toStringAsFixed(1)} cm",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 32,
+                        fontSize: 36,
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "${lengthMeters!.toStringAsFixed(3)} meters",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -247,81 +150,198 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> {
             ),
         ],
       ),
+      floatingActionButton: lengthMeters != null
+          ? FloatingActionButton.extended(
+        backgroundColor: Colors.green,
+        icon: const Icon(Icons.check),
+        label: const Text("Use Measurement"),
+        onPressed: _confirmMeasurement,
+      )
+          : null,
     );
   }
-}
 
-class MeasurementPainter extends CustomPainter {
-  final Offset? startPoint;
-  final Offset? endPoint;
-
-  MeasurementPainter({
-    required this.startPoint,
-    required this.endPoint,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.greenAccent
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final fillPaint = Paint()
-      ..color = Colors.greenAccent
-      ..style = PaintingStyle.fill;
-
-    // Draw start point
-    if (startPoint != null) {
-      // Outer circle
-      canvas.drawCircle(startPoint!, 20, paint);
-      // Inner filled circle
-      canvas.drawCircle(startPoint!, 8, fillPaint);
-      
-      // Crosshair
-      canvas.drawLine(
-        Offset(startPoint!.dx - 30, startPoint!.dy),
-        Offset(startPoint!.dx + 30, startPoint!.dy),
-        paint,
-      );
-      canvas.drawLine(
-        Offset(startPoint!.dx, startPoint!.dy - 30),
-        Offset(startPoint!.dx, startPoint!.dy + 30),
-        paint,
-      );
-    }
-
-    // Draw end point and line
-    if (endPoint != null && startPoint != null) {
-      // Line connecting points
-      final dashedPaint = Paint()
-        ..color = Colors.greenAccent
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
-      
-      canvas.drawLine(startPoint!, endPoint!, dashedPaint);
-
-      // End point
-      canvas.drawCircle(endPoint!, 20, paint);
-      canvas.drawCircle(endPoint!, 8, fillPaint);
-      
-      // Crosshair
-      canvas.drawLine(
-        Offset(endPoint!.dx - 30, endPoint!.dy),
-        Offset(endPoint!.dx + 30, endPoint!.dy),
-        paint,
-      );
-      canvas.drawLine(
-        Offset(endPoint!.dx, endPoint!.dy - 30),
-        Offset(endPoint!.dx, endPoint!.dy + 30),
-        paint,
-      );
+  String _getInstructionText() {
+    if (!isStartPointSet) {
+      return "Tap on a detected plane to set start point";
+    } else if (lengthMeters == null) {
+      return "Tap again to set end point and measure";
+    } else {
+      return "Measurement complete! Tap confirm to use";
     }
   }
 
+  void _onARViewCreated(
+      ARSessionManager arSessionManager,
+      ARObjectManager arObjectManager,
+      ARAnchorManager arAnchorManager,
+      ARLocationManager arLocationManager,
+      ) {
+    this.arSessionManager = arSessionManager;
+    this.arObjectManager = arObjectManager;
+    this.arAnchorManager = arAnchorManager;
+
+    this.arSessionManager!.onInitialize(
+      showFeaturePoints: false,
+      showPlanes: true,
+      showWorldOrigin: false,
+      handleTaps: true,
+    );
+
+    this.arObjectManager!.onInitialize();
+
+    // Handle taps on planes
+    this.arSessionManager!.onPlaneOrPointTap = _onPlaneTapped;
+  }
+
+  void _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
+    if (hitTestResults.isEmpty) {
+      _showSnackBar('No surface detected. Try pointing at a flat surface.');
+      return;
+    }
+
+    final hitResult = hitTestResults.first;
+
+    // Extract position from world transform
+    final position = Vector3(
+      hitResult.worldTransform.getColumn(3).x,
+      hitResult.worldTransform.getColumn(3).y,
+      hitResult.worldTransform.getColumn(3).z,
+    );
+
+    if (!isStartPointSet) {
+      await _setStartPoint(position);
+    } else {
+      await _setEndPoint(position);
+    }
+  }
+
+  Future<void> _setStartPoint(Vector3 point) async {
+    // Remove previous start node if exists
+    if (startNode != null) {
+      await arObjectManager?.removeNode(startNode!);
+      startNode = null;
+    }
+
+    // Create a small sphere marker for the start point
+    final node = ARNode(
+      type: NodeType.localGLTF2,
+      uri: "assets/models/ar/sphere.gltf",
+      scale: Vector3.all(0.02), // small sphere
+      position: point,
+    );
+
+    final didAdd = await arObjectManager?.addNode(node) ?? false;
+    if (!didAdd) {
+      _showSnackBar('Failed to place start point marker');
+      return;
+    }
+
+    setState(() {
+      startPoint = point;
+      isStartPointSet = true;
+      lengthMeters = null;
+      endPoint = null;
+      startNode = node;
+
+      // If you want end marker cleared as well
+      endNode = null;
+    });
+
+    _showSnackBar('Start point set. Tap again for end point.', isSuccess: true);
+  }
+
+  Future<void> _setEndPoint(Vector3 point) async {
+    if (startPoint == null) {
+      _showSnackBar('Start point not set');
+      return;
+    }
+
+    // Remove previous end node if exists
+    if (endNode != null) {
+      await arObjectManager?.removeNode(endNode!);
+      endNode = null;
+    }
+
+    // Create a small sphere marker for the end point
+    final node = ARNode(
+      type: NodeType.localGLTF2,
+      uri: "assets/models/ar/sphere.gltf",
+      scale: Vector3.all(0.02),
+      position: point,
+    );
+
+    final didAdd = await arObjectManager?.addNode(node) ?? false;
+    if (!didAdd) {
+      _showSnackBar('Failed to place end point marker');
+      return;
+    }
+
+    setState(() {
+      endPoint = point;
+      endNode = node;
+
+      // Calculate distance in meters
+      final dx = endPoint!.x - startPoint!.x;
+      final dy = endPoint!.y - startPoint!.y;
+      final dz = endPoint!.z - startPoint!.z;
+
+      lengthMeters = math.sqrt(dx * dx + dy * dy + dz * dz);
+    });
+
+    _showSnackBar(
+      'Measurement: ${(lengthMeters! * 100).toStringAsFixed(1)} cm',
+      isSuccess: true,
+    );
+  }
+
+  void _reset() async {
+    // Remove markers from AR scene
+    if (startNode != null) {
+      await arObjectManager?.removeNode(startNode!);
+      startNode = null;
+    }
+    if (endNode != null) {
+      await arObjectManager?.removeNode(endNode!);
+      endNode = null;
+    }
+
+    setState(() {
+      startPoint = null;
+      endPoint = null;
+      lengthMeters = null;
+      isStartPointSet = false;
+    });
+
+    _showSnackBar('Measurement reset. Tap to start again.');
+  }
+
+  void _confirmMeasurement() {
+    if (lengthMeters == null) {
+      _showSnackBar('No measurement to confirm');
+      return;
+    }
+
+    final valueInCm = (lengthMeters! * 100).toStringAsFixed(1);
+    Get.back(result: valueInCm);
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = false}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.orange,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
-  bool shouldRepaint(MeasurementPainter oldDelegate) {
-    return oldDelegate.startPoint != startPoint ||
-        oldDelegate.endPoint != endPoint;
+  void dispose() {
+    arSessionManager?.dispose();
+    super.dispose();
   }
 }
