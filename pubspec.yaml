@@ -79,6 +79,5 @@ flutter:
     - assets/data/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
-    - assets/models/ar/sphere.bin
-    - assets/models/ar/sphere.gltf
     - .env
+    
