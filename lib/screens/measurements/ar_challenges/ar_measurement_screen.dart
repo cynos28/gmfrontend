@@ -13,6 +13,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'ar_questions_screen.dart';
 import 'object_capture_yolo_screen.dart';
+import 'ar_length_measure_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
   const ARMeasurementScreen({Key? key}) : super(key: key);
@@ -92,6 +93,24 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  /// Opens the AR length measurement screen and sets the value if returned
+  Future<void> _openARLengthMeasurement() async {
+    // Only allow for length type
+    if (_measurementType != MeasurementType.length) {
+      _showSnackBar('AR measurement is only available for length.', backgroundColor: Colors.orange);
+      return;
+    }
+    final result = await Get.to<String?>(
+      () => ARLengthMeasureScreen(),
+    );
+    if (result != null && result.trim().isNotEmpty) {
+      setState(() {
+        _valueController.text = result;
+      });
+      _showSnackBar('Measurement captured: $result cm', backgroundColor: Colors.green);
+    }
   }
 
   /// Opens the object detection screen using camera
@@ -407,7 +426,11 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           decoration: InputDecoration(
             hintText: 'Enter measurement',
             prefixIcon: Icon(Icons.straighten, color: _borderColor),
-            suffixIcon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
+              tooltip: 'Measure with AR camera',
+              onPressed: _openARLengthMeasurement,
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
