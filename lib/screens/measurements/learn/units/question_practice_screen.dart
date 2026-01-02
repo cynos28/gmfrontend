@@ -81,14 +81,15 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       final grade = await UserService.getGrade();
       
       // Always use adaptive questions from RAG service
-      debugPrint('🎯 Loading adaptive question from RAG service for grade $grade...');
+      debugPrint('🎯 Loading adaptive question from RAG service for ${widget.unit.name} (${widget.unit.id}) - Grade $grade...');
       
       final ragQuestion = await _apiService.getAdaptiveQuestion(
-        unitId: widget.unit.id, // Use full unit_id like "unit_length_1"
+        unitId: widget.unit.id, // Use full unit_id like "unit_length_1", "unit_area_1", etc.
         gradeLevel: grade,
       );
       
       debugPrint('📦 Received RAG question:');
+      debugPrint('   Unit ID: ${widget.unit.id}');
       debugPrint('   Question: ${ragQuestion.questionText}');
       debugPrint('   Type: ${ragQuestion.questionType}');
       debugPrint('   Options: ${ragQuestion.options}');
@@ -114,6 +115,16 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       debugPrint('   Options: ${question.options}');
       debugPrint('   Options count: ${question.options.length}');
       
+      // Validate question matches the unit topic
+      if (!_isQuestionRelevantToUnit(question.questionText, widget.unit.id)) {
+        debugPrint('⚠️ Question topic does not match unit ${widget.unit.id}, treating as no questions available');
+        setState(() {
+          _hasCompletedSession = true;
+          _isLoading = false;
+        });
+        return;
+      }
+      
       setState(() {
         _currentQuestion = question;
         _questionHistory.add(question);
@@ -122,17 +133,26 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       });
       
     } catch (e) {
-      debugPrint('❌ Error loading question: $e');
+      debugPrint('❌ Error loading question for ${widget.unit.name} (${widget.unit.id}): $e');
       
-      // If error is due to no more questions, show completion
-      if (e.toString().contains('No questions available') || 
-          e.toString().contains('404') ||
-          _answeredQuestionsCount >= 5) {
+      // Check if error is due to no more questions available
+      final errorMessage = e.toString().toLowerCase();
+      final noQuestionsAvailable = errorMessage.contains('no suitable questions') ||
+          errorMessage.contains('no questions available') ||
+          errorMessage.contains('no questions found') ||
+          errorMessage.contains('404') ||
+          errorMessage.contains('document not found');
+      
+      if (noQuestionsAvailable || _answeredQuestionsCount >= 5) {
+        // Show completion screen instead of error
         setState(() {
           _hasCompletedSession = true;
           _isLoading = false;
         });
+        
+        debugPrint('✅ No questions available for ${widget.unit.name} (${widget.unit.id})');
       } else {
+        // Show actual error for other issues
         setState(() {
           _error = 'Failed to load question. Please try again.';
           _isLoading = false;
@@ -235,6 +255,78 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       default:
         return const Color(0xFF6B7FFF);
     }
+  }
+
+  // Validate if question is relevant to the unit topic
+  bool _isQuestionRelevantToUnit(String questionText, String unitId) {
+    final lowerQuestion = questionText.toLowerCase();
+    
+    // Check if it's a length unit
+    if (unitId.contains('length')) {
+      // Length keywords
+      if (lowerQuestion.contains('long') || 
+          lowerQuestion.contains('short') || 
+          lowerQuestion.contains('tall') ||
+          lowerQuestion.contains('height') ||
+          lowerQuestion.contains('distance') ||
+          lowerQuestion.contains('meter') ||
+          lowerQuestion.contains('centimeter') ||
+          lowerQuestion.contains('cm') ||
+          lowerQuestion.contains('km')) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Check if it's a weight unit
+    if (unitId.contains('weight')) {
+      // Weight keywords
+      if (lowerQuestion.contains('heavy') || 
+          lowerQuestion.contains('light') || 
+          lowerQuestion.contains('weigh') ||
+          lowerQuestion.contains('weight') ||
+          lowerQuestion.contains('kg') ||
+          lowerQuestion.contains('kilogram') ||
+          lowerQuestion.contains('gram') ||
+          lowerQuestion.contains('mass')) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Check if it's an area unit
+    if (unitId.contains('area')) {
+      // Area keywords
+      if (lowerQuestion.contains('area') || 
+          lowerQuestion.contains('square') || 
+          lowerQuestion.contains('space') ||
+          lowerQuestion.contains('cover') ||
+          lowerQuestion.contains('surface') ||
+          lowerQuestion.contains('m²') ||
+          lowerQuestion.contains('cm²')) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Check if it's a capacity/volume unit
+    if (unitId.contains('capacity') || unitId.contains('volume')) {
+      // Capacity keywords
+      if (lowerQuestion.contains('hold') || 
+          lowerQuestion.contains('contain') || 
+          lowerQuestion.contains('fill') ||
+          lowerQuestion.contains('capacity') ||
+          lowerQuestion.contains('volume') ||
+          lowerQuestion.contains('liter') ||
+          lowerQuestion.contains('ml') ||
+          lowerQuestion.contains('litre')) {
+        return true;
+      }
+      return false;
+    }
+    
+    // Default: allow the question if we can't determine the unit type
+    return true;
   }
 
   @override
@@ -731,6 +823,235 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   }
   
   Widget _buildCompletionScreen() {
+    // Check if student answered any questions
+    final hasAnsweredQuestions = _answeredQuestionsCount > 0;
+    
+    // If no questions were answered, show "no questions available" message
+    if (!hasAnsweredQuestions) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+              const SizedBox(height: 20),
+              
+              // Fun animated-style icon with gradient background
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF6B7FFF),
+                      const Color(0xFF8CA9FF),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6B7FFF).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.auto_stories_rounded,
+                  size: 70,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              // Title with fun emoji - Kid friendly
+              const Text(
+                '🎈 No Questions Here Yet! 🎈',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF6B7FFF),
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              
+              // Unit-specific message - Simpler language for kids
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F7FF),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  'We don\'t have any questions about\n"${widget.unit.name}" ready for you yet! 😊',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Color(AppColors.textBlack),
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 28),
+              
+              // Fun suggestions card - Bright and encouraging
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFFE8F5E9),
+                      const Color(0xFFD4F1D7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF2EB872),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2EB872).withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.emoji_objects_rounded,
+                        size: 44,
+                        color: Color(0xFF2EB872),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Let\'s Try Something Fun!',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1B7F4E),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Column(
+                        children: [
+                          Row(
+                            children: [
+                              Text('🎯', style: TextStyle(fontSize: 22)),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Try other units with questions!',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(AppColors.textBlack),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Text('🤖', style: TextStyle(fontSize: 22)),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Chat with your AI tutor!',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(AppColors.textBlack),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Text('📱', style: TextStyle(fontSize: 22)),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Play with AR measurements!',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(AppColors.textBlack),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              // Big friendly back button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B7FFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                    shadowColor: const Color(0xFF6B7FFF).withOpacity(0.4),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.arrow_back_rounded, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Go Back',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      }
+    
+    // Normal completion screen when student answered questions
     final percentage = _answeredQuestionsCount > 0 
         ? ((_correctAnswersCount / _answeredQuestionsCount) * 100).round()
         : 0;
@@ -738,12 +1059,11 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     final isGreat = percentage >= 80;
     final isGood = percentage >= 60;
     
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
             // Trophy/Celebration Icon
             Container(
               width: 120,
@@ -915,9 +1235,8 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
   
   Widget _buildStatItem(String label, String value, IconData icon, Color color) {
     return Column(
