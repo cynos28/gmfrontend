@@ -16,6 +16,7 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
   bool _loading = true;
   bool _scanning = false;
   List<Detection> _detections = [];
+  int? _selectedIndex;
 
   @override
   void initState() {
@@ -54,16 +55,35 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
     setState(() {
       _scanning = true;
       _detections = [];
+      _selectedIndex = null;
     });
     
     try {
       final image = await _controller!.takePicture();
       final detections = await _detector.detectFile(image.path);
-      if (mounted) setState(() => _detections = detections);
+      if (mounted) {
+        setState(() {
+          _detections = detections;
+          // Auto-select if only one detection
+          if (_detections.length == 1) {
+            _selectedIndex = 0;
+          }
+        });
+      }
     } catch (e) {
       debugPrint('Scan error: $e');
     } finally {
       if (mounted) setState(() => _scanning = false);
+    }
+  }
+
+  void _handleTapOnDetection(Offset tapPosition) {
+    for (int i = 0; i < _detections.length; i++) {
+      final box = _detections[i].box;
+      if (box.contains(tapPosition)) {
+        setState(() => _selectedIndex = i);
+        return;
+      }
     }
   }
 
@@ -129,8 +149,16 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
                         children: [
                           if (_controller != null) CameraPreview(_controller!),
                           if (_detections.isNotEmpty)
-                            CustomPaint(
-                              painter: SimpleDetectionPainter(_detections),
+                            GestureDetector(
+                              onTapDown: (details) {
+                                _handleTapOnDetection(details.localPosition);
+                              },
+                              child: CustomPaint(
+                                painter: SelectableDetectionPainter(
+                                  _detections,
+                                  _selectedIndex,
+                                ),
+                              ),
                             ),
                           if (_scanning)
                             Container(
@@ -161,19 +189,36 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
                         child: _detections.isEmpty 
                           ? const Text("Point & tap the button!", 
                               style: TextStyle(fontSize: 18, color: Colors.blueGrey, fontWeight: FontWeight.w600))
-                          : SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: _detections.map((d) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Chip(
-                                    backgroundColor: Colors.purpleAccent,
-                                    label: Text(d.label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  ),
-                                )).toList(),
+                          : _detections.length > 1 && _selectedIndex == null
+                            ? const Text("👆 Tap on the object you want!", 
+                                style: TextStyle(fontSize: 18, color: Colors.orange, fontWeight: FontWeight.bold))
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: _detections.asMap().entries.map((entry) {
+                                    final idx = entry.key;
+                                    final d = entry.value;
+                                    final isSelected = idx == _selectedIndex;
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _selectedIndex = idx),
+                                        child: Chip(
+                                          backgroundColor: isSelected ? Colors.purpleAccent : Colors.grey,
+                                          label: Text(
+                                            d.label, 
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
-                            ),
                       ),
                     ),
                     
@@ -206,12 +251,12 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
                     ),
 
                     // Success Confirmation Button
-                    if (_detections.isNotEmpty && !_scanning) ...[
+                    if (_detections.isNotEmpty && !_scanning && _selectedIndex != null) ...[
                       const SizedBox(height: 20),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, _detections.first.label),
+                          onPressed: () => Navigator.pop(context, _detections[_selectedIndex!].label),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.purpleAccent,
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -238,6 +283,80 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
       ),
     );
   }
+}
+
+class SelectableDetectionPainter extends CustomPainter {
+  final List<Detection> detections;
+  final int? selectedIndex;
+  
+  SelectableDetectionPainter(this.detections, this.selectedIndex);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < detections.length; i++) {
+      final detection = detections[i];
+      final isSelected = i == selectedIndex;
+      
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isSelected ? 8.0 : 4.0
+        ..color = isSelected ? Colors.greenAccent : Colors.yellowAccent
+        ..strokeCap = StrokeCap.round;
+
+      final rect = Rect.fromLTWH(
+        detection.box.left, 
+        detection.box.top, 
+        detection.box.width, 
+        detection.box.height
+      );
+      
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(15)), 
+        paint
+      );
+      
+      // Draw label background for selected item
+      if (isSelected) {
+        final textSpan = TextSpan(
+          text: detection.label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        
+        final labelRect = Rect.fromLTWH(
+          detection.box.left,
+          detection.box.top - 30,
+          textPainter.width + 16,
+          24,
+        );
+        
+        final labelPaint = Paint()
+          ..color = Colors.greenAccent
+          ..style = PaintingStyle.fill;
+        
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(labelRect, const Radius.circular(12)),
+          labelPaint,
+        );
+        
+        textPainter.paint(
+          canvas,
+          Offset(detection.box.left + 8, detection.box.top - 28),
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class SimpleDetectionPainter extends CustomPainter {

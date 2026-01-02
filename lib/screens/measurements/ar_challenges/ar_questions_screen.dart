@@ -141,11 +141,13 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     if (_useAdaptiveMode) {
       // Submit to adaptive endpoint
       try {
+        final grade = await UserService.getGrade();
         final response = await _questionService.submitMeasurementAnswer(
           studentId: _studentId, // Use consistent student ID
           questionId: _currentQuestion!.questionId,
           answer: _selectedAnswer!,
           measurementType: _measurementType.name,
+          grade: grade,
         );
         
         final isCorrect = response['is_correct'] as bool;
@@ -165,6 +167,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
         });
         
         print('📊 Ability: $oldAbility → $newAbility (${abilityChange >= 0 ? "+" : ""}${abilityChange.toStringAsFixed(2)})');
+        print('🎚️ Next difficulty level: $_currentDifficulty');
         
       } catch (e) {
         print('❌ Error submitting answer: $e');
@@ -199,29 +202,281 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
       _questionsAnswered++;
     });
     
+    // Show progress checkpoint after 5 questions
+    if (_questionsAnswered == 5 && !isLastQuestion) {
+      _showProgressCheckpoint();
+      return;
+    }
+    
     if (isLastQuestion) {
       _showResults();
     } else {
-      if (_useAdaptiveMode) {
-        // Reset UI state and load next adaptive question
-        setState(() {
-          _selectedAnswer = null;
-          _showFeedback = false;
-          _isCorrect = false;
-          _currentQuestion = null; // Clear current question
-          _hintsRevealed = [];
-        });
-        _loadNextAdaptiveQuestion();
-      } else {
-        setState(() {
-          _currentQuestionIndex++;
-          _selectedAnswer = null;
-          _showFeedback = false;
-          _isCorrect = false;
-          _hintsRevealed = List.filled(currentQuestion.hints.length, false);
-        });
-      }
+      _continueToNextQuestion();
     }
+  }
+  
+  void _continueToNextQuestion() {
+    if (_useAdaptiveMode) {
+      // Reset UI state and load next adaptive question
+      setState(() {
+        _selectedAnswer = null;
+        _showFeedback = false;
+        _isCorrect = false;
+        _currentQuestion = null; // Clear current question
+        _hintsRevealed = [];
+      });
+      _loadNextAdaptiveQuestion();
+    } else {
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswer = null;
+        _showFeedback = false;
+        _isCorrect = false;
+        _hintsRevealed = List.filled(currentQuestion.hints.length, false);
+      });
+    }
+  }
+  
+  void _showProgressCheckpoint() {
+    final accuracy = (_correctCount / 5 * 100).round();
+    final String emoji;
+    final String title;
+    final String message;
+    final Color accentColor;
+    
+    if (accuracy >= 80) {
+      emoji = '🌟';
+      title = 'Amazing Work!';
+      message = 'You got $correctCount out of 5 correct! You\'re doing fantastic!';
+      accentColor = Colors.amber;
+    } else if (accuracy >= 60) {
+      emoji = '🎉';
+      title = 'Great Job!';
+      message = 'You got $correctCount out of 5 correct! Keep going!';
+      accentColor = Colors.green;
+    } else {
+      emoji = '💪';
+      title = 'Keep Trying!';
+      message = 'You got $correctCount out of 5! Let\'s practice more together!';
+      accentColor = Colors.blue;
+    }
+    
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false, // Prevent dismissing by tapping outside
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accentColor.withOpacity(0.1),
+                  Colors.white,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Emoji
+                Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 80),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Title
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: accentColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(AppColors.textBlack),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Progress indicator
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '📊 Progress: ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: accentColor,
+                            ),
+                          ),
+                          Text(
+                            '5 / 10 Questions',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(AppColors.textBlack),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: 0.5,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      if (_useAdaptiveMode) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '⭐ Level $_currentDifficulty',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: accentColor,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '| Skill: ${_studentAbility.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(AppColors.textBlack),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Question prompt
+                Text(
+                  '🤔 Ready for more questions?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Buttons
+                Row(
+                  children: [
+                    // Go Back button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back(); // Close dialog
+                          Get.back(); // Return to previous screen
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
+                          foregroundColor: const Color(AppColors.textBlack),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.arrow_back, size: 24),
+                            SizedBox(height: 4),
+                            Text(
+                              'Go Back',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 16),
+                    
+                    // Continue button
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back(); // Close dialog
+                          _continueToNextQuestion();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 4,
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.rocket_launch, size: 28),
+                            SizedBox(height: 4),
+                            Text(
+                              'Let\'s Go!',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false, // Must click a button
+    );
   }
   
   void _showResults() {
@@ -390,6 +645,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
           onPressed: () => Get.back(),
         ),
         title: Column(
+          key: ValueKey('ability_$_studentAbility'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(

@@ -154,13 +154,14 @@ class ContextualQuestionService {
     required String questionId,
     required String answer,
     required String measurementType,
+    required int grade,
   }) async {
     try {
       print('📤 Submitting answer...');
       
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$baseUrl/submit-measurement-answer?student_id=$studentId&question_id=$questionId&answer=${Uri.encodeComponent(answer)}&measurement_type=$measurementType'),
+        Uri.parse('$baseUrl/submit-measurement-answer?student_id=$studentId&question_id=$questionId&answer=${Uri.encodeComponent(answer)}&measurement_type=$measurementType&grade=$grade'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 30));
       
