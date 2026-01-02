@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
-import 'package:ganithamithura/services/user_service.dart';
 import 'package:ganithamithura/services/user_service.dart';
 
 class QuestionPracticeScreen extends StatefulWidget {
@@ -46,7 +46,39 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSavedProgress();
+  }
+  
+  // Load saved progress for this unit
+  Future<void> _loadSavedProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCount = prefs.getInt('practice_progress_${widget.unit.id}') ?? 0;
+    final savedCorrect = prefs.getInt('practice_correct_${widget.unit.id}') ?? 0;
+    
+    setState(() {
+      _answeredQuestionsCount = savedCount;
+      _correctAnswersCount = savedCorrect;
+    });
+    
+    debugPrint('📚 Loaded saved progress for ${widget.unit.id}: $savedCount/$MAX_QUESTIONS_PER_SESSION answered, $savedCorrect correct');
+    
     _loadNextQuestion();
+  }
+  
+  // Save progress for this unit
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('practice_progress_${widget.unit.id}', _answeredQuestionsCount);
+    await prefs.setInt('practice_correct_${widget.unit.id}', _correctAnswersCount);
+    debugPrint('💾 Saved progress: $_answeredQuestionsCount/$MAX_QUESTIONS_PER_SESSION answered');
+  }
+  
+  // Clear saved progress for this unit
+  Future<void> _clearProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('practice_progress_${widget.unit.id}');
+    await prefs.remove('practice_correct_${widget.unit.id}');
+    debugPrint('🗑️ Cleared saved progress for ${widget.unit.id}');
   }
 
   Future<void> _loadNextQuestion() async {
@@ -200,6 +232,9 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
         _showingFeedback = true;
         _isSubmitting = false;
       });
+      
+      // Save progress after each answer
+      await _saveProgress();
       
       // Log progress
       if (_isInitialAssessment) {
@@ -1188,7 +1223,8 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
+                      await _clearProgress();
                       setState(() {
                         _answeredQuestionsCount = 0;
                         _correctAnswersCount = 0;
