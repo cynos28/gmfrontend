@@ -53,7 +53,7 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
   static const Color widthColor = Color(0xFF2196F3);     // Blue  
   static const Color areaColor = Color(0xFFFF9800);      // Orange
   static const Color startColor = Color(0xFF4ECDC4);     // Teal
-  static const Color endColor = Color(0xFFFF6B9D);       // Pink
+  static const Color endColor = Color(0xFF4CAF50);       // Green
 
   @override
   void initState() {
@@ -725,7 +725,7 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
 
     Color bgColor = const Color(0xFF6C63FF);
     if (isSuccess) bgColor = lengthColor;
-    if (isError) bgColor = const Color(0xFFFF6B9D);
+    if (isError) bgColor = const Color(0xFFE53935);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -122,39 +122,39 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
   Color get _primaryColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberColor);
+        return const Color(0xFF4285F4); // Blue
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolColor);
+        return const Color(0xFF00BCD4); // Cyan
       case MeasurementType.weight:
-        return const Color(AppColors.shapeColor);
+        return const Color(0xFFFF9500); // Orange
       case MeasurementType.area:
-        return const Color(AppColors.measurementColor);
+        return const Color(0xFF4CAF50); // Green
     }
   }
   
   Color get _pastelBackground {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(0xFFE8F4F8); // Soft blue
+        return const Color(0xFFE8F4FF); // Soft blue
       case MeasurementType.capacity:
-        return const Color(0xFFFFF4E8); // Soft orange
+        return const Color(0xFFE0F7FA); // Soft cyan
       case MeasurementType.weight:
-        return const Color(0xFFF4E8FF); // Soft purple
+        return const Color(0xFFFFF3E0); // Soft orange
       case MeasurementType.area:
-        return const Color(0xFFFFE8F4); // Soft pink
+        return const Color(0xFFE8F5E9); // Soft green
     }
   }
   
   Color get _borderColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberBorder);
+        return const Color(0xFF4285F4); // Blue
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolBorder);
+        return const Color(0xFF00BCD4); // Cyan
       case MeasurementType.weight:
-        return const Color(AppColors.shapeBorder);
+        return const Color(0xFFFF9500); // Orange
       case MeasurementType.area:
-        return const Color(AppColors.measurementBorder);
+        return const Color(0xFF4CAF50); // Green
     }
   }
   
@@ -273,300 +273,465 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
     if (accuracy >= 80) {
       icon = Icons.emoji_events_rounded;
       title = 'Amazing Work!';
-      message = 'You got $_correctCount out of 5 correct! You\'re doing fantastic!';
-      accentColor = Colors.amber;
+      message = 'You got $_correctCount out of 5!\nYou\'re doing fantastic!';
+      accentColor = const Color(0xFFFFB800); // Gold
     } else if (accuracy >= 60) {
       icon = Icons.thumb_up_rounded;
       title = 'Great Job!';
-      message = 'You got $_correctCount out of 5 correct! Keep going!';
-      accentColor = Colors.green;
+      message = 'You got $_correctCount out of 5!\nKeep going!';
+      accentColor = const Color(0xFF4CAF50); // Green
     } else {
       icon = Icons.favorite_rounded;
       title = 'Keep Trying!';
-      message = 'You got $_correctCount out of 5! Let\'s practice more together!';
-      accentColor = Colors.blue;
+      message = 'You got $_correctCount out of 5!\nLet\'s practice more together!';
+      accentColor = const Color(0xFF2196F3); // Blue
     }
     
     Get.dialog(
       WillPopScope(
-        onWillPop: () async => false, // Prevent dismissing by tapping outside
+        onWillPop: () async => false,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accentColor.withOpacity(0.1),
-                  Colors.white,
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(24),
+          backgroundColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 600),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Container(
+                  padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 60,
-                    color: accentColor,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Title
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: accentColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Message
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Color(AppColors.textBlack),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Progress indicator
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(40),
+                    border: Border.all(
+                      color: accentColor,
+                      width: 4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.3),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Animated icon with cute character
+                      TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 800),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        curve: Curves.bounceOut,
+                        builder: (context, bounceValue, child) {
+                          return Transform.translate(
+                            offset: Offset(0, -10 * (1 - bounceValue)),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Glowing circle background
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        accentColor.withOpacity(0.3),
+                                        accentColor.withOpacity(0.1),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Main icon circle
+                                Container(
+                                  padding: const EdgeInsets.all(28),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: accentColor,
+                                      width: 4,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    size: 50,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Title with shimmer effect
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: accentColor,
+                          letterSpacing: 0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Message
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(AppColors.textBlack),
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Progress card with better visibility
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: accentColor.withOpacity(0.3),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentColor.withOpacity(0.1),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            // Progress text
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.show_chart_rounded,
+                                  size: 20,
+                                  color: accentColor,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Progress',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            
+                            // Big progress numbers
+                            Text(
+                              '5 / 10',
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: accentColor,
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            
+                            // Progress bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: TweenAnimationBuilder<double>(
+                                duration: const Duration(milliseconds: 1000),
+                                tween: Tween(begin: 0.0, end: 0.5),
+                                curve: Curves.easeOut,
+                                builder: (context, progressValue, child) {
+                                  return LinearProgressIndicator(
+                                    value: progressValue,
+                                    backgroundColor: Colors.grey[200],
+                                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                                    minHeight: 12,
+                                  );
+                                },
+                              ),
+                            ),
+                            
+                            if (_useAdaptiveMode) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // Level badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: accentColor.withOpacity(0.3),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.trending_up_rounded,
+                                          size: 18,
+                                          color: accentColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Lv $_currentDifficulty',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            color: accentColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Skill badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: accentColor.withOpacity(0.3),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.stars_rounded,
+                                          size: 18,
+                                          color: accentColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${_studentAbility.toStringAsFixed(1)}',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            color: accentColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 28),
+                      
+                      // Ready for more text
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.show_chart_rounded,
-                            size: 18,
-                            color: accentColor,
+                            Icons.help_outline_rounded,
+                            size: 22,
+                            color: _primaryColor,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Progress: ',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                            ),
-                          ),
-                          Text(
-                            '5 / 10 Questions',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(AppColors.textBlack),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Ready for more?',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: _primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: 0.5,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(4),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Buttons
+                      Row(
+                        children: [
+                          // Go Back button
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.back();
+                                Get.back();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                foregroundColor: const Color(AppColors.textBlack),
+                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.arrow_back_rounded, size: 22),
+                                  SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Back',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          
+                          const SizedBox(width: 12),
+                          
+                          // Continue button
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.back();
+                                _continueToNextQuestion();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accentColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                elevation: 8,
+                                shadowColor: accentColor.withOpacity(0.5),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.rocket_launch_rounded, size: 24),
+                                  SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Let\'s Go!',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (_useAdaptiveMode) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.trending_up_rounded,
-                              size: 16,
-                              color: accentColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Level $_currentDifficulty',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: accentColor,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '| Skill: ${_studentAbility.toStringAsFixed(1)}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(AppColors.textBlack),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                 ),
-                
-                const SizedBox(height: 32),
-                
-                // Question prompt
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.help_outline_rounded,
-                      size: 24,
-                      color: _primaryColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Ready for more questions?',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Buttons
-                Row(
-                  children: [
-                    // Go Back button
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back(); // Close dialog
-                          Get.back(); // Return to previous screen
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          foregroundColor: const Color(AppColors.textBlack),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: const Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.arrow_back, size: 24),
-                            SizedBox(height: 4),
-                            Text(
-                              'Go Back',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 16),
-                    
-                    // Continue button
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back(); // Close dialog
-                          _continueToNextQuestion();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accentColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          elevation: 4,
-                        ),
-                        child: const Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.rocket_launch, size: 28),
-                            SizedBox(height: 4),
-                            Text(
-                              'Let\'s Go!',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
-      barrierDismissible: false, // Must click a button
+      barrierDismissible: false,
     );
   }
   
   void _showResults() {
     final accuracy = (_correctCount / _measurement.questions.length * 100).round();
+    final Color accentColor;
+    
+    if (accuracy >= 80) {
+      accentColor = const Color(0xFFFFB800); // Gold
+    } else if (accuracy >= 60) {
+      accentColor = const Color(0xFF4CAF50); // Green
+    } else {
+      accentColor = const Color(0xFF2196F3); // Blue
+    }
     
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+        child: Container(
           padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(
+              color: accentColor,
+              width: 4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.2),
+                  color: accentColor.withOpacity(0.2),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: accentColor,
+                    width: 3,
+                  ),
                 ),
                 child: Icon(
-                  accuracy >= 70 ? Icons.emoji_events : Icons.thumb_up,
-                  color: _borderColor,
-                  size: 40,
+                  accuracy >= 80 ? Icons.emoji_events_rounded : accuracy >= 60 ? Icons.thumb_up_rounded : Icons.favorite_rounded,
+                  color: accentColor,
+                  size: 50,
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Great Job!',
+              const SizedBox(height: 20),
+              Text(
+                accuracy >= 80 ? 'Amazing Work!' : accuracy >= 60 ? 'Great Job!' : 'Keep Trying!',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Color(AppColors.textBlack),
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: accentColor,
+                  letterSpacing: 0.5,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
@@ -578,18 +743,18 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _borderColor, width: 1.5),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: accentColor, width: 3),
                 ),
                 child: Text(
                   '$accuracy% Accuracy',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: _borderColor,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: accentColor,
                   ),
                 ),
               ),
@@ -597,26 +762,26 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
               // Full-width buttons stacked for better UX
               SizedBox(
                 width: double.infinity,
-                height: 52,
                 child: ElevatedButton(
                   onPressed: () {
                     Get.back(); // Close dialog
                     Get.back(); // Back to measurement screen to try again
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _borderColor,
+                    backgroundColor: accentColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                    elevation: 0,
+                    elevation: 8,
+                    shadowColor: accentColor.withOpacity(0.5),
                   ),
                   child: const Text(
                     'Try Again',
                     style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -625,7 +790,6 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                height: 52,
                 child: OutlinedButton(
                   onPressed: () {
                     Get.back(); // Close dialog
@@ -633,17 +797,18 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
                     Get.back(); // Back to home
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: _borderColor, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: BorderSide(color: Colors.grey.shade400, width: 2),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                     ),
+                    backgroundColor: Colors.grey.shade100,
                   ),
                   child: const Text(
                     'Done',
                     style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -721,9 +886,10 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: _borderColor.withOpacity(0.2),
                     shape: BoxShape.circle,
@@ -731,58 +897,77 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
                   child: Icon(
                     Icons.school_rounded,
                     color: _borderColor,
-                    size: 20,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _useAdaptiveMode ? 'Practice Time' : 'Let\'s Learn',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: _borderColor,
-                    letterSpacing: 0.5,
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    _useAdaptiveMode ? 'Practice Time' : 'Let\'s Learn',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: _borderColor,
+                      letterSpacing: 0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             if (_useAdaptiveMode)
               Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                margin: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _borderColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _borderColor.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _borderColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.trending_up_rounded,
-                      size: 14,
+                      size: 16,
                       color: _borderColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Level $_currentDifficulty',
+                      'Lv $_currentDifficulty',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
                         color: _borderColor,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      width: 2,
+                      height: 14,
+                      color: _borderColor.withOpacity(0.3),
+                    ),
                     Icon(
                       Icons.stars_rounded,
-                      size: 14,
+                      size: 16,
                       color: _borderColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Skill: ${_studentAbility.toStringAsFixed(1)}',
+                      '${_studentAbility.toStringAsFixed(1)}',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
                         color: _borderColor,
                       ),
                     ),

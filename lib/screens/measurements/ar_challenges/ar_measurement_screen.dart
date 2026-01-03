@@ -108,9 +108,9 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     
     // Use different screens for length vs area
     final result = await Get.to<String?>(
-      _measurementType == MeasurementType.length
-          ? () => ARLengthMeasureScreen()
-          : () => const ARAreaMeasureScreen(),
+      () => _measurementType == MeasurementType.length
+          ? const ARLengthMeasureScreen()
+          : const ARAreaMeasureScreen(),
     );
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
