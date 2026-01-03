@@ -6,6 +6,7 @@ import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
@@ -210,15 +211,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(AppColors.symbolColor).withOpacity(0.24),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Symbols module will be available soon',
-                    backgroundColor: const Color(AppColors.infoColor),
-                    colorText: Colors.white,
-                  );
-                },
-                isEnabled: false,
+                onTap: () => Get.to(() => const SymbolHomeScreen()),
+                isEnabled: true,
               ),
             ),
           ],
