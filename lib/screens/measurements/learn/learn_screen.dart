@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/measurements/learn/unit_card_screen.dart';
 
@@ -53,16 +54,21 @@ class _LearnScreenState extends State<LearnScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF8CA9FF).withOpacity(0.15),
-                      const Color(0xFFA6ADED).withOpacity(0.10),
+                      KidsColors.primaryLighter.withOpacity(0.15),
+                      KidsColors.primaryLight.withOpacity(0.10),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
+                    bottomLeft: Radius.circular(KidsSpacing.radiusXLarge),
+                    bottomRight: Radius.circular(KidsSpacing.radiusXLarge),
                   ),
                 ),
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                padding: const EdgeInsets.fromLTRB(
+                  KidsSpacing.screenPadding,
+                  KidsSpacing.xxl,
+                  KidsSpacing.screenPadding,
+                  KidsSpacing.xxxl,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -75,48 +81,52 @@ class _LearnScreenState extends State<LearnScreen> {
                             const Text(
                               'Learn & Explore',
                               style: TextStyle(
-                                fontSize: 30,
+                                fontSize: 28,
                                 fontWeight: FontWeight.w700,
-                                color: Color(AppColors.textBlack),
+                                color: KidsColors.textPrimary,
                                 height: 1.2,
+                                letterSpacing: -0.5,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
-                              'Master math concepts step by step',
+                              'Learn step by step',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(AppColors.subText1).withOpacity(0.8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: KidsColors.textSecondary,
                               ),
                             ),
                           ],
                         ),
                         // Achievement badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: KidsSpacing.md,
+                            vertical: KidsSpacing.sm,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
+                            color: KidsColors.starBackground,
+                            borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
                             border: Border.all(
-                              color: const Color(0xFFFFD700),
+                              color: KidsColors.starGold,
                               width: 1.5,
                             ),
                           ),
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.emoji_events,
-                                color: Color(0xFFFFB800),
-                                size: 18,
+                                Icons.emoji_events_rounded,
+                                color: KidsColors.starGold,
+                                size: 20,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: KidsSpacing.xs),
                               const Text(
                                 '15',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFFFB800),
+                                  color: KidsColors.starGold,
                                 ),
                               ),
                             ],
@@ -124,20 +134,14 @@ class _LearnScreenState extends State<LearnScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: KidsSpacing.xl),
                     // Overall progress card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                        boxShadow: KidsShadows.soft,
                       ),
                       child: Row(
                         children: [
@@ -146,17 +150,20 @@ class _LearnScreenState extends State<LearnScreen> {
                             height: 56,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF6B7FFF), Color(0xFF8CA9FF)],
+                                colors: [
+                                  KidsColors.primaryAccent,
+                                  KidsColors.primaryLight,
+                                ],
                               ),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
                             ),
                             child: const Icon(
-                              Icons.trending_up,
+                              Icons.trending_up_rounded,
                               color: Colors.white,
                               size: 28,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KidsSpacing.lg),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,19 +171,19 @@ class _LearnScreenState extends State<LearnScreen> {
                                 const Text(
                                   'Overall Progress',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(AppColors.subText2),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: KidsColors.textSecondary,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: KidsSpacing.sm),
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(KidsSpacing.sm),
                                   child: LinearProgressIndicator(
                                     value: 0.13,
-                                    backgroundColor: const Color(0xFFE8EEFF),
+                                    backgroundColor: KidsColors.primaryBackground,
                                     valueColor: const AlwaysStoppedAnimation<Color>(
-                                      Color(0xFF6B7FFF),
+                                      KidsColors.primaryAccent,
                                     ),
                                     minHeight: 8,
                                   ),
@@ -184,13 +191,13 @@ class _LearnScreenState extends State<LearnScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: KidsSpacing.md),
                           const Text(
                             '13%',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: Color(AppColors.textBlack),
+                              color: KidsColors.textPrimary,
                             ),
                           ),
                         ],
@@ -200,11 +207,11 @@ class _LearnScreenState extends State<LearnScreen> {
                 ),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: KidsSpacing.xxl),
               
               // Continue Learning Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: KidsSpacing.screenPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -216,7 +223,7 @@ class _LearnScreenState extends State<LearnScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: Color(AppColors.textBlack),
+                            color: KidsColors.textPrimary,
                           ),
                         ),
                         TextButton(
@@ -226,13 +233,13 @@ class _LearnScreenState extends State<LearnScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7FFF),
+                              color: KidsColors.primaryAccent,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KidsSpacing.md),
                     // Horizontal scrollable recent cards
                     SizedBox(
                       height: 140,
@@ -245,7 +252,7 @@ class _LearnScreenState extends State<LearnScreen> {
                             progress: 0.35,
                             color: const Color(AppColors.numberColor),
                             iconColor: const Color(AppColors.numberIcon),
-                            icon: Icons.pin,
+                            icon: Icons.looks_one_rounded,
                           ),
                           const SizedBox(width: 12),
                           _buildRecentCard(
@@ -254,7 +261,7 @@ class _LearnScreenState extends State<LearnScreen> {
                             progress: 0.15,
                             color: const Color(AppColors.measurementColor),
                             iconColor: const Color(AppColors.measurementIcon),
-                            icon: Icons.straighten,
+                            icon: Icons.straighten_rounded,
                           ),
                         ],
                       ),
@@ -263,11 +270,11 @@ class _LearnScreenState extends State<LearnScreen> {
                 ),
               ),
               
-              const SizedBox(height: 28),
+              const SizedBox(height: KidsSpacing.xxl),
               
               // All Modules Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: KidsSpacing.screenPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -276,16 +283,16 @@ class _LearnScreenState extends State<LearnScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Color(AppColors.textBlack),
+                        color: KidsColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KidsSpacing.cardMarginLarge),
                     // Module list cards (vertical)
                     _buildModuleListCard(
                       title: 'Numbers',
-                      subtitle: 'Trace, read & say numbers',
-                      description: '25 lessons • 12 activities',
-                      icon: Icons.pin,
+                      subtitle: 'Trace, read & say',
+                      description: '25 lessons',
+                      icon: Icons.looks_one_rounded,
                       color: const Color(AppColors.numberColor),
                       borderColor: const Color(AppColors.numberBorder),
                       iconColor: const Color(AppColors.numberIcon),
@@ -294,18 +301,19 @@ class _LearnScreenState extends State<LearnScreen> {
                       onTap: () {
                         Get.snackbar(
                           'Coming Soon',
-                          'Numbers learning module will be available soon',
+                          'Numbers will be available soon',
                           backgroundColor: const Color(AppColors.infoColor),
                           colorText: Colors.white,
+                          borderRadius: KidsSpacing.radiusMedium,
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KidsSpacing.cardMargin),
                     _buildModuleListCard(
                       title: 'Symbols',
-                      subtitle: '+ − × ÷ stories & quizzes',
-                      description: '18 lessons • 10 activities',
-                      icon: Icons.calculate,
+                      subtitle: '+ − × ÷',
+                      description: '18 lessons',
+                      icon: Icons.calculate_rounded,
                       color: const Color(AppColors.symbolColor),
                       borderColor: const Color(AppColors.symbolBorder),
                       iconColor: const Color(AppColors.symbolIcon),
@@ -314,18 +322,19 @@ class _LearnScreenState extends State<LearnScreen> {
                       onTap: () {
                         Get.snackbar(
                           'Coming Soon',
-                          'Symbols learning module will be available soon',
+                          'Symbols will be available soon',
                           backgroundColor: const Color(AppColors.infoColor),
                           colorText: Colors.white,
+                          borderRadius: KidsSpacing.radiusMedium,
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KidsSpacing.cardMargin),
                     _buildModuleListCard(
                       title: 'Measurement',
-                      subtitle: 'Length, Area, Capacity, Weight',
-                      description: '20 lessons • 15 activities',
-                      icon: Icons.straighten,
+                      subtitle: 'Length, area & more',
+                      description: '20 lessons',
+                      icon: Icons.straighten_rounded,
                       color: const Color(AppColors.measurementColor),
                       borderColor: const Color(AppColors.measurementBorder),
                       iconColor: const Color(AppColors.measurementIcon),
@@ -335,12 +344,12 @@ class _LearnScreenState extends State<LearnScreen> {
                         Get.to(() => const UnitCardScreen());
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KidsSpacing.cardMargin),
                     _buildModuleListCard(
                       title: 'Shapes',
-                      subtitle: 'Hunt & build 2D/3D shapes',
-                      description: '22 lessons • 14 activities',
-                      icon: Icons.category,
+                      subtitle: '2D & 3D',
+                      description: '22 lessons',
+                      icon: Icons.category_rounded,
                       color: const Color(AppColors.shapeColor),
                       borderColor: const Color(AppColors.shapeBorder),
                       iconColor: const Color(AppColors.shapeIcon),
@@ -349,9 +358,10 @@ class _LearnScreenState extends State<LearnScreen> {
                       onTap: () {
                         Get.snackbar(
                           'Coming Soon',
-                          'Shapes learning module will be available soon',
+                          'Shapes will be available soon',
                           backgroundColor: const Color(AppColors.infoColor),
                           colorText: Colors.white,
+                          borderRadius: KidsSpacing.radiusMedium,
                         );
                       },
                     ),
@@ -381,32 +391,37 @@ class _LearnScreenState extends State<LearnScreen> {
   }) {
     return Container(
       width: 240,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
+        color: color,
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
         border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+          color: color,
+          width: 2,
         ),
+        boxShadow: KidsShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: iconColor, size: 22),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -414,7 +429,7 @@ class _LearnScreenState extends State<LearnScreen> {
                 child: Text(
                   '${(progress * 100).toInt()}%',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: iconColor,
                   ),
@@ -422,32 +437,38 @@ class _LearnScreenState extends State<LearnScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Color(AppColors.textBlack),
+              color: KidsColors.textPrimary,
+              height: 1.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             subtitle,
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(AppColors.subText1),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: KidsColors.textSecondary,
+              height: 1.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: color.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(iconColor),
-              minHeight: 5,
+              minHeight: 4,
             ),
           ),
         ],
@@ -472,114 +493,87 @@ class _LearnScreenState extends State<LearnScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isLocked ? Colors.grey.withOpacity(0.1) : color.withOpacity(0.15),
+          color: isLocked ? Colors.grey.withOpacity(0.08) : color,
           border: Border.all(
             color: isLocked ? Colors.grey.withOpacity(0.3) : borderColor,
-            width: 1.5,
+            width: 2,
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isLocked
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+          boxShadow: isLocked ? null : KidsShadows.soft,
         ),
         child: Row(
           children: [
             // Icon
             Container(
-              width: 60,
-              height: 60,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: isLocked
-                    ? Colors.grey.withOpacity(0.2)
+                    ? Colors.grey.withOpacity(0.15)
                     : borderColor.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: isLocked
-                  ? const Icon(Icons.lock, color: Colors.grey, size: 28)
-                  : Icon(icon, color: iconColor, size: 30),
+                  ? const Icon(Icons.lock_rounded, color: Colors.grey, size: 26)
+                  : Icon(icon, color: iconColor, size: 28),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            color: isLocked
-                                ? Colors.grey
-                                : const Color(AppColors.textBlack),
-                          ),
-                        ),
-                      ),
-                      if (isLocked)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'LOCKED',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
-                      else
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: iconColor,
-                        ),
-                    ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isLocked
+                          ? Colors.grey
+                          : KidsColors.textPrimary,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: isLocked
                           ? Colors.grey
-                          : const Color(AppColors.subText1),
+                          : KidsColors.textSecondary,
                       height: 1.2,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Row(
                     children: [
                       Icon(
-                        Icons.menu_book,
-                        size: 13,
+                        Icons.menu_book_rounded,
+                        size: 12,
                         color: isLocked
                             ? Colors.grey
-                            : const Color(AppColors.subText2),
+                            : KidsColors.textTertiary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          color: isLocked
+                      Flexible(
+                        child: Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isLocked
                               ? Colors.grey
-                              : const Color(AppColors.subText2),
+                              : KidsColors.textTertiary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -599,6 +593,33 @@ class _LearnScreenState extends State<LearnScreen> {
                 ],
               ),
             ),
+            const SizedBox(width: KidsSpacing.md),
+            // Arrow or locked badge
+            if (isLocked)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: KidsSpacing.sm,
+                  vertical: KidsSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(KidsSpacing.sm),
+                ),
+                child: const Text(
+                  'LOCKED',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: iconColor,
+              ),
           ],
         ),
       ),

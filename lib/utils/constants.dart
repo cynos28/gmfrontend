@@ -83,19 +83,20 @@ class NumberWords {
 }
 
 class AppColors {
-  // Module Colors (from Figma design)
-  static const int measurementColor = 0xFFFFD1C2; // Orange-light background
-  static const int measurementBorder = 0xFFFFD1C2; // Orange-light border
-  static const int measurementIcon = 0xFFFF8C52; // Orange - higher contrast
-  static const int numberColor = 0xFFA6ADED; // Purple-light
-  static const int numberBorder = 0xFFA6ADED; // Purple-light border
-  static const int numberIcon = 0xFF6B7FFF; // Purple - higher contrast
-  static const int shapeColor = 0xFFBADFDB; // Green-light
-  static const int shapeBorder = 0xFFBADFDB; // Green-light border
-  static const int shapeIcon = 0xFF2EB872; // Green - higher contrast
-  static const int symbolColor = 0xFFFFA4A4; // Rose-light
-  static const int symbolBorder = 0xFFFFA4A4; // Rose-light border
-  static const int symbolIcon = 0xFFFF6B6B; // Rose - higher contrast
+  // Module Colors - Bright and Vibrant for Kids aged 6-10
+  // Using bright, saturated colors that kids love!
+  static const int measurementColor = 0xFFFFF3E0; // Bright orange background
+  static const int measurementBorder = 0xFFFFE0B2; // Bright orange border
+  static const int measurementIcon = 0xFFFF9500; // Bright orange icon
+  static const int numberColor = 0xFFE8F4FF; // Bright blue background
+  static const int numberBorder = 0xFFB3D7FF; // Bright blue border
+  static const int numberIcon = 0xFF4285F4; // Bright blue icon
+  static const int shapeColor = 0xFFE6F9EC; // Bright green background
+  static const int shapeBorder = 0xFFB2F5D6; // Bright green border
+  static const int shapeIcon = 0xFF34C759; // Bright green icon
+  static const int symbolColor = 0xFFFCE4EC; // Bright pink background
+  static const int symbolBorder = 0xFFF8BBD0; // Bright pink border
+  static const int symbolIcon = 0xFFFF4081; // Bright pink icon
   
   // Text Colors
   static const int textBlack = 0xFF273444;
@@ -104,31 +105,34 @@ class AppColors {
   
   // Background Colors
   static const int white = 0xFFFFFFFF;
-  static const int backgroundColor = 0xFFFFFFFF;
+  static const int backgroundColor = 0xFFFAFBFF; // Very light blue-purple tint
   static const int splashBackground = 0xFFF6F7FF; // Light purple-blue for splash screen
   
-  // Activity Card Colors
-  static const int timeCardBg = 0xFFEEF1FF; // rgba(238,241,255,0.64)
-  static const int completedCardBg = 0xFFECFAE5; // rgba(236,250,229,0.64)
-  static const int progressBadgeBg = 0xFFF08787; // rgba(240,135,135,0.16)
-  static const int progressBadgeText = 0xFFF08787;
+  // Activity Card Colors - Updated for Kids-Friendly UI
+  static const int timeCardBg = 0xFFE8EEFF; // Soft purple-blue
+  static const int completedCardBg = 0xFFE8F8F0; // Soft green
+  static const int progressBadgeBg = 0xFFFFEDE4; // Soft orange
+  static const int progressBadgeText = 0xFFFF8C52; // Orange text
   
   // Navigation & UI
-  static const int navActiveColor = 0xFF8CA9FF;
+  static const int navActiveColor = 0xFF6B7FFF; // Primary accent
   static const int navInactiveColor = 0x7F49596E; // rgba(73,89,110,0.5)
-  static const int dailyTipBg = 0xFF8CA9FF;
+  static const int dailyTipBg = 0xFF6B7FFF; // Primary accent
   
   // Border Colors
-  static const int borderLight = 0x3D49596E; // rgba(73,89,110,0.24)
+  static const int borderLight = 0xFFE8EEFF; // Very light purple-blue
   
-  // Status Colors (legacy)
-  static const int successColor = 0xFF4CAF50;
-  static const int errorColor = 0xFFF44336;
-  static const int warningColor = 0xFFFFC107;
-  static const int infoColor = 0xFF2196F3;
+  // Status Colors - Kids-Friendly
+  static const int successColor = 0xFF2EB872; // Soft green
+  static const int errorColor = 0xFFFF6B6B; // Soft red
+  static const int warningColor = 0xFFFFC107; // Yellow
+  static const int infoColor = 0xFF6B7FFF; // Primary accent
   
-  // Legacy UI Colors
-  static const int primaryColor = 0xFF6200EE;
-  static const int secondaryColor = 0xFF03DAC6;
-  static const int disabledColor = 0xFFBDBDBD;
+  // Star/Achievement Colors
+  static const int starGold = 0xFFFFD700; // Gold
+  static const int starBackground = 0xFFFFF9E6; // Very light yellow
+  
+  // Legacy colors for backward compatibility
+  static const int primaryColor = 0xFF6B7FFF; // Primary accent
+  static const int disabledColor = 0xFFBDBDBD; // Gray for disabled state
 }

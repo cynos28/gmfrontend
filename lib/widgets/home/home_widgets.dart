@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/daily_tip_service.dart';
 
 /// ResourceCard - Card for each learning module (Numbers, Symbols, Measurements, Shapes)
@@ -30,56 +31,84 @@ class ResourceCard extends StatelessWidget {
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
       child: Container(
-        height: 148,
+        height: 170,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor, width: 1.5),
-          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              backgroundColor,
+              backgroundColor.withOpacity(0.85),
+            ],
+          ),
+          border: Border.all(color: borderColor, width: 3),
+          borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+          boxShadow: isEnabled ? KidsShadows.coloredBlue : KidsShadows.soft,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            // Icon
+            // Icon with fun background
             Container(
-              width: 42,
-              height: 42,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: borderColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    borderColor.withOpacity(0.3),
+                    borderColor.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: borderColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Icon(
                 icon,
-                size: 26,
+                size: 30,
                 color: iconColor,
               ),
             ),
-            const SizedBox(height: 8),
-            // Title
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                color: Color(AppColors.textBlack),
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 2),
-            // Subtitle
-            Flexible(
-              child: Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(AppColors.subText1),
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 12),
+            // Title and Subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: KidsColors.textPrimary,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: KidsColors.textSecondary,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
@@ -811,49 +840,62 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 70,
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            KidsColors.backgroundLight,
+          ],
+        ),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+          topLeft: Radius.circular(KidsSpacing.radiusLarge),
+          topRight: Radius.circular(KidsSpacing.radiusLarge),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.16),
-            blurRadius: 54,
-            offset: const Offset(6, 6),
+            color: KidsColors.primaryAccent.withOpacity(0.15),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            icon: Icons.home,
-            label: 'Home',
-            isActive: currentIndex == 0,
-            onTap: () => onTap(0),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 0),
+        child: SizedBox(
+          height: 62,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home_rounded,
+                label: 'Home',
+                isActive: currentIndex == 0,
+                onTap: () => onTap(0),
+              ),
+              _NavItem(
+                icon: Icons.school_rounded,
+                label: 'Learn',
+                isActive: currentIndex == 1,
+                onTap: () => onTap(1),
+              ),
+              _NavItem(
+                icon: Icons.bar_chart_rounded,
+                label: 'Progress',
+                isActive: currentIndex == 2,
+                onTap: () => onTap(2),
+              ),
+              _NavItem(
+                icon: Icons.person_rounded,
+                label: 'Profile',
+                isActive: currentIndex == 3,
+                onTap: () => onTap(3),
+              ),
+            ],
           ),
-          _NavItem(
-            icon: Icons.school,
-            label: 'Learn',
-            isActive: currentIndex == 1,
-            onTap: () => onTap(1),
-          ),
-          _NavItem(
-            icon: Icons.bar_chart,
-            label: 'Progress',
-            isActive: currentIndex == 2,
-            onTap: () => onTap(2),
-          ),
-          _NavItem(
-            icon: Icons.person,
-            label: 'Profile',
-            isActive: currentIndex == 3,
-            onTap: () => onTap(3),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -878,28 +920,52 @@ class _NavItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 83.5,
+        width: 90,
         color: Colors.transparent,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isActive
-                  ? const Color(AppColors.navActiveColor)
-                  : const Color(AppColors.navInactiveColor),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: isActive 
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          KidsColors.primaryAccent,
+                          KidsColors.primaryLight,
+                        ],
+                      )
+                    : null,
+                color: isActive ? null : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isActive ? [
+                  BoxShadow(
+                    color: KidsColors.primaryAccent.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : null,
+              ),
+              child: Icon(
+                icon,
+                size: 22,
+                color: isActive ? Colors.white : KidsColors.textTertiary,
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
                 color: isActive
-                    ? const Color(AppColors.navActiveColor)
-                    : const Color(AppColors.navInactiveColor),
-                height: 1.5,
+                    ? KidsColors.primaryAccent
+                    : KidsColors.textTertiary,
+                height: 1.0,
               ),
             ),
           ],

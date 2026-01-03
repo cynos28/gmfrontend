@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
@@ -522,39 +523,30 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(KidsSpacing.screenPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Question text
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F7FF),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF8CA9FF).withOpacity(0.3),
-                width: 2,
-              ),
-            ),
+            padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
+            decoration: KidsComponents.questionCard(),
             child: Text(
               _currentQuestion!.questionText,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: Color(AppColors.textBlack),
-                height: 1.4,
+              style: KidsTypography.question.copyWith(
+                fontSize: 20,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
           ),
           
-          const SizedBox(height: 28),
+          const SizedBox(height: KidsSpacing.xxl),
           
           // Answer options
           ..._buildAnswerOptions(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: KidsSpacing.xl),
           
           // Submit button
           if (!_showingFeedback && _selectedAnswer != null)
@@ -577,60 +569,33 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                       _selectedAnswer == index && 
                       !_answerFeedback!.isCorrect;
       
-      Color borderColor;
-      Color backgroundColor;
-      
-      if (_showingFeedback) {
-        if (isCorrect) {
-          borderColor = const Color(0xFF2EB872);
-          backgroundColor = const Color(0xFF2EB872).withOpacity(0.15);
-        } else if (isWrong) {
-          borderColor = const Color(0xFFFF6B6B);
-          backgroundColor = const Color(0xFFFF6B6B).withOpacity(0.15);
-        } else {
-          borderColor = const Color(AppColors.borderLight);
-          backgroundColor = Colors.white;
-        }
-      } else {
-        borderColor = isSelected
-            ? const Color(0xFF6B7FFF)
-            : const Color(AppColors.borderLight);
-        backgroundColor = isSelected
-            ? const Color(0xFF6B7FFF).withOpacity(0.1)
-            : Colors.white;
-      }
-      
       return Padding(
-        padding: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.only(bottom: KidsSpacing.cardMargin),
         child: GestureDetector(
           onTap: _showingFeedback || _isSubmitting
               ? null
               : () => setState(() => _selectedAnswer = index),
           child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              border: Border.all(color: borderColor, width: 2.5),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: isSelected && !_showingFeedback
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF6B7FFF).withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
+            padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
+            decoration: KidsComponents.answerCard(
+              isSelected: isSelected,
+              showFeedback: _showingFeedback,
+              isCorrect: isCorrect,
             ),
             child: Row(
               children: [
-                // Option letter
+                // Option letter badge
                 Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: borderColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+                  width: 44,
+                  height: 44,
+                  decoration: KidsComponents.badge(
+                    color: _showingFeedback && isCorrect
+                        ? KidsColors.success
+                        : _showingFeedback && isWrong
+                            ? KidsColors.error
+                            : isSelected
+                                ? KidsColors.primaryAccent
+                                : KidsColors.borderMedium,
                   ),
                   child: Center(
                     child: Text(
@@ -638,28 +603,32 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: borderColor,
+                        color: _showingFeedback && isCorrect
+                            ? KidsColors.success
+                            : _showingFeedback && isWrong
+                                ? KidsColors.error
+                                : isSelected
+                                    ? KidsColors.primaryAccent
+                                    : KidsColors.textSecondary,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: KidsSpacing.lg),
                 // Option text
                 Expanded(
                   child: Text(
                     option,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(AppColors.textBlack),
+                    style: KidsTypography.label.copyWith(
+                      fontSize: 17,
                     ),
                   ),
                 ),
                 // Check/Cross icon
                 if (_showingFeedback && (isCorrect || isWrong))
                   Icon(
-                    isCorrect ? Icons.check_circle : Icons.cancel,
-                    color: borderColor,
+                    isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    color: isCorrect ? KidsColors.success : KidsColors.error,
                     size: 28,
                   ),
               ],
@@ -673,14 +642,8 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   Widget _buildSubmitButton() {
     return ElevatedButton(
       onPressed: _isSubmitting ? null : _submitAnswer,
-      style: ElevatedButton.styleFrom(
+      style: KidsComponents.primaryButton(
         backgroundColor: const Color(AppColors.measurementIcon),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 4,
       ),
       child: _isSubmitting
           ? const SizedBox(
@@ -691,11 +654,10 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                 strokeWidth: 3,
               ),
             )
-          : const Text(
-              'Submit Answer',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+          : Text(
+              'Check Answer',
+              style: KidsTypography.buttonLarge.copyWith(
+                color: Colors.white,
               ),
             ),
     );
@@ -704,94 +666,163 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   Widget _buildFeedback() {
     final isCorrect = _answerFeedback!.isCorrect;
     
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
       decoration: BoxDecoration(
-        color: isCorrect
-            ? const Color(0xFF2EB872).withOpacity(0.1)
-            : const Color(0xFFFF6B6B).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isCorrect
-              ? const Color(0xFF2EB872)
-              : const Color(0xFFFF6B6B),
-          width: 2,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isCorrect 
+              ? [
+                  KidsColors.successLight,
+                  KidsColors.successLight.withOpacity(0.8),
+                ]
+              : [
+                  KidsColors.errorLight,
+                  KidsColors.errorLight.withOpacity(0.8),
+                ],
         ),
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+        border: Border.all(
+          color: isCorrect ? KidsColors.success : KidsColors.error,
+          width: 3,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isCorrect ? KidsColors.success : KidsColors.error).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Icon(
-                isCorrect ? Icons.check_circle : Icons.cancel,
-                color: isCorrect
-                    ? const Color(0xFF2EB872)
-                    : const Color(0xFFFF6B6B),
-                size: 36,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isCorrect ? 'Great job! 🎉' : 'Not quite right',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: isCorrect
-                        ? const Color(0xFF2EB872)
-                        : const Color(0xFFFF6B6B),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Explanation
+          // Big celebration header
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Explanation:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(AppColors.subText2),
-                  ),
-                ),
-                const SizedBox(height: 6),
                 Text(
-                  _answerFeedback!.explanation,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Color(AppColors.textBlack),
-                    height: 1.4,
+                  isCorrect ? '🎉' : '🤔',
+                  style: const TextStyle(fontSize: 48),
+                ),
+                const SizedBox(width: 16),
+                Flexible(
+                  child: Column(
+                    children: [
+                      Text(
+                        isCorrect ? 'Awesome!' : 'Oops!',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: isCorrect ? KidsColors.success : KidsColors.error,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isCorrect ? 'You got it right!' : 'Let\'s try again!',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: KidsColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _goToNextQuestion,
-            icon: const Icon(Icons.arrow_forward),
-            label: const Text('Next Question'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(AppColors.measurementIcon),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 14,
+          const SizedBox(height: KidsSpacing.lg),
+          // Explanation box
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+              border: Border.all(
+                color: isCorrect ? KidsColors.success.withOpacity(0.3) : KidsColors.error.withOpacity(0.3),
+                width: 2,
               ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isCorrect ? KidsColors.successLight : KidsColors.errorLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '💡',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Here\'s why:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: KidsColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: KidsSpacing.md),
+                Text(
+                  _answerFeedback!.explanation,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: KidsColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: KidsSpacing.xl),
+          // Next button - big and fun
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              onPressed: _goToNextQuestion,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isCorrect ? KidsColors.success : KidsColors.primaryAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                ),
+                elevation: 6,
+                shadowColor: (isCorrect ? KidsColors.success : KidsColors.primaryAccent).withOpacity(0.5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Next Question',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.arrow_forward_rounded, size: 28),
+                ],
               ),
             ),
           ),

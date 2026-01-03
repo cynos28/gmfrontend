@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/unit_home_screen.dart';
 
@@ -53,12 +54,14 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
   }
 
   Future<void> _loadGradeAndProgress() async {
+    if (!mounted) return;
     setState(() => _isLoadingProgress = true);
     
     try {
       // Load current grade
       final grade = await UserService.getGrade();
       
+      if (!mounted) return;
       setState(() {
         _currentGrade = grade;
       });
@@ -66,11 +69,13 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       await _loadAllProgress();
     } catch (e) {
       debugPrint('Error loading grade: $e');
+      if (!mounted) return;
       setState(() => _isLoadingProgress = false);
     }
   }
 
   Future<void> _loadAllProgress() async {
+    if (!mounted) return;
     setState(() => _isLoadingProgress = true);
     
     try {
@@ -122,20 +127,28 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       backgroundColor: const Color(AppColors.backgroundColor),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(KidsSpacing.screenPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 24),
-                    onPressed: () => Get.back(),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  Container(
+                    width: KidsSpacing.minTapTarget,
+                    height: KidsSpacing.minTapTarget,
+                    decoration: BoxDecoration(
+                      color: KidsColors.primaryBackground,
+                      borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, size: 24),
+                      onPressed: () => Get.back(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KidsSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,16 +157,18 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                           'Measurement Units',
                           style: TextStyle(
                             fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Color(AppColors.textBlack),
+                            fontWeight: FontWeight.w700,
+                            color: KidsColors.textPrimary,
+                            height: 1.2,
                           ),
                         ),
+                        const SizedBox(height: KidsSpacing.xs),
                         Text(
                           'Grade $_currentGrade',
                           style: const TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(AppColors.subText1),
+                            fontWeight: FontWeight.w600,
+                            color: KidsColors.textSecondary,
                           ),
                         ),
                       ],
@@ -161,26 +176,26 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: KidsSpacing.xxl),
               
               // Overall Progress Summary
               _buildProgressSummary(),
               
-              const SizedBox(height: 20),
+              const SizedBox(height: KidsSpacing.xl),
               
               
               
-              const SizedBox(height: 20),
+              const SizedBox(height: KidsSpacing.xl),
               
               const Text(
                 'Practice by Topic',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Color(AppColors.textBlack),
+                  color: KidsColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: KidsSpacing.cardMarginLarge),
               
               // Content - Measurement Units Grid
               Expanded(
@@ -303,9 +318,9 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     
     return GridView.count(
       crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.0,
+      crossAxisSpacing: KidsSpacing.cardMarginLarge,
+      mainAxisSpacing: KidsSpacing.cardMarginLarge,
+      childAspectRatio: 0.95,
       children: cards,
     );
   }
@@ -332,36 +347,36 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     final overallAccuracy = (totalCorrect / totalQuestions * 100);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF4CAF50).withOpacity(0.1),
-            const Color(0xFF2E7D32).withOpacity(0.1),
+            KidsColors.successLight,
+            KidsColors.secondaryBackground,
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
         border: Border.all(
-          color: const Color(0xFF4CAF50),
-          width: 1.5,
+          color: KidsColors.success,
+          width: 2,
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: KidsColors.success.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
             ),
             child: const Icon(
-              Icons.trending_up,
-              color: Color(0xFF2E7D32),
+              Icons.trending_up_rounded,
+              color: KidsColors.success,
               size: 28,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: KidsSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,28 +386,28 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(AppColors.textBlack),
+                    color: KidsColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
+                const SizedBox(height: KidsSpacing.sm),
+                Wrap(
+                  spacing: KidsSpacing.sm,
+                  runSpacing: KidsSpacing.sm,
                   children: [
                     _buildStatChip(
-                      icon: Icons.quiz,
+                      icon: Icons.quiz_rounded,
                       label: '$totalQuestions',
-                      color: const Color(0xFF2196F3),
+                      color: KidsColors.primaryAccent,
                     ),
-                    const SizedBox(width: 8),
                     _buildStatChip(
-                      icon: Icons.check_circle,
+                      icon: Icons.check_circle_rounded,
                       label: '$totalCorrect',
-                      color: const Color(0xFF4CAF50),
+                      color: KidsColors.success,
                     ),
-                    const SizedBox(width: 8),
                     _buildStatChip(
-                      icon: Icons.percent,
+                      icon: Icons.percent_rounded,
                       label: '${overallAccuracy.toStringAsFixed(0)}%',
-                      color: const Color(0xFFFF9800),
+                      color: KidsColors.highlightAccent,
                     ),
                   ],
                 ),
@@ -410,16 +425,19 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: KidsSpacing.sm,
+        vertical: KidsSpacing.xs,
+      ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(KidsSpacing.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(width: KidsSpacing.xs),
           Text(
             label,
             style: TextStyle(
@@ -453,29 +471,23 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.24),
-          border: Border.all(color: borderColor, width: 1.5),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: color,
+          border: Border.all(color: borderColor, width: 2),
+          borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+          boxShadow: KidsShadows.soft,
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(KidsSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Icon
             Container(
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: borderColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
               ),
               child: Icon(
                 icon,
@@ -488,43 +500,46 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Color(AppColors.textBlack),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: KidsColors.textPrimary,
                 height: 1.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: KidsSpacing.xs),
             // Subtitle
             Text(
               subtitle,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Color(AppColors.subText1),
-                height: 1.2,
+                fontWeight: FontWeight.w500,
+                color: KidsColors.textSecondary,
+                height: 1.3,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             if (hasProgress) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: KidsSpacing.sm),
               // Progress stats
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: KidsSpacing.sm,
+                  vertical: KidsSpacing.xs,
+                ),
                 decoration: BoxDecoration(
                   color: borderColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(KidsSpacing.sm),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.check_circle,
-                      size: 12,
+                      Icons.check_circle_rounded,
+                      size: 14,
                       color: iconColor,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: KidsSpacing.xs),
                     Text(
                       '$questionsAnswered Q',
                       style: TextStyle(
@@ -533,7 +548,7 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                         color: iconColor,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: KidsSpacing.sm),
                     Text(
                       '${accuracy.toStringAsFixed(0)}%',
                       style: TextStyle(
