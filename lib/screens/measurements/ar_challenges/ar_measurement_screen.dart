@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:ganithamithura/models/ar_measurement.dart';
 import 'package:ganithamithura/services/ar_learning_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'package:ganithamithura/widgets/cute_character.dart';
 import 'ar_questions_screen.dart';
@@ -161,26 +162,26 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   Color get _primaryColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberColor);
+        return KidsColors.lengthColor;
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolColor);
+        return KidsColors.capacityColor;
       case MeasurementType.weight:
-        return const Color(AppColors.shapeColor);
+        return KidsColors.weightColor;
       case MeasurementType.area:
-        return const Color(AppColors.measurementColor);
+        return KidsColors.areaColor;
     }
   }
   
   Color get _borderColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberBorder);
+        return KidsColors.lengthColor;
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolBorder);
+        return KidsColors.capacityColor;
       case MeasurementType.weight:
-        return const Color(AppColors.shapeBorder);
+        return KidsColors.weightColor;
       case MeasurementType.area:
-        return const Color(AppColors.measurementBorder);
+        return KidsColors.areaColor;
     }
   }
   
@@ -257,23 +258,31 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: KidsShadows.soft,
             ),
-            child: const Icon(Icons.arrow_back, color: Color(AppColors.textBlack), size: 20),
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: KidsColors.textPrimary,
+                size: 24,
+              ),
+              padding: EdgeInsets.zero,
+              onPressed: () => Get.back(),
+            ),
           ),
-          onPressed: () => Get.back(),
         ),
         title: Text(
           _measurementType.displayName,
           style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(AppColors.textBlack),
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: KidsColors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -287,13 +296,13 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   Color _getBackgroundColor() {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(0xFFE3F2FD); // Light blue
+        return KidsColors.lengthBackground;
       case MeasurementType.capacity:
-        return const Color(0xFFF3E5F5); // Light purple
+        return KidsColors.capacityBackground;
       case MeasurementType.weight:
-        return const Color(0xFFFFF9C4); // Light yellow
+        return KidsColors.weightBackground;
       case MeasurementType.area:
-        return const Color(0xFFE8F5E9); // Light green
+        return KidsColors.areaBackground;
     }
   }
   
@@ -352,17 +361,18 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                     const Text(
                       "Hello, Friend!",
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(AppColors.textBlack),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: KidsColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
+                    const Text(
                       "Let's measure together!",
                       style: TextStyle(
-                        fontSize: 14,
-                        color: const Color(AppColors.textBlack).withOpacity(0.7),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: KidsColors.textSecondary,
                       ),
                     ),
                   ],
@@ -376,14 +386,50 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   }
   
   Widget _buildInstructionsCard() {
+    IconData getIcon() {
+      switch (_measurementType) {
+        case MeasurementType.length:
+          return Icons.straighten_rounded;
+        case MeasurementType.capacity:
+          return Icons.local_drink_rounded;
+        case MeasurementType.weight:
+          return Icons.scale_rounded;
+        case MeasurementType.area:
+          return Icons.grid_on_rounded;
+      }
+    }
+
     return CuteCard(
       backgroundColor: _primaryColor.withOpacity(0.1),
       borderColor: _primaryColor.withOpacity(0.3),
       child: Row(
         children: [
-          Text(
-            _measurementType.icon,
-            style: const TextStyle(fontSize: 40),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _primaryColor,
+                  _primaryColor.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: _primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(
+              getIcon(),
+              size: 28,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -393,8 +439,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                 Text(
                   'What to do?',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
                     color: _borderColor,
                   ),
                 ),
@@ -403,7 +449,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                   'Measure something and tell me about it!',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(AppColors.textBlack),
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.textSecondary,
                   ),
                 ),
               ],
@@ -422,16 +469,16 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.inventory_2_rounded,
-              size: 20,
-              color: const Color(AppColors.textBlack),
+              size: 22,
+              color: KidsColors.textPrimary,
             ),
             const SizedBox(width: 8),
             const Text(
               'What are you measuring?',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(AppColors.textBlack),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
               ),
             ),
           ],
@@ -492,16 +539,16 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.straighten_rounded,
-              size: 20,
-              color: const Color(AppColors.textBlack),
+              size: 22,
+              color: KidsColors.textPrimary,
             ),
             const SizedBox(width: 8),
             const Text(
               'How much did you measure?',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(AppColors.textBlack),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
               ),
             ),
           ],
@@ -568,16 +615,16 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.square_foot_rounded,
-              size: 20,
-              color: const Color(AppColors.textBlack),
+              size: 22,
+              color: KidsColors.textPrimary,
             ),
             const SizedBox(width: 8),
             const Text(
               'Choose a unit:',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(AppColors.textBlack),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
               ),
             ),
           ],
@@ -635,13 +682,13 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             : const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.rocket_launch_rounded, size: 24),
+                  Icon(Icons.rocket_launch_rounded, size: 26),
                   SizedBox(width: 12),
                   Text(
                     "Let's Start!",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
