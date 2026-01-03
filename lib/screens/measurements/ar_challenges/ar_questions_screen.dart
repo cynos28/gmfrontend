@@ -247,17 +247,17 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     if (accuracy >= 80) {
       emoji = '🌟';
       title = 'Amazing Work!';
-      message = 'You got $correctCount out of 5 correct! You\'re doing fantastic!';
+      message = 'You got $_correctCount out of 5 correct! You\'re doing fantastic!';
       accentColor = Colors.amber;
     } else if (accuracy >= 60) {
       emoji = '🎉';
       title = 'Great Job!';
-      message = 'You got $correctCount out of 5 correct! Keep going!';
+      message = 'You got $_correctCount out of 5 correct! Keep going!';
       accentColor = Colors.green;
     } else {
       emoji = '💪';
       title = 'Keep Trying!';
-      message = 'You got $correctCount out of 5! Let\'s practice more together!';
+      message = 'You got $_correctCount out of 5! Let\'s practice more together!';
       accentColor = Colors.blue;
     }
     

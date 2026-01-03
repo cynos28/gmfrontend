@@ -77,6 +77,7 @@ flutter:
     - assets/animations/
     - assets/numbers/
     - assets/data/
+    - assets/symbols/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - .env

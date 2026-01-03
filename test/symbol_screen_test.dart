@@ -15,17 +15,30 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify that the title is present
-    expect(find.text('Symbol World'), findsOneWidget);
+    // Verify that the title is present
+    expect(find.text('Hello, Marion'), findsOneWidget);
     
     // Verify subheading
-    expect(find.text('Let\'s Play with Symbols!'), findsOneWidget);
+    expect(find.text('Progress 10%'), findsOneWidget);
 
-    // Verify buttons are present
-    expect(find.text('Symbol Stories'), findsOneWidget);
-    expect(find.text('Symbol Quiz'), findsOneWidget);
+    // Verify that the action cards/categories are present
+    expect(find.text('Lessons'), findsWidgets);
+    expect(find.text('Games'), findsWidgets);
     
-    // Verify icons
-    expect(find.byIcon(Icons.menu_book), findsOneWidget);
-    expect(find.byIcon(Icons.psychology), findsOneWidget);
+    // Verify icons on Home Screen
+    expect(find.byIcon(Icons.menu_book_rounded), findsWidgets);
+    expect(find.byIcon(Icons.games_rounded), findsWidgets);
+
+    // Tap on 'Lessons' card and verify navigation
+    // 'Lessons' appears in Categories and the Big Card. The Card is likely the last one found or we search by specific text hierarchy.
+    // simpler: The big card has subtitle "Fun learning lessons..."
+    await tester.tap(find.text('Lessons').last); 
+    await tester.pump(); // Register tap
+    await tester.pump(const Duration(seconds: 1)); // Wait for navigation
+
+    // Verify we are on the Intro Screen
+    expect(find.text('Symbol Hunter'), findsOneWidget);
+    expect(find.text('Only 3 - 4 minutes.'), findsOneWidget);
+    expect(find.text('NEXT'), findsOneWidget);
   });
 }
