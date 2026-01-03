@@ -148,6 +148,24 @@ class ChatMessage {
     required this.timestamp,
     this.reply,
   });
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      message: json['message'] ?? '',
+      isUser: json['isUser'] ?? true,
+      timestamp: DateTime.parse(json['timestamp']),
+      reply: json['reply'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'isUser': isUser,
+      'timestamp': timestamp.toIso8601String(),
+      'reply': reply,
+    };
+  }
 }
 
 class ChatResponse {

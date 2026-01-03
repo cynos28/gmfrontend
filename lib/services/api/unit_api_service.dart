@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 
 /// API Service for Unit-based Learning
@@ -51,17 +52,19 @@ class UnitApiService {
   Future<ChatResponse> sendChatMessage({
     required String unitId,
     required String message,
+    List<Map<String, dynamic>>? conversationHistory,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/chat'),
+        Uri.parse('$ragBaseUrl/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'studentId': studentId,
           'unitId': unitId,
           'message': message,
+          'conversationHistory': conversationHistory ?? [],
         }),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 20));
       
       if (response.statusCode == 200) {
         return ChatResponse.fromJson(json.decode(response.body));
@@ -69,8 +72,48 @@ class UnitApiService {
         throw Exception('Failed to send message: ${response.statusCode}');
       }
     } catch (e) {
-      // Return mock response for MVP
-      return _getMockChatResponse(message);
+      debugPrint('Chat error: $e');
+      throw Exception('Failed to get AI response');
+    }
+  }
+  
+  /// GET /api/chat/history/{studentId}/{unitId}
+  /// Load chat history from database (multi-device sync)
+  Future<List<ChatMessage>> loadChatHistory({
+    required String unitId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final messages = data['messages'] as List<dynamic>? ?? [];
+        return messages.map((msg) => ChatMessage.fromJson(msg)).toList();
+      } else {
+        debugPrint('Failed to load chat history: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error loading chat history: $e');
+      return [];
+    }
+  }
+  
+  /// DELETE /api/chat/history/{studentId}/{unitId}
+  /// Clear chat history from database
+  Future<void> clearChatHistory({
+    required String unitId,
+  }) async {
+    try {
+      await http.delete(
+        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('Error clearing chat history: $e');
     }
   }
   

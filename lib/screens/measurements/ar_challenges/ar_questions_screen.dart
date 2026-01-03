@@ -9,6 +9,7 @@ import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/services/api/contextual_question_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/user_service.dart';
+import 'package:ganithamithura/widgets/cute_character.dart';
 
 class ARQuestionsScreen extends StatefulWidget {
   const ARQuestionsScreen({Key? key}) : super(key: key);
@@ -17,9 +18,12 @@ class ARQuestionsScreen extends StatefulWidget {
   State<ARQuestionsScreen> createState() => _ARQuestionsScreenState();
 }
 
-class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
+class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTickerProviderStateMixin {
   final UnitProgressService _progressService = UnitProgressService.instance;
   final ContextualQuestionService _questionService = ContextualQuestionService();
+  
+  late AnimationController _characterController;
+  late Animation<double> _bounceAnimation;
   
   late ARMeasurement _measurement;
   late MeasurementType _measurementType;
@@ -49,6 +53,15 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   @override
   void initState() {
     super.initState();
+    
+    _characterController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _bounceAnimation = Tween<double>(begin: -8, end: 8).animate(
+      CurvedAnimation(parent: _characterController, curve: Curves.easeInOut),
+    );
     
     final args = Get.arguments as Map<String, dynamic>;
     _measurement = args['measurement'] as ARMeasurement;
@@ -116,6 +129,19 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
         return const Color(AppColors.shapeColor);
       case MeasurementType.area:
         return const Color(AppColors.measurementColor);
+    }
+  }
+  
+  Color get _pastelBackground {
+    switch (_measurementType) {
+      case MeasurementType.length:
+        return const Color(0xFFE8F4F8); // Soft blue
+      case MeasurementType.capacity:
+        return const Color(0xFFFFF4E8); // Soft orange
+      case MeasurementType.weight:
+        return const Color(0xFFF4E8FF); // Soft purple
+      case MeasurementType.area:
+        return const Color(0xFFFFE8F4); // Soft pink
     }
   }
   
@@ -239,25 +265,25 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   
   void _showProgressCheckpoint() {
     final accuracy = (_correctCount / 5 * 100).round();
-    final String emoji;
+    final IconData icon;
     final String title;
     final String message;
     final Color accentColor;
     
     if (accuracy >= 80) {
-      emoji = '🌟';
+      icon = Icons.emoji_events_rounded;
       title = 'Amazing Work!';
-      message = 'You got $correctCount out of 5 correct! You\'re doing fantastic!';
+      message = 'You got $_correctCount out of 5 correct! You\'re doing fantastic!';
       accentColor = Colors.amber;
     } else if (accuracy >= 60) {
-      emoji = '🎉';
+      icon = Icons.thumb_up_rounded;
       title = 'Great Job!';
-      message = 'You got $correctCount out of 5 correct! Keep going!';
+      message = 'You got $_correctCount out of 5 correct! Keep going!';
       accentColor = Colors.green;
     } else {
-      emoji = '💪';
+      icon = Icons.favorite_rounded;
       title = 'Keep Trying!';
-      message = 'You got $correctCount out of 5! Let\'s practice more together!';
+      message = 'You got $_correctCount out of 5! Let\'s practice more together!';
       accentColor = Colors.blue;
     }
     
@@ -282,10 +308,18 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Emoji
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 80),
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 60,
+                    color: accentColor,
+                  ),
                 ),
                 
                 const SizedBox(height: 16),
@@ -327,8 +361,14 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Icon(
+                            Icons.show_chart_rounded,
+                            size: 18,
+                            color: accentColor,
+                          ),
+                          const SizedBox(width: 6),
                           Text(
-                            '📊 Progress: ',
+                            'Progress: ',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -358,8 +398,14 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Icon(
+                              Icons.trending_up_rounded,
+                              size: 16,
+                              color: accentColor,
+                            ),
+                            const SizedBox(width: 4),
                             Text(
-                              '⭐ Level $_currentDifficulty',
+                              'Level $_currentDifficulty',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -385,14 +431,24 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
                 const SizedBox(height: 32),
                 
                 // Question prompt
-                Text(
-                  '🤔 Ready for more questions?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: _primaryColor,
-                  ),
-                  textAlign: TextAlign.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.help_outline_rounded,
+                      size: 24,
+                      color: _primaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Ready for more questions?',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
                 
                 const SizedBox(height: 24),
@@ -636,39 +692,106 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     }
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFA),
+      backgroundColor: _pastelBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(AppColors.textBlack)),
-          onPressed: () => Get.back(),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _borderColor.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_rounded, color: _borderColor, size: 24),
+              onPressed: () => Get.back(),
+            ),
+          ),
         ),
         title: Column(
           key: ValueKey('ability_$_studentAbility'),
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _useAdaptiveMode
-                  ? 'Adaptive Practice'
-                  : 'Question ${_currentQuestionIndex + 1} of ${_measurement.questions.length}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(AppColors.textBlack),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _borderColor.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.school_rounded,
+                    color: _borderColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _useAdaptiveMode ? 'Practice Time' : 'Let\'s Learn',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: _borderColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
             if (_useAdaptiveMode)
-              Text(
-                'Level $_currentDifficulty • Ability: ${_studentAbility.toStringAsFixed(1)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(AppColors.textBlack).withOpacity(0.6),
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _borderColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.trending_up_rounded,
+                      size: 14,
+                      color: _borderColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Level $_currentDifficulty',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: _borderColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.stars_rounded,
+                      size: 14,
+                      color: _borderColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Skill: ${_studentAbility.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: _borderColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
         ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
@@ -725,53 +848,76 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
         : ((_currentQuestionIndex + 1) / _measurement.questions.length);
     
     return Container(
-      height: 4,
-      color: Colors.white,
-      child: LinearProgressIndicator(
-        value: progress,
-        backgroundColor: Colors.grey.withOpacity(0.2),
-        valueColor: AlwaysStoppedAnimation<Color>(_borderColor),
-      ),
-    );
-  }
-  
-  Widget _buildContextCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: _primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Text(
-            _measurementType.icon,
-            style: const TextStyle(fontSize: 32),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: _borderColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your ${_measurement.objectName}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(AppColors.textBlack),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _measurement.measurementString,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.quiz_rounded,
+                    size: 20,
                     color: _borderColor,
                   ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Question ${_questionsAnswered + 1} of ${_useAdaptiveMode ? _totalQuestions : _measurement.questions.length}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _borderColor,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green, width: 2),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      size: 16,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_correctCount',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: _borderColor.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(_borderColor),
+              minHeight: 12,
             ),
           ),
         ],
@@ -779,50 +925,153 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     );
   }
   
-  Widget _buildQuestionCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  Widget _buildContextCard() {
+    return AnimatedBuilder(
+      animation: _bounceAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _bounceAnimation.value),
+          child: CuteCard(
+            borderColor: _borderColor,
+            child: Row(
+              children: [
+                // Cute character
+                CuteCharacter(
+                  size: 70,
+                  color: _borderColor,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _measurementType.icon,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Your ${_measurement.objectName}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(AppColors.textBlack),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _borderColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          _measurement.measurementString,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: _borderColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildQuestionCard() {
+    return CuteCard(
+      borderColor: _borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'Difficulty: ${currentQuestion.difficultyLevel}/5',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _borderColor,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _borderColor.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.psychology_rounded,
+                      color: _borderColor,
+                      size: 20,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Question',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: _borderColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _borderColor.withOpacity(0.8),
+                      _borderColor,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: List.generate(currentQuestion.difficultyLevel, (index) {
+                    return const Padding(
+                      padding: EdgeInsets.only(left: 2),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    );
+                  }),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            currentQuestion.questionText,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(AppColors.textBlack),
-              height: 1.4,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _borderColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _borderColor.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Text(
+              currentQuestion.questionText,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(AppColors.textBlack),
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -832,33 +1081,53 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   
   Widget _buildMCQOptions() {
     final options = currentQuestion.options ?? [];
+    final optionLabels = ['A', 'B', 'C', 'D'];
     
     return Column(
-      children: options.map((option) {
+      children: options.asMap().entries.map((entry) {
+        final index = entry.key;
+        final option = entry.value;
         final isSelected = _selectedAnswer == option;
         final isCorrectAnswer = option == currentQuestion.correctAnswer;
         
-        Color borderColor;
-        Color bgColor;
+        Color buttonColor;
+        Color textColor;
+        Widget? trailingIcon;
         
         if (_showFeedback) {
           if (isCorrectAnswer) {
-            borderColor = Colors.green;
-            bgColor = Colors.green.withOpacity(0.1);
+            buttonColor = Colors.green;
+            textColor = Colors.white;
+            trailingIcon = Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_rounded, color: Colors.green, size: 20),
+            );
           } else if (isSelected && !_isCorrect) {
-            borderColor = Colors.red;
-            bgColor = Colors.red.withOpacity(0.1);
+            buttonColor = Colors.red;
+            textColor = Colors.white;
+            trailingIcon = Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close_rounded, color: Colors.red, size: 20),
+            );
           } else {
-            borderColor = _borderColor.withOpacity(0.3);
-            bgColor = Colors.white;
+            buttonColor = Colors.grey.shade300;
+            textColor = const Color(AppColors.textBlack).withOpacity(0.5);
           }
         } else {
-          borderColor = isSelected ? _borderColor : _borderColor.withOpacity(0.3);
-          bgColor = isSelected ? _primaryColor.withOpacity(0.1) : Colors.white;
+          buttonColor = isSelected ? _borderColor : Colors.white;
+          textColor = isSelected ? Colors.white : const Color(AppColors.textBlack);
         }
         
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 14),
           child: GestureDetector(
             onTap: _showFeedback ? null : () {
               setState(() {
@@ -866,31 +1135,68 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(12),
+                color: buttonColor,
+                borderRadius: BorderRadius.circular(30),
                 border: Border.all(
-                  color: borderColor,
-                  width: isSelected || (_showFeedback && isCorrectAnswer) ? 2 : 1.5,
+                  color: isSelected && !_showFeedback ? Colors.white : buttonColor,
+                  width: 3,
                 ),
+                boxShadow: [
+                  if (isSelected && !_showFeedback)
+                    BoxShadow(
+                      color: buttonColor.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                ],
               ),
               child: Row(
                 children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isSelected || _showFeedback
+                          ? Colors.white.withOpacity(0.3)
+                          : _borderColor.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected || _showFeedback
+                            ? Colors.white.withOpacity(0.5)
+                            : _borderColor.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        optionLabels[index % optionLabels.length],
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: isSelected || _showFeedback
+                              ? Colors.white
+                              : _borderColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       option,
                       style: TextStyle(
+                        color: textColor,
                         fontSize: 16,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: const Color(AppColors.textBlack),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  if (_showFeedback && isCorrectAnswer)
-                    const Icon(Icons.check_circle, color: Colors.green, size: 24),
-                  if (_showFeedback && isSelected && !_isCorrect)
-                    const Icon(Icons.cancel, color: Colors.red, size: 24),
+                  if (trailingIcon != null) ...[
+                    const SizedBox(width: 12),
+                    trailingIcon,
+                  ],
                 ],
               ),
             ),
@@ -909,13 +1215,31 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Need a hint?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFD93D).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lightbulb_rounded,
+                color: Color(0xFFFFD93D),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Hints',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Color(AppColors.textBlack),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         ...currentQuestion.hints.asMap().entries.map((entry) {
@@ -924,36 +1248,63 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
           final isRevealed = _hintsRevealed[index];
           
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 10),
             child: GestureDetector(
               onTap: () => _revealHint(index),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isRevealed ? const Color(AppColors.infoColor).withOpacity(0.1) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(AppColors.infoColor).withOpacity(0.3),
-                    width: 1,
+                  gradient: LinearGradient(
+                    colors: isRevealed
+                        ? [const Color(0xFFFFD93D).withOpacity(0.3), const Color(0xFFFFA938).withOpacity(0.3)]
+                        : [Colors.white, Colors.white],
                   ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isRevealed ? const Color(0xFFFFD93D) : Colors.grey.shade300,
+                    width: 2.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isRevealed ? const Color(0xFFFFD93D) : Colors.grey).withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      isRevealed ? Icons.lightbulb : Icons.lightbulb_outline,
-                      color: const Color(AppColors.infoColor),
-                      size: 20,
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isRevealed
+                            ? const Color(0xFFFFD93D)
+                            : Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isRevealed ? Icons.lightbulb_rounded : Icons.lock_rounded,
+                        color: isRevealed ? Colors.white : Colors.grey.shade600,
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
-                        isRevealed ? hint : 'Tap to reveal hint ${index + 1}',
+                        isRevealed ? hint : 'Tap to see Hint ${index + 1}',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: const Color(AppColors.textBlack).withOpacity(0.8),
+                          fontSize: 15,
+                          fontWeight: isRevealed ? FontWeight.w600 : FontWeight.w700,
+                          color: const Color(AppColors.textBlack),
                         ),
                       ),
                     ),
+                    if (!isRevealed)
+                      Icon(
+                        Icons.touch_app_rounded,
+                        color: Colors.grey.shade400,
+                        size: 24,
+                      ),
                   ],
                 ),
               ),
@@ -965,44 +1316,93 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   }
   
   Widget _buildFeedback() {
+    final feedbackColor = _isCorrect ? Colors.green : Colors.orange;
+    final icon = _isCorrect ? Icons.celebration_rounded : Icons.refresh_rounded;
+    final title = _isCorrect ? 'Great Job!' : 'Try Again!';
+    
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _isCorrect ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _isCorrect ? Colors.green : Colors.red,
-          width: 1.5,
+        gradient: LinearGradient(
+          colors: [
+            feedbackColor.withOpacity(0.15),
+            feedbackColor.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: feedbackColor,
+          width: 3,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: feedbackColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                _isCorrect ? Icons.check_circle : Icons.cancel,
-                color: _isCorrect ? Colors.green : Colors.red,
-                size: 24,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: feedbackColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                _isCorrect ? 'Correct! 🎉' : 'Not quite right',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _isCorrect ? Colors.green : Colors.red,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: feedbackColor,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ],
           ),
           if (currentQuestion.explanation != null && currentQuestion.explanation!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              currentQuestion.explanation!,
-              style: TextStyle(
-                fontSize: 14,
-                color: const Color(AppColors.textBlack).withOpacity(0.8),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.menu_book_rounded,
+                    color: Color(AppColors.textBlack),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      currentQuestion.explanation!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(AppColors.textBlack),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1014,48 +1414,79 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> {
   Widget _buildBottomButton() {
     final bool isDisabled = !_showFeedback && _selectedAnswer == null;
     
+    String buttonText;
+    IconData buttonIcon;
+    
+    if (_showFeedback) {
+      if (isLastQuestion) {
+        buttonText = 'View Results';
+        buttonIcon = Icons.emoji_events_rounded;
+      } else {
+        buttonText = 'Next Question';
+        buttonIcon = Icons.arrow_forward_rounded;
+      }
+    } else {
+      buttonText = 'Check Answer';
+      buttonIcon = Icons.check_circle_rounded;
+    }
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: _borderColor.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         child: SizedBox(
-          width: double.infinity, // Full width
-          height: 54, // Better touch target
+          width: double.infinity,
+          height: 64,
           child: ElevatedButton(
             onPressed: isDisabled ? null : (_showFeedback ? _nextQuestion : _checkAnswer),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _borderColor,
+              backgroundColor: isDisabled ? Colors.grey.shade300 : _borderColor,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: _borderColor.withOpacity(0.4),
-              disabledForegroundColor: Colors.white.withOpacity(0.6),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.grey.shade500,
+              padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(24),
               ),
-              elevation: 0,
+              elevation: isDisabled ? 0 : 8,
+              shadowColor: _borderColor.withOpacity(0.5),
             ),
-            child: Text(
-              _showFeedback
-                  ? (isLastQuestion ? 'View Results' : 'Next Question')
-                  : 'Submit Answer',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  buttonIcon,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  buttonText,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+  
+  @override
+  void dispose() {
+    _characterController.dispose();
+    super.dispose();
   }
 }

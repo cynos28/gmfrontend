@@ -6,7 +6,7 @@ import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/question_practice_screen.dart';
-import 'package:ganithamithura/screens/measurements/learn/units/unit_chat_screen.dart';
+import 'package:ganithamithura/screens/measurements/ai_tutor/ai_tutor_chat_screen.dart';
 
 class UnitHomeScreen extends StatefulWidget {
   final Unit unit;
@@ -254,9 +254,9 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildActionButton(
-                      title: 'Ask a Doubt',
+                      title: 'Ask AI Tutor 🤖',
                       subtitle: 'Chat with AI tutor about this unit',
-                      icon: Icons.chat_bubble_outline,
+                      icon: Icons.smart_toy_rounded,
                       gradient: const LinearGradient(
                         colors: [
                           Color(0xFF6B7FFF),
@@ -264,7 +264,7 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
                         ],
                       ),
                       onTap: () {
-                        Get.to(() => UnitChatScreen(unit: widget.unit));
+                        Get.to(() => AiTutorChatScreen(unit: widget.unit));
                       },
                     ),
                   ],
