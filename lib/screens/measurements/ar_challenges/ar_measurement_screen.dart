@@ -15,6 +15,7 @@ import 'package:ganithamithura/widgets/cute_character.dart';
 import 'ar_questions_screen.dart';
 import 'object_capture_yolo_screen.dart';
 import 'ar_length_measure_screen.dart';
+import 'ar_area_measure_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
   const ARMeasurementScreen({Key? key}) : super(key: key);
@@ -96,21 +97,26 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     );
   }
 
-  /// Opens the AR length measurement screen and sets the value if returned
-  Future<void> _openARLengthMeasurement() async {
-    // Only allow for length type
-    if (_measurementType != MeasurementType.length) {
-      _showSnackBar('AR measurement is only available for length.', backgroundColor: Colors.orange);
+  /// Opens the AR measurement screen and sets the value if returned
+  Future<void> _openARMeasurement() async {
+    // Only allow for length and area types
+    if (_measurementType != MeasurementType.length && _measurementType != MeasurementType.area) {
+      _showSnackBar('AR measurement is only available for length and area.', backgroundColor: Colors.orange);
       return;
     }
+    
+    // Use different screens for length vs area
     final result = await Get.to<String?>(
-      () => ARLengthMeasureScreen(),
+      _measurementType == MeasurementType.length
+          ? () => ARLengthMeasureScreen()
+          : () => const ARAreaMeasureScreen(),
     );
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
         _valueController.text = result;
       });
-      _showSnackBar('Measurement captured: $result cm', backgroundColor: Colors.green);
+      final unit = _measurementType == MeasurementType.length ? 'cm' : 'cm²';
+      _showSnackBar('Measurement captured: $result $unit', backgroundColor: Colors.green);
     }
   }
 
@@ -524,7 +530,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                 color: _borderColor,
                 size: 20,
               ),
-              suffixIcon: _measurementType == MeasurementType.length
+              suffixIcon: (_measurementType == MeasurementType.length || _measurementType == MeasurementType.area)
                   ? IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
@@ -534,8 +540,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
                         ),
                         child: Icon(Icons.camera_alt, color: _borderColor, size: 20),
                       ),
-                      tooltip: 'AR Measure',
-                      onPressed: _openARLengthMeasurement,
+                      tooltip: _measurementType == MeasurementType.length ? 'AR Measure' : 'AR Measure Area',
+                      onPressed: _openARMeasurement,
                     )
                   : null,
               filled: true,

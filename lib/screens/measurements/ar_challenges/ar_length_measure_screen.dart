@@ -289,6 +289,9 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                 ),
                 child: Column(
                   children: [
+                    // Visual line diagram
+                    _buildLengthDiagram(),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
@@ -665,6 +668,26 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     );
   }
 
+  /// Visual diagram showing length line with start and end points
+  Widget _buildLengthDiagram() {
+    return Container(
+      height: 80,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F4F8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF4ECDC4).withOpacity(0.3), width: 1),
+      ),
+      child: CustomPaint(
+        size: const Size(double.infinity, 80),
+        painter: LengthLinePainter(
+          lengthMeters: lengthMeters,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _pulseController.dispose();
@@ -685,5 +708,151 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     }
     
     super.dispose();
+  }
+}
+
+/// Custom painter to draw the length measurement line
+class LengthLinePainter extends CustomPainter {
+  final double? lengthMeters;
+
+  LengthLinePainter({required this.lengthMeters});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (lengthMeters == null) return;
+
+    final double padding = 40;
+    final double lineWidth = size.width - padding * 2;
+    final double centerY = size.height / 2;
+    
+    // Colors
+    const Color startColor = Color(0xFF4ECDC4);  // Teal
+    const Color endColor = Color(0xFFFF6B9D);    // Pink
+    const Color lineColor = Color(0xFF4ECDC4);
+
+    // Draw the main measurement line
+    final linePaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(padding, centerY),
+      Offset(padding + lineWidth, centerY),
+      linePaint,
+    );
+
+    // Draw START point (left)
+    final startPointPaint = Paint()
+      ..color = startColor
+      ..style = PaintingStyle.fill;
+    
+    // Outer glow for start point
+    final startGlowPaint = Paint()
+      ..color = startColor.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding, centerY), 12, startGlowPaint);
+    canvas.drawCircle(Offset(padding, centerY), 8, startPointPaint);
+    
+    // Inner white dot
+    final whiteDotPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding, centerY), 3, whiteDotPaint);
+
+    // Draw END point (right)
+    final endPointPaint = Paint()
+      ..color = endColor
+      ..style = PaintingStyle.fill;
+    
+    // Outer glow for end point
+    final endGlowPaint = Paint()
+      ..color = endColor.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 12, endGlowPaint);
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 8, endPointPaint);
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 3, whiteDotPaint);
+
+    // Draw START label
+    final startTextPainter = TextPainter(
+      text: const TextSpan(
+        text: 'START',
+        style: TextStyle(
+          color: startColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    startTextPainter.layout();
+    startTextPainter.paint(
+      canvas,
+      Offset(padding - startTextPainter.width / 2, centerY - 24),
+    );
+
+    // Draw END label
+    final endTextPainter = TextPainter(
+      text: const TextSpan(
+        text: 'END',
+        style: TextStyle(
+          color: endColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    endTextPainter.layout();
+    endTextPainter.paint(
+      canvas,
+      Offset(padding + lineWidth - endTextPainter.width / 2, centerY - 24),
+    );
+
+    // Draw measurement value in the middle
+    final lengthCm = lengthMeters! * 100;
+    final measurementTextPainter = TextPainter(
+      text: TextSpan(
+        text: '${lengthCm.toStringAsFixed(1)} cm',
+        style: const TextStyle(
+          color: lineColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    measurementTextPainter.layout();
+    
+    // Draw background for measurement text
+    final textBgRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(padding + lineWidth / 2, centerY),
+        width: measurementTextPainter.width + 16,
+        height: measurementTextPainter.height + 8,
+      ),
+      const Radius.circular(8),
+    );
+    final textBgPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(textBgRect, textBgPaint);
+    
+    // Draw text
+    measurementTextPainter.paint(
+      canvas,
+      Offset(
+        padding + lineWidth / 2 - measurementTextPainter.width / 2,
+        centerY - measurementTextPainter.height / 2,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant LengthLinePainter oldDelegate) {
+    return oldDelegate.lengthMeters != lengthMeters;
   }
 }
