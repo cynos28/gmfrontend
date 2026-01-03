@@ -5,6 +5,7 @@ import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/unit_home_screen.dart';
 
 import 'package:ganithamithura/services/unit_progress_service.dart';
+import 'package:ganithamithura/services/user_service.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 
 class UnitCardScreen extends StatefulWidget {
@@ -23,11 +24,50 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
   Map<String, dynamic> _capacityProgress = {};
   Map<String, dynamic> _weightProgress = {};
   bool _isLoadingProgress = true;
+  int _currentGrade = 1;
 
   @override
   void initState() {
     super.initState();
-    _loadAllProgress();
+    _loadGradeAndProgress();
+  }
+
+  /// Get available topics based on grade level
+  /// Grade 1: Length only
+  /// Grade 2: Length, Area
+  /// Grade 3: Length, Area, Weight, Capacity
+  /// Grade 4: All topics
+  List<String> _getAvailableTopics(int grade) {
+    switch (grade) {
+      case 1:
+        return ['Length'];
+      case 2:
+        return ['Length', 'Area'];
+      case 3:
+        return ['Length', 'Area', 'Weight', 'Capacity'];
+      case 4:
+        return ['Length', 'Area', 'Weight', 'Capacity'];
+      default:
+        return ['Length'];
+    }
+  }
+
+  Future<void> _loadGradeAndProgress() async {
+    setState(() => _isLoadingProgress = true);
+    
+    try {
+      // Load current grade
+      final grade = await UserService.getGrade();
+      
+      setState(() {
+        _currentGrade = grade;
+      });
+      
+      await _loadAllProgress();
+    } catch (e) {
+      debugPrint('Error loading grade: $e');
+      setState(() => _isLoadingProgress = false);
+    }
   }
 
   Future<void> _loadAllProgress() async {
@@ -96,12 +136,27 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                     constraints: const BoxConstraints(),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Measurement Units',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Color(AppColors.textBlack),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Measurement Units',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Color(AppColors.textBlack),
+                          ),
+                        ),
+                        Text(
+                          'Grade $_currentGrade',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(AppColors.subText1),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -129,98 +184,9 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               
               // Content - Measurement Units Grid
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.0,
-                  children: [
-                    _buildUnitCard(
-                      title: 'Length',
-                      subtitle: 'cm, m, km',
-                      icon: Icons.straighten,
-                      color: const Color(AppColors.measurementColor),
-                      borderColor: const Color(AppColors.measurementBorder),
-                      iconColor: const Color(AppColors.measurementIcon),
-                      progress: _lengthProgress,
-                      onTap: () {
-                        Get.to(() => UnitHomeScreen(
-                          unit: Unit(
-                            id: 'unit_length_1',  // Changed to grade 1 (has 45 questions in DB)
-                            name: 'Length – cm and m',
-                            topic: 'Length',
-                            grade: 1,  // Changed to grade 1
-                            description: 'Learn to measure length using centimeters and meters',
-                            iconName: 'straighten',
-                          ),
-                        ))?.then((_) => _loadAllProgress());
-                      },
-                    ),
-                    _buildUnitCard(
-                      title: 'Area',
-                      subtitle: 'cm², m², km²',
-                      icon: Icons.crop_square,
-                      color: const Color(AppColors.measurementColor),
-                      borderColor: const Color(AppColors.measurementBorder),
-                      iconColor: const Color(AppColors.measurementIcon),
-                      progress: _areaProgress,
-                      onTap: () {
-                        Get.to(() => UnitHomeScreen(
-                          unit: Unit(
-                            id: 'unit_area_1',  // Changed to grade 1 (has 15 questions in DB)
-                            name: 'Area – cm² and m²',
-                            topic: 'Area',
-                            grade: 1,  // Changed to grade 1
-                            description: 'Understand how to calculate area of shapes',
-                            iconName: 'crop_square',
-                          ),
-                        ))?.then((_) => _loadAllProgress());
-                      },
-                    ),
-                    _buildUnitCard(
-                      title: 'Capacity',
-                      subtitle: 'ml, l',
-                      icon: Icons.local_drink,
-                      color: const Color(AppColors.measurementColor),
-                      borderColor: const Color(AppColors.measurementBorder),
-                      iconColor: const Color(AppColors.measurementIcon),
-                      progress: _capacityProgress,
-                      onTap: () {
-                        Get.to(() => UnitHomeScreen(
-                          unit: Unit(
-                            id: 'unit_capacity_1',  // Changed to grade 1 (has 5 questions in DB)
-                            name: 'Capacity – ml and l',
-                            topic: 'Capacity',
-                            grade: 1,  // Changed to grade 1
-                            description: 'Learn about volume and capacity measurements',
-                            iconName: 'local_drink',
-                          ),
-                        ))?.then((_) => _loadAllProgress());
-                      },
-                    ),
-                    _buildUnitCard(
-                      title: 'Weight',
-                      subtitle: 'g, kg',
-                      icon: Icons.fitness_center,
-                      color: const Color(AppColors.measurementColor),
-                      borderColor: const Color(AppColors.measurementBorder),
-                      iconColor: const Color(AppColors.measurementIcon),
-                      progress: _weightProgress,
-                      onTap: () {
-                        Get.to(() => UnitHomeScreen(
-                          unit: Unit(
-                            id: 'unit_weight_1',  // Changed to grade 1 (has 5 questions in DB)
-                            name: 'Weight – g and kg',
-                            topic: 'Weight',
-                            grade: 1,  // Changed to grade 1
-                            description: 'Understand weight measurements in grams and kilograms',
-                            iconName: 'fitness_center',
-                          ),
-                        ))?.then((_) => _loadAllProgress());
-                      },
-                    ),
-                  ],
-                ),
+                child: _isLoadingProgress
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildUnitsGrid(),
               ),
             ],
           ),
@@ -230,6 +196,117 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
         currentIndex: _selectedIndex,
         onTap: _onNavItemTapped,
       ),
+    );
+  }
+
+  Widget _buildUnitsGrid() {
+    final availableTopics = _getAvailableTopics(_currentGrade);
+    
+    // Build cards only for available topics
+    final List<Widget> cards = [];
+    
+    if (availableTopics.contains('Length')) {
+      cards.add(_buildUnitCard(
+        title: 'Length',
+        subtitle: 'cm, m, km',
+        icon: Icons.straighten,
+        color: const Color(AppColors.measurementColor),
+        borderColor: const Color(AppColors.measurementBorder),
+        iconColor: const Color(AppColors.measurementIcon),
+        progress: _lengthProgress,
+        onTap: () {
+          Get.to(() => UnitHomeScreen(
+            unit: Unit(
+              id: 'unit_length_$_currentGrade',
+              name: 'Length – cm and m',
+              topic: 'Length',
+              grade: _currentGrade,
+              description: 'Learn to measure length using centimeters and meters',
+              iconName: 'straighten',
+            ),
+          ))?.then((_) => _loadGradeAndProgress());
+        },
+      ));
+    }
+    
+    if (availableTopics.contains('Area')) {
+      cards.add(_buildUnitCard(
+        title: 'Area',
+        subtitle: 'cm², m², km²',
+        icon: Icons.crop_square,
+        color: const Color(AppColors.measurementColor),
+        borderColor: const Color(AppColors.measurementBorder),
+        iconColor: const Color(AppColors.measurementIcon),
+        progress: _areaProgress,
+        onTap: () {
+          Get.to(() => UnitHomeScreen(
+            unit: Unit(
+              id: 'unit_area_$_currentGrade',
+              name: 'Area – cm² and m²',
+              topic: 'Area',
+              grade: _currentGrade,
+              description: 'Understand how to calculate area of shapes',
+              iconName: 'crop_square',
+            ),
+          ))?.then((_) => _loadGradeAndProgress());
+        },
+      ));
+    }
+    
+    if (availableTopics.contains('Capacity')) {
+      cards.add(_buildUnitCard(
+        title: 'Capacity',
+        subtitle: 'ml, l',
+        icon: Icons.local_drink,
+        color: const Color(AppColors.measurementColor),
+        borderColor: const Color(AppColors.measurementBorder),
+        iconColor: const Color(AppColors.measurementIcon),
+        progress: _capacityProgress,
+        onTap: () {
+          Get.to(() => UnitHomeScreen(
+            unit: Unit(
+              id: 'unit_capacity_$_currentGrade',
+              name: 'Capacity – ml and l',
+              topic: 'Capacity',
+              grade: _currentGrade,
+              description: 'Learn about volume and capacity measurements',
+              iconName: 'local_drink',
+            ),
+          ))?.then((_) => _loadGradeAndProgress());
+        },
+      ));
+    }
+    
+    if (availableTopics.contains('Weight')) {
+      cards.add(_buildUnitCard(
+        title: 'Weight',
+        subtitle: 'g, kg',
+        icon: Icons.fitness_center,
+        color: const Color(AppColors.measurementColor),
+        borderColor: const Color(AppColors.measurementBorder),
+        iconColor: const Color(AppColors.measurementIcon),
+        progress: _weightProgress,
+        onTap: () {
+          Get.to(() => UnitHomeScreen(
+            unit: Unit(
+              id: 'unit_weight_$_currentGrade',
+              name: 'Weight – g and kg',
+              topic: 'Weight',
+              grade: _currentGrade,
+              description: 'Understand weight measurements in grams and kilograms',
+              iconName: 'fitness_center',
+            ),
+          ))?.then((_) => _loadGradeAndProgress());
+        },
+      ));
+    }
+    
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.0,
+      children: cards,
     );
   }
 

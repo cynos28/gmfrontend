@@ -4,6 +4,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/widgets/measurements/measurement_widgets.dart';
 import 'package:ganithamithura/widgets/measurements/ar_challenge_card.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
+import 'package:ganithamithura/services/user_service.dart';
 
 
 /// MeasurementHomeScreen - Main screen for Measurement module
@@ -16,6 +17,43 @@ class MeasurementHomeScreen extends StatefulWidget {
 
 class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
   int _currentNavIndex = 0;
+  int _currentGrade = 1;
+  bool _isLoadingGrade = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGrade();
+  }
+
+  Future<void> _loadGrade() async {
+    try {
+      final grade = await UserService.getGrade();
+      setState(() {
+        _currentGrade = grade;
+        _isLoadingGrade = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading grade: $e');
+      setState(() => _isLoadingGrade = false);
+    }
+  }
+
+  /// Get available topics based on grade level
+  List<String> _getAvailableTopics(int grade) {
+    switch (grade) {
+      case 1:
+        return ['Length'];
+      case 2:
+        return ['Length', 'Area'];
+      case 3:
+        return ['Length', 'Area', 'Weight', 'Capacity'];
+      case 4:
+        return ['Length', 'Area', 'Weight', 'Capacity'];
+      default:
+        return ['Length'];
+    }
+  }
 
   void _onNavTap(int index) {
     if (index == 0) {
@@ -148,82 +186,100 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
   }
 
   Widget _buildARChallengesGrid() {
+    if (_isLoadingGrade) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final availableTopics = _getAvailableTopics(_currentGrade);
+    final List<Widget> firstRow = [];
+    final List<Widget> secondRow = [];
+
+    // Build first row
+    if (availableTopics.contains('Length')) {
+      firstRow.add(Expanded(
+        child: ARChallengeCard(
+          title: 'Length',
+          subtitle: 'Measure objects',
+          units: 'mm · cm · m',
+          icon: '📏',
+          backgroundColor: const Color(AppColors.numberColor).withOpacity(0.24),
+          borderColor: const Color(AppColors.numberBorder),
+          onTap: () {
+            Get.toNamed('/ar-measurement', arguments: {
+              'type': 'length',
+            });
+          },
+        ),
+      ));
+    }
+
+    if (availableTopics.contains('Capacity')) {
+      if (firstRow.isNotEmpty) {
+        firstRow.add(const SizedBox(width: 16));
+      }
+      firstRow.add(Expanded(
+        child: ARChallengeCard(
+          title: 'Capacity',
+          subtitle: 'Measure liquids',
+          units: 'ml · L',
+          icon: '🥤',
+          backgroundColor: const Color(AppColors.symbolColor).withOpacity(0.24),
+          borderColor: const Color(AppColors.symbolBorder),
+          onTap: () {
+            Get.toNamed('/ar-measurement', arguments: {
+              'type': 'capacity',
+            });
+          },
+        ),
+      ));
+    }
+
+    // Build second row
+    if (availableTopics.contains('Weight')) {
+      secondRow.add(Expanded(
+        child: ARChallengeCard(
+          title: 'Weight',
+          subtitle: 'Measure mass',
+          units: 'g · kg',
+          icon: '⚖️',
+          backgroundColor: const Color(AppColors.shapeColor).withOpacity(0.24),
+          borderColor: const Color(AppColors.shapeBorder),
+          onTap: () {
+            Get.toNamed('/ar-measurement', arguments: {
+              'type': 'weight',
+            });
+          },
+        ),
+      ));
+    }
+
+    if (availableTopics.contains('Area')) {
+      if (secondRow.isNotEmpty) {
+        secondRow.add(const SizedBox(width: 16));
+      }
+      secondRow.add(Expanded(
+        child: ARChallengeCard(
+          title: 'Area',
+          subtitle: 'Measure surfaces',
+          units: 'cm² · m²',
+          icon: '📐',
+          backgroundColor: const Color(AppColors.measurementColor).withOpacity(0.24),
+          borderColor: const Color(AppColors.measurementBorder),
+          onTap: () {
+            Get.toNamed('/ar-measurement', arguments: {
+              'type': 'area',
+            });
+          },
+        ),
+      ));
+    }
+
+    // Build column with available rows
     return Column(
       children: [
-        // First row: Length and Capacity
-        Row(
-          children: [
-            Expanded(
-              child: ARChallengeCard(
-                title: 'Length',
-                subtitle: 'Measure objects',
-                units: 'mm · cm · m',
-                icon: '📏',
-                backgroundColor: const Color(AppColors.numberColor).withOpacity(0.24),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () {
-                  // Navigate to AR measurement screen
-                  Get.toNamed('/ar-measurement', arguments: {
-                    'type': 'length',
-                  });
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ARChallengeCard(
-                title: 'Capacity',
-                subtitle: 'Measure liquids',
-                units: 'ml · L',
-                icon: '🥤',
-                backgroundColor: const Color(AppColors.symbolColor).withOpacity(0.24),
-                borderColor: const Color(AppColors.symbolBorder),
-                onTap: () {
-                  Get.toNamed('/ar-measurement', arguments: {
-                    'type': 'capacity',
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Second row: Area and Weight
-        Row(
-          children: [
-            Expanded(
-              child: ARChallengeCard(
-                title: 'Weight',
-                subtitle: 'Measure mass',
-                units: 'g · kg',
-                icon: '⚖️',
-                backgroundColor: const Color(AppColors.shapeColor).withOpacity(0.24),
-                borderColor: const Color(AppColors.shapeBorder),
-                onTap: () {
-                  Get.toNamed('/ar-measurement', arguments: {
-                    'type': 'weight',
-                  });
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ARChallengeCard(
-                title: 'Area',
-                subtitle: 'Measure surfaces',
-                units: 'cm² · m²',
-                icon: '📐',
-                backgroundColor: const Color(AppColors.measurementColor).withOpacity(0.24),
-                borderColor: const Color(AppColors.measurementBorder),
-                onTap: () {
-                  Get.toNamed('/ar-measurement', arguments: {
-                    'type': 'area',
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
+        if (firstRow.isNotEmpty) Row(children: firstRow),
+        if (firstRow.isNotEmpty && secondRow.isNotEmpty) const SizedBox(height: 16),
+        if (secondRow.isNotEmpty) Row(children: secondRow),
       ],
     );
   }
