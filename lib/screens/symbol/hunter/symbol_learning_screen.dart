@@ -69,7 +69,6 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
     // Use '10.0.2.2' for Android Emulator
     // Use '127.0.0.1' for Physical Device with 'adb reverse tcp:8000 tcp:8000'
     const String serverHost = '127.0.0.1'; 
-    
     String url = 'ws://$serverHost:8000/ws/tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
 
     try {

@@ -5,19 +5,44 @@ import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart
 import 'package:http/http.dart' as http;
 import 'dart:io';
 
-class SymbolLevelSelectionScreen extends StatefulWidget {
-  const SymbolLevelSelectionScreen({super.key});
+class LearningPoolLevelScreen extends StatefulWidget {
+  const LearningPoolLevelScreen({super.key});
 
   @override
-  State<SymbolLevelSelectionScreen> createState() => _SymbolLevelSelectionScreenState();
+  State<LearningPoolLevelScreen> createState() => _LearningPoolLevelScreenState();
 }
 
-class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen> {
+class _LearningPoolLevelScreenState extends State<LearningPoolLevelScreen> {
   
   @override
   void initState() {
     super.initState();
-    // Warmup optimization removed to prevent excessive API usage
+    // Start generating questions for Level 1 immediately (Warmup)
+    _warmupTutor(grade: 1, level: 1, sublevel: "Starter");
+  }
+
+  Future<void> _warmupTutor({required int grade, required int level, required String sublevel}) async {
+    try {
+      String host;
+      if (Platform.isAndroid) {
+        // Try logical address first, then emulator
+         host = '127.0.0.1'; // Using ADB reverse
+      } else {
+        host = '127.0.0.1';
+      }
+      
+      final url = Uri.parse('http://$host:8000/warmup-tutor/$grade/$level/$sublevel');
+      print("Warming up tutor at $url");
+      
+      final response = await http.post(url);
+      if (response.statusCode == 200) {
+        print("Tutor Warmup Successful: ${response.body}");
+      } else {
+        print("Tutor Warmup Failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Warmup Error (safe to ignore): $e");
+    }
   }
 
   @override
@@ -113,12 +138,14 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                               color: const Color(0xFFFFE0E0), // Light Pink
                               textColor: Colors.black87,
                               onTap: () {
-                                // Navigate to Level 1
-                                 Get.to(() => const SymbolLearningScreen(
-                                   grade: 1, 
-                                   level: 1, 
-                                   sublevel: "Starter"
-                                 ));
+                                // User requested no navigation for now
+                                 Get.snackbar(
+                                  'Level 01',
+                                  'Learning Pool Level 1 Selected',
+                                  backgroundColor: Colors.green,
+                                  colorText: Colors.white,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
                               },
                             ),
                             const SizedBox(height: 16),
@@ -161,7 +188,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                       Padding(
                         padding: const EdgeInsets.only(bottom: 0),
                         child: Image.asset(
-                          'assets/symbols/beging1.png',
+                          'assets/symbols/learningLevel.png', // Using the Learning Pool specific asset
                           height: 250,
                           fit: BoxFit.contain,
                         ),

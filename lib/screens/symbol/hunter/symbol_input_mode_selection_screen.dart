@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart';
 import 'package:ganithamithura/screens/symbol/hunter/symbol_level_selection_screen.dart';
-import 'package:ganithamithura/screens/symbol/hunter/symbol_input_mode_selection_screen.dart';
-import 'package:ganithamithura/screens/symbol/hunter/learning_pool_level_screen.dart';
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_tutor_screen.dart';
 
-class SymbolHunterOptionsScreen extends StatelessWidget {
-  const SymbolHunterOptionsScreen({super.key});
+class SymbolInputModeSelectionScreen extends StatelessWidget {
+  const SymbolInputModeSelectionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,36 +60,54 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
             children: [
               // Hero Image (Main Illustration)
               Image.asset(
-                'assets/symbols/hunterOptionMain.png',
-                height: 250, 
+                'assets/symbols/quectionTypeMain.png',
+                height: 200, 
                 fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 24),
+
+              // Title
+              Text(
+                'Select the way you are going\nto answer the questions',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800, // Extra Bold like screenshot
+                  color: const Color(0xFF330000), // Dark Brown/Black
+                  height: 1.2,
+                ),
               ),
               const SizedBox(height: 32),
 
-              // Practice Questions Card
-              _buildImageCard(
-                title: 'Practice Questions',
-                subtitle: 'Test your knowledge with\nquestions',
-                buttonText: 'Start',
-                imageAsset: 'assets/symbols/hunterOptionQuection.png',
-                color: const Color(0xFFFFCCAA), // Peach/Orange
+              // Typing Card
+              _buildInputModeCard(
+                title: 'Typing the Answer',
+                subtitle: 'You can give your answer by\ntyping it with open the keyboard.',
+                buttonText: 'Choose',
+                imageAsset: 'assets/symbols/quectionTypeTyping.png',
+                color: const Color(0xFFF9B872), // Sandy Orange
                 textColor: Colors.white,
                 onTap: () {
-                   Get.to(() => const SymbolInputModeSelectionScreen());
+                   Get.to(() => const SymbolLevelSelectionScreen());
                 },
               ),
               const SizedBox(height: 20),
 
-              // Learning Pool Card
-              _buildImageCard(
-                title: 'Learning Pool',
-                subtitle: 'You can learn symbols with\nour AI Tutor',
-                buttonText: "Let's Learn",
-                imageAsset: 'assets/symbols/hunterGame.png',
-                color: const Color(0xFFA8B5FF), // Periwinkle/Blue
+              // Telling Card
+              _buildInputModeCard(
+                title: 'Telling the Answer',
+                subtitle: 'Using microphone you can\ntell your answer.',
+                buttonText: 'Choose',
+                imageAsset: 'assets/symbols/quectionTypeTellling.png', // Note: double 'l' in filename
+                color: const Color(0xFFF9B872), // Sandy Orange
                 textColor: Colors.white,
                 onTap: () {
-                  Get.to(() => const LearningPoolLevelScreen());
+                   // Telling mode -> Voice Tutor Screen
+                   Get.to(() => const SymbolVoiceTutorScreen(
+                     grade: 1, 
+                     level: 1, 
+                     sublevel: "Starter"
+                   ));
                 },
               ),
               const SizedBox(height: 24),
@@ -100,7 +118,7 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildImageCard({
+  Widget _buildInputModeCard({
     required String title,
     required String subtitle,
     required String buttonText,
@@ -113,7 +131,7 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        height: 160, // Fixed height for consistency
+        height: 140, 
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(24),
@@ -130,16 +148,16 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
             // Content (Left)
             Positioned(
               left: 24,
-              top: 24,
-              bottom: 24,
-              right: 140, // Space for image
+              top: 20,
+              bottom: 20,
+              right: 120, // Space for image
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: GoogleFonts.poppins(
-                      fontSize: 18, // Slightly larger
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
@@ -149,22 +167,23 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
                     child: Text(
                       subtitle,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: textColor.withOpacity(0.9),
+                        height: 1.2,
                       ),
                     ),
                   ),
-                  // "Button" Look
+                  // Button
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withOpacity(0.4), // Darker pill bg
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
                       buttonText,
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: textColor,
                       ),
@@ -177,9 +196,9 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
             // Image (Right)
             Positioned(
               right: 10,
-              bottom: 10,
+              bottom: 0, 
               top: 10,
-              width: 140,
+              width: 120,
               child: Image.asset(
                 imageAsset,
                 fit: BoxFit.contain,
