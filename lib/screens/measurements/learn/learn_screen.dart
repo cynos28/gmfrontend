@@ -47,28 +47,47 @@ class _LearnScreenState extends State<LearnScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section with gradient background
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      KidsColors.primaryLighter.withOpacity(0.15),
-                      KidsColors.primaryLight.withOpacity(0.10),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        KidsColors.primaryAccent.withOpacity(0.1),
+                        KidsColors.secondaryAccent.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(28),
+                      bottomRight: Radius.circular(28),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: KidsColors.primaryAccent.withOpacity(0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(KidsSpacing.radiusXLarge),
-                    bottomRight: Radius.circular(KidsSpacing.radiusXLarge),
+                  padding: const EdgeInsets.fromLTRB(
+                    KidsSpacing.screenPadding,
+                    KidsSpacing.xxl,
+                    KidsSpacing.screenPadding,
+                    KidsSpacing.xxxl,
                   ),
-                ),
-                padding: const EdgeInsets.fromLTRB(
-                  KidsSpacing.screenPadding,
-                  KidsSpacing.xxl,
-                  KidsSpacing.screenPadding,
-                  KidsSpacing.xxxl,
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -81,55 +100,84 @@ class _LearnScreenState extends State<LearnScreen> {
                             const Text(
                               'Learn & Explore',
                               style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
                                 color: KidsColors.textPrimary,
                                 height: 1.2,
                                 letterSpacing: -0.5,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              'Learn step by step',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: KidsColors.textSecondary,
-                              ),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.school_rounded,
+                                  size: 18,
+                                  color: KidsColors.primaryAccent,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Learn step by step',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: KidsColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        // Achievement badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: KidsSpacing.md,
-                            vertical: KidsSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: KidsColors.starBackground,
-                            borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-                            border: Border.all(
-                              color: KidsColors.starGold,
-                              width: 1.5,
+                        // Achievement badge with pulse animation
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.9, end: 1.0),
+                          duration: const Duration(milliseconds: 1000),
+                          curve: Curves.easeInOut,
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: value,
+                              child: child,
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.emoji_events_rounded,
-                                color: KidsColors.starGold,
-                                size: 20,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  KidsColors.starGold,
+                                  KidsColors.starOrange,
+                                ],
                               ),
-                              const SizedBox(width: KidsSpacing.xs),
-                              const Text(
-                                '15',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: KidsColors.starGold,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: KidsColors.starGold.withOpacity(0.4),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.emoji_events_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  '15',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -206,6 +254,7 @@ class _LearnScreenState extends State<LearnScreen> {
                   ],
                 ),
               ),
+            ),
               
               const SizedBox(height: KidsSpacing.xxl),
               
@@ -218,13 +267,42 @@ class _LearnScreenState extends State<LearnScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Continue Learning',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: KidsColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    KidsColors.secondaryAccent,
+                                    KidsColors.secondaryAccent.withOpacity(0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: KidsColors.secondaryAccent.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.play_circle_filled_rounded,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Continue Learning',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: KidsColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                         TextButton(
                           onPressed: () {},
@@ -278,13 +356,42 @@ class _LearnScreenState extends State<LearnScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'All Modules',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: KidsColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                KidsColors.highlightAccent,
+                                KidsColors.highlightAccent.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: KidsColors.highlightAccent.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.apps_rounded,
+                            size: 24,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'All Modules',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: KidsColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: KidsSpacing.cardMarginLarge),
                     // Module list cards (vertical)
