@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async'; // Added for Timer
 import 'dart:io' show Platform;
 import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart'; // Import Success Screen
+import 'package:ganithamithura/config.dart';
 
 class SymbolLearningScreen extends StatefulWidget {
   final int grade;
@@ -73,8 +73,9 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
     // CONFIGURATION: Set your machine's local IP here
     // Use '10.0.2.2' for Android Emulator
     // Use '127.0.0.1' for Physical Device with 'adb reverse tcp:8000 tcp:8000'
-    const String serverHost = '127.0.0.1'; 
-    String url = 'ws://$serverHost:8000/ws/tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
+    // const String serverHost = '127.0.0.1'; 
+    // String url = 'ws://$serverHost:8000/ws/tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
+    String url = '${AppConfig.wsUrl}/ws/tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
 
     try {
       print('Connecting to $url');
@@ -215,8 +216,10 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
        String rawUrl = data['url'];
        // FIX: Rewrite localhost to serverHost
        // Use '10.0.2.2' for Emulator, '127.0.0.1' for ADB Reverse
-       String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1");
-       fixedUrl = fixedUrl.replaceFirst("192.168.8.118", "127.0.0.1"); // Also fix stuck IP if any
+       // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1");
+       // fixedUrl = fixedUrl.replaceFirst("192.168.8.118", "127.0.0.1"); // Also fix stuck IP if any
+       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
+       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
 
        print("Loading image: $fixedUrl"); // Debug log
 

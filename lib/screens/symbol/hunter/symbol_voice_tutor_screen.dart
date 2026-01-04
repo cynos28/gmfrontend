@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ganithamithura/config.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -105,8 +106,10 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   }
 
   void _connectWebSocket() {
-    const String serverHost = '127.0.0.1'; 
-    String url = 'ws://$serverHost:8000/ws/voice-tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
+    // const String serverHost = '127.0.0.1'; 
+    // String url = 'ws://$serverHost:8000/ws/voice-tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
+    String url = '${AppConfig.wsUrl}/ws/voice-tutor/${widget.grade}/${widget.level}/${widget.sublevel}';
+
 
     try {
       print('Connecting to $url');
@@ -238,7 +241,11 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
       });
     } else if (data['type'] == 'image') {
        String rawUrl = data['url'];
-       String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1").replaceFirst("192.168.8.118", "127.0.0.1");
+       // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1").replaceFirst("192.168.8.118", "127.0.0.1");
+       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
+       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
+       
+       print("Loading image: $fixedUrl");
        setState(() {
          _imageUrl = fixedUrl;
        });
@@ -269,26 +276,40 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
 
   void _listen() async {
     if (!_speechAvailable) {
-       _initSpeech(); 
-       if (!_speechAvailable) return;
+       print("Initializing speech...");
+       await _initSpeech(); 
+       if (!_speechAvailable) {
+         print("Speech not available after init");
+         return;
+       }
     }
 
     if (!_isListening) {
-      bool available = await _speech.initialize();
+      bool available = await _speech.initialize(
+        onStatus: (status) => print('Speech Status Update: $status'),
+        onError: (error) => print('Speech Error Update: $error'),
+      );
+      
       if (available) {
         setState(() {
           _isListening = true;
           _lastWords = "";
         });
+        print("Started listening...");
         _speech.listen(
           onResult: (val) {
+            print("Speech Result: ${val.recognizedWords} (Final: ${val.finalResult})");
             setState(() {
               _lastWords = val.recognizedWords;
             });
             
             if (val.finalResult && _lastWords.isNotEmpty) {
-               Future.delayed(const Duration(milliseconds: 1200), () {
-                 if (!_isChecking && _isListening) { 
+               print("Final result received, waiting to send...");
+               // Reduced delay to make it snappier
+               Future.delayed(const Duration(milliseconds: 500), () {
+                 // Removed _isListening check to ensure we send even if status changed
+                 if (!_isChecking) { 
+                    print("Sending input from final result: $_lastWords");
                     _sendInput(_lastWords);
                     _speech.stop();
                     setState(() => _isListening = false);
@@ -297,24 +318,36 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
             }
           },
         );
+      } else {
+        print("Speech initialization returned false");
       }
     } else {
+      // Manual Stop - Send what we have!
+      print("Manual stop triggered. Last words: $_lastWords");
       setState(() => _isListening = false);
       _speech.stop();
+      if (_lastWords.isNotEmpty && !_isChecking) {
+         print("Sending input from manual stop: $_lastWords");
+         _sendInput(_lastWords);
+      }
     }
   }
 
   void _sendInput(String value) {
+    print("Attempting to send input: $value");
     if (_channel != null && _isConnected) {
       setState(() {
         _isChecking = true;
         _feedbackMessage = null;
       });
       String numberValue = _wordToNumber(value);
+      print("Sending to WebSocket: $numberValue");
       _channel!.sink.add(jsonEncode({
         "type": "input",
         "value": numberValue
       }));
+    } else {
+      print("Cannot send: Channel null or not connected");
     }
   }
 
