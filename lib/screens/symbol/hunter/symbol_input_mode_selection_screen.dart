@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart';
 import 'package:ganithamithura/screens/symbol/hunter/symbol_level_selection_screen.dart';
-import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_tutor_screen.dart';
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_level_selection_screen.dart'; // Add this
 
 class SymbolInputModeSelectionScreen extends StatelessWidget {
   const SymbolInputModeSelectionScreen({super.key});
@@ -102,12 +102,8 @@ class SymbolInputModeSelectionScreen extends StatelessWidget {
                 color: const Color(0xFFF9B872), // Sandy Orange
                 textColor: Colors.white,
                 onTap: () {
-                   // Telling mode -> Voice Tutor Screen
-                   Get.to(() => const SymbolVoiceTutorScreen(
-                     grade: 1, 
-                     level: 1, 
-                     sublevel: "Starter"
-                   ));
+                   // Navigate to Voice Level Selection
+                   Get.to(() => const SymbolVoiceLevelSelectionScreen());
                 },
               ),
               const SizedBox(height: 24),

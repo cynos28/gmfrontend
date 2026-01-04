@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart'; // Import Success Screen
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -52,6 +53,10 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
 
   Timer? _typewriterTimer;
   String _displayedQuestionText = "";
+
+  // Stats
+  int _questionsAnswered = 0;
+  int _correctAnswers = 0;
 
   @override
   void initState() {
@@ -183,15 +188,39 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     _isProcessingQueue = false;
   }
 
-  void _handleFeedback(Map<String, dynamic> data) {
+  void _handleFeedback(Map<String, dynamic> data) async {
     bool isCorrect = data['isCorrect'] ?? false;
     String text = data['text'] ?? (isCorrect ? "Correct!" : "Try again");
     
+    // Increment Stats
+    if (isCorrect) {
+       _correctAnswers++;
+    }
+    _questionsAnswered++;
+
     setState(() {
       _isChecking = false;
       _feedbackMessage = text; 
     });
-    _speak(text);
+    
+    await _speak(text);
+
+    // Check if 5 questions DONE
+    if (_questionsAnswered >= 5) {
+       // Wait a moment for the speech to finish/user to register
+       await Future.delayed(const Duration(seconds: 2));
+       
+       // Stop services
+       _channel?.sink.close();
+       flutterTts.stop();
+       _speech.stop();
+       
+       // Navigate to Success
+       Get.off(() => SymbolVoiceSuccessScreen(
+         totalQuestions: 5, 
+         correctAnswers: _correctAnswers
+       ));
+    }
   }
 
   void _handleServerMessage(Map<String, dynamic> data) {

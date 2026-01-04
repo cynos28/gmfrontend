@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart';
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_tutor_screen.dart';
 
-class SymbolLevelSelectionScreen extends StatefulWidget {
-  const SymbolLevelSelectionScreen({super.key});
+class SymbolVoiceLevelSelectionScreen extends StatefulWidget {
+  const SymbolVoiceLevelSelectionScreen({super.key});
 
   @override
-  State<SymbolLevelSelectionScreen> createState() => _SymbolLevelSelectionScreenState();
+  State<SymbolVoiceLevelSelectionScreen> createState() => _SymbolVoiceLevelSelectionScreenState();
 }
 
-class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen> {
+class _SymbolVoiceLevelSelectionScreenState extends State<SymbolVoiceLevelSelectionScreen> {
   int _selectedGrade = 1;
 
   void _showGradeSelector() {
@@ -35,7 +35,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
       ),
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,7 +77,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Symbol Hunter',
+                              'Voice Tutor',
                               style: GoogleFonts.poppins(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                               ),
                             ),
                             Text(
-                              'Let\'s Learn Symbols Together!',
+                              'Speak & Learn!',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 color: Colors.black54,
@@ -110,7 +110,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
 
                 const SizedBox(height: 30),
 
-                // Title with Grade Indicator
+                // Title with Grade Selector Indicator
                 Column(
                   children: [
                     Text(
@@ -142,13 +142,13 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                       _buildLevelCard(
                         level: 1,
                         title: "Level 01",
-                        description: "Test your knowledge with questions",
+                        description: "Speak your answers to solve math!",
                         isLocked: false,
                         color: const Color(0xFFFFCCBC), 
-                        imageAsset: 'assets/symbols/levelselection.png', 
+                        imageAsset: 'assets/symbols/beging1.png', 
                         progress: "1/3",
                         onTap: () {
-                          Get.to(() => SymbolLearningScreen(
+                          Get.to(() => SymbolVoiceTutorScreen(
                             grade: _selectedGrade, 
                             level: 1, 
                             sublevel: "Starter"
@@ -159,13 +159,13 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                        _buildLevelCard(
                         level: 2,
                         title: "Level 02",
-                        description: "Test your knowledge with questions",
+                        description: "Speak your answers to solve math!",
                         isLocked: false, // Unlocked
                         color: const Color(0xFFFFCCBC).withOpacity(0.5), 
-                        imageAsset: 'assets/symbols/levelselection.png', 
+                        imageAsset: 'assets/symbols/beging1.png', 
                         progress: "2/3",
                         onTap: () {
-                          Get.to(() => SymbolLearningScreen(
+                          Get.to(() => SymbolVoiceTutorScreen(
                             grade: _selectedGrade, 
                             level: 2, 
                             sublevel: "Starter"
@@ -176,13 +176,13 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                        _buildLevelCard(
                         level: 3,
                         title: "Level 03",
-                        description: "Test your knowledge with questions",
+                        description: "Speak your answers to solve math!",
                         isLocked: false, // Unlocked
                         color: const Color(0xFFFFCCBC).withOpacity(0.5),
-                        imageAsset: 'assets/symbols/levelselection.png', 
+                        imageAsset: 'assets/symbols/beging1.png', 
                         progress: "3/3",
                         onTap: () {
-                           Get.to(() => SymbolLearningScreen(
+                           Get.to(() => SymbolVoiceTutorScreen(
                             grade: _selectedGrade, 
                             level: 3, 
                             sublevel: "Starter"
@@ -198,7 +198,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
           ),
           
           // Floating Bottom Nav Bar
-           Positioned(
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,

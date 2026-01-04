@@ -8,6 +8,7 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async'; // Added for Timer
 import 'dart:io' show Platform;
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart'; // Import Success Screen
 
 class SymbolLearningScreen extends StatefulWidget {
   final int grade;
@@ -38,6 +39,10 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
   // NEW: Feedback state
   String? _feedbackMessage;
   bool _isChecking = false;
+  
+  // NEW: Question Counters
+  int _questionsAnswered = 0;
+  int _correctAnswers = 0;
 
   // NEW: Message Queue
   final List<Map<String, dynamic>> _messageQueue = [];
@@ -160,16 +165,37 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
     _isProcessingQueue = false;
   }
 
-  void _handleFeedback(Map<String, dynamic> data) {
+  void _handleFeedback(Map<String, dynamic> data) async {
     bool isCorrect = data['isCorrect'] ?? false;
     String text = data['text'] ?? (isCorrect ? "Correct!" : "Try again");
     
+    // Increment Stats
+    if (isCorrect) _correctAnswers++;
+    _questionsAnswered++;
+
     setState(() {
       _isChecking = false;
       _feedbackMessage = text; 
     });
-    _speak(text);
+    
+    // Speak and Show Feedback
     _startTypewriter(text);
+    await _speak(text); 
+
+    // CHECK FOR COMPLETION
+    if (_questionsAnswered >= 5) {
+       // Wait a moment for user to see feedback
+       await Future.delayed(const Duration(seconds: 2));
+       
+       // Close connection
+       _channel?.sink.close();
+       
+       // Navigate to Success Screen
+       Get.off(() => SymbolVoiceSuccessScreen(
+         totalQuestions: 5, 
+         correctAnswers: _correctAnswers
+       ));
+    }
   }
 
   void _handleServerMessage(Map<String, dynamic> data) {
