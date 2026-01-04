@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart';
-import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:ganithamithura/screens/symbol/hunter/symbol_video_list_screen.dart';
 
 class LearningPoolLevelScreen extends StatefulWidget {
   const LearningPoolLevelScreen({super.key});
@@ -17,220 +17,335 @@ class _LearningPoolLevelScreenState extends State<LearningPoolLevelScreen> {
   @override
   void initState() {
     super.initState();
-    // Start generating questions for Level 1 immediately (Warmup)
-    _warmupTutor(grade: 1, level: 1, sublevel: "Starter");
-  }
-
-  Future<void> _warmupTutor({required int grade, required int level, required String sublevel}) async {
-    try {
-      String host;
-      if (Platform.isAndroid) {
-        // Try logical address first, then emulator
-         host = '127.0.0.1'; // Using ADB reverse
-      } else {
-        host = '127.0.0.1';
-      }
-      
-      final url = Uri.parse('http://$host:8000/warmup-tutor/$grade/$level/$sublevel');
-      print("Warming up tutor at $url");
-      
-      final response = await http.post(url);
-      if (response.statusCode == 200) {
-        print("Tutor Warmup Successful: ${response.body}");
-      } else {
-        print("Tutor Warmup Failed: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Warmup Error (safe to ignore): $e");
-    }
+    // Warmup optimization removed
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Symbol Hunter',
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+      body: Stack(
+        children: [
+          // Header Background Card
+          Container(
+            height: 250,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFE0B2), // Light Orange/Peach
+                  Color(0xFFF5F5F5), // Fading to White/Grey
+                ],
               ),
-            ),
-            Text(
-              'Let\'s Learn Symbols Together!',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey[200],
-              backgroundImage: const AssetImage('assets/images/user_avatar.png'),
-              onBackgroundImageError: (_, __) {},
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
             ),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: IntrinsicHeight(
-                  child: Column(
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom App Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
                     children: [
-                      // Top Section with Title
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F0FE), // Light Blue tint like design
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(30),
-                            bottomRight: Radius.circular(30),
-                          ),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        onPressed: () => Get.back(),
+                      ),
+                      Expanded(
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Start from the Beginning',
-                              textAlign: TextAlign.center,
+                              'Symbol Hunter',
                               style: GoogleFonts.poppins(
-                                fontSize: 22,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              'Let\'s Learn Symbols Together !',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.black54,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      
-                      const SizedBox(height: 40),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white,
+                        backgroundImage: const AssetImage('assets/images/user_avatar.png'),
+                        onBackgroundImageError: (_, __) {},
+                        child: const Icon(Icons.person, color: Colors.grey, size: 24),
+                      ),
+                    ],
+                  ),
+                ),
 
-                      // Level Buttons
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                        child: Column(
-                          children: [
-                            _buildLevelButton(
-                              text: 'Level 01',
-                              color: const Color(0xFFFFE0E0), // Light Pink
-                              textColor: Colors.black87,
-                              onTap: () {
-                                // User requested no navigation for now
-                                 Get.snackbar(
-                                  'Level 01',
-                                  'Learning Pool Level 1 Selected',
-                                  backgroundColor: Colors.green,
-                                  colorText: Colors.white,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildLevelButton(
-                              text: 'Level 02',
-                              color: const Color(0xFF90A4AE), // Grey Blue
-                              textColor: Colors.black87,
-                              onTap: () {
-                                 Get.snackbar(
-                                  'Level 02',
-                                  'Locked!',
-                                  backgroundColor: Colors.grey,
-                                  colorText: Colors.white,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _buildLevelButton(
-                              text: 'Level 03',
-                              color: const Color(0xFF90A4AE), // Grey Blue
-                              textColor: Colors.black87,
-                              onTap: () {
-                                 Get.snackbar(
-                                  'Level 03',
-                                  'Locked!',
-                                  backgroundColor: Colors.grey,
-                                  colorText: Colors.white,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                );
-                              },
-                            ),
-                          ],
+                const SizedBox(height: 20),
+
+                // Orange "Choose Grade" Header Pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB74D), // Light Orange
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Choose the Grade',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
+                       Text(
+                        'want to study',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-                      const Spacer(),
+                const SizedBox(height: 30),
 
-                      // Bottom Illustration
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 0),
-                        child: Image.asset(
-                          'assets/symbols/learningLevel.png', // Using the Learning Pool specific asset
-                          height: 250,
-                          fit: BoxFit.contain,
+                // Grade Cards List
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      _buildGradeCard(
+                        grade: "01",
+                        description: "Learn through the video sets we created for you.",
+                        buttonText: "Watch",
+                        badgeText: "4/12",
+                        color: const Color(0xFF9CCC9C), // Muted Green/Teal
+                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        onTap: () {
+                          // Navigate to video list
+                          Get.to(() => const SymbolVideoListScreen(grade: "01"));
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildGradeCard(
+                        grade: "02",
+                        description: "Learn through the video sets we created for you.",
+                        buttonText: "Watch",
+                        badgeText: "0/12",
+                        color: const Color(0xFF9CCC9C), // Muted Green/Teal
+                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        onTap: () {
+                          _showSnackbar("Grade 02", "Coming Soon!");
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildGradeCard(
+                        grade: "03",
+                        description: "Learn through the video sets we created for you.",
+                        buttonText: "Watch",
+                        badgeText: "0/12",
+                        color: const Color(0xFF9CCC9C), // Muted Green/Teal
+                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        onTap: () {
+                           _showSnackbar("Grade 03", "Coming Soon!");
+                        },
+                      ),
+                      const SizedBox(height: 90), // Bottom padding
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Bottom Nav Bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))
+                ]
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                   _buildNavItem(Icons.home_outlined, "Home", isActive: false),
+                   _buildNavItem(Icons.school, "Learn", isActive: true),
+                   _buildNavItem(Icons.show_chart, "Progress", isActive: false),
+                   _buildNavItem(Icons.person_outline, "Profile", isActive: false),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(20),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, {required bool isActive}) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: isActive ? const Color(0xFF6200EA) : Colors.grey, size: 28),
+        const SizedBox(height: 4),
+        Text(label, style: GoogleFonts.poppins(
+          color: isActive ? const Color(0xFF6200EA) : Colors.grey, 
+          fontSize: 12,
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal
+        ))
+      ],
+    );
+  }
+
+  Widget _buildGradeCard({
+    required String grade,
+    required String description,
+    required String buttonText,
+    required String badgeText,
+    required Color color,
+    required String imageAsset,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Stack(
+        children: [
+          Row(
+            children: [
+              // Left Content
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 0, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Grade $grade',
+                        style: GoogleFonts.poppins(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        description,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.black54,
+                          height: 1.2
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Button
+                      SizedBox(
+                        height: 36,
+                        child: ElevatedButton(
+                          onPressed: onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF546E7A), // Blue Grey
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                          ),
+                          child: Text(
+                            buttonText,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+              
+              // Right Image Area
+              Expanded(
+                flex: 4,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.asset(
+                       imageAsset,
+                       fit: BoxFit.contain,
+                       errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, size: 40, color: Colors.white54)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
 
-  Widget _buildLevelButton({
-    required String text,
-    required Color color,
-    required Color textColor,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: textColor,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.black.withOpacity(0.1)),
+          // Badge
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A1F3D), // Dark Navy
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                badgeText,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        ],
       ),
     );
   }

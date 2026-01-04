@@ -33,9 +33,8 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   late Animation<double> _pulseAnimation;
   
   // State
-  String _currentText = ""; 
-  String _displayedText = "Connecting..."; 
-  String _expression = ""; 
+  String _questionText = "Waiting for teacher..."; // The story/scenario
+  String _expression = ""; // The math formula (2 + 2 = ?)
   String? _imageUrl;
   bool _isConnected = false;
   String? _feedbackMessage;
@@ -52,6 +51,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   bool _isLoadingQuestion = false;
 
   Timer? _typewriterTimer;
+  String _displayedQuestionText = "";
 
   @override
   void initState() {
@@ -115,7 +115,8 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
         print('WebSocket Error: $error');
         setState(() {
           _isConnected = false;
-          _currentText = "Connection Error";
+          _questionText = "Connection Error";
+          _displayedQuestionText = "Connection Error";
         });
       }, onDone: () {
         setState(() {
@@ -147,9 +148,12 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
         setState(() {
           _isLoadingQuestion = true;
           _imageUrl = null;
-          _expression = "";
+          _expression = ""; // Clear expression for next q
           _feedbackMessage = null;
           _lastWords = ""; 
+          // Keep question text or clear it? Better to clear or show "Next..."
+           _questionText = "";
+           _displayedQuestionText = "";
         });
 
       } else if (data['type'] == 'speak') {
@@ -164,7 +168,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
           setState(() {
             _isLoadingQuestion = false;
             _feedbackMessage = null; 
-            if (_isChecking) _isChecking = false; // Reset checking state on new question
+            if (_isChecking) _isChecking = false; 
             _lastWords = "";
           });
 
@@ -183,8 +187,6 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     bool isCorrect = data['isCorrect'] ?? false;
     String text = data['text'] ?? (isCorrect ? "Correct!" : "Try again");
     
-    // Play sound or haptic here for voice mode?
-    // For now, TTS handles it
     setState(() {
       _isChecking = false;
       _feedbackMessage = text; 
@@ -196,7 +198,8 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     if (data['type'] == 'speak') {
       String text = data['text'];
       setState(() {
-        _feedbackMessage = null; // Clear feedback when new text comes
+        _feedbackMessage = null;
+        _questionText = text; // STORE IT
       });
       _speak(text);
       _startTypewriter(text);
@@ -214,18 +217,15 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   }
 
   void _startTypewriter(String text) {
-    // For voice mode, we might not show ALL text, but maybe just a subtitle.
-    // Let's keep it for visual reinforcement.
     _typewriterTimer?.cancel();
     setState(() {
-      _currentText = text;
-      _displayedText = "";
+      _displayedQuestionText = "";
     });
     int index = 0;
     _typewriterTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (index < text.length) {
         setState(() {
-          _displayedText = text.substring(0, index + 1);
+          _displayedQuestionText = text.substring(0, index + 1);
         });
         index++;
       } else {
@@ -258,9 +258,8 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
             });
             
             if (val.finalResult && _lastWords.isNotEmpty) {
-               // Auto-send after brief pause
                Future.delayed(const Duration(milliseconds: 1200), () {
-                 if (!_isChecking && _isListening) { // Ensure still "listening" context
+                 if (!_isChecking && _isListening) { 
                     _sendInput(_lastWords);
                     _speech.stop();
                     setState(() => _isListening = false);
@@ -296,9 +295,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
       'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
       'ten': '10'
     };
-    // Attempt to find number words in the sentence
     String lower = word.toLowerCase().trim();
-    // Simple check: check if any key is in the string
     for (var key in numbers.keys) {
       if (lower.contains(key)) return numbers[key]!;
     }
@@ -318,162 +315,237 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2E004E), Color(0xFF6200EA), Color(0xFFB388FF)],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // 1. Blue Header Background
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)], 
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Back Button
-              Positioned(
-                top: 10,
-                left: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Get.back(),
-                ),
-              ),
 
-              // Main Content
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-
-                  // Image Viewer (Glassmorphism)
-                  if (_imageUrl != null)
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(maxHeight: 220),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+          // 2. Safe Area Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Header Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        onPressed: () => Get.back(),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.network(_imageUrl!, fit: BoxFit.contain),
-                      ),
-                    ),
-                  
-                  const Spacer(),
-
-                  // Teacher Avatar & Question
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.2),
-                              blurRadius: 20 * (_isListening ? _pulseAnimation.value * 1.5 : 1.0),
-                              spreadRadius: 5 * (_isListening ? _pulseAnimation.value : 0.0),
-                            )
-                          ]
+                      Expanded(
+                        child: Text(
+                          'Voice Tutor',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                        child: CircleAvatar(
-                          radius: 70,
-                          backgroundColor: Colors.white,
-                          backgroundImage: const AssetImage('assets/symbols/teacher1.png'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Expression / Question Text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Text(
-                      _expression.isNotEmpty ? _expression : (_isLoadingQuestion ? "Thinking..." : _displayedText),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: _expression.isNotEmpty ? 42 : 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 4)]
                       ),
-                    ),
-                  ),
-                  
-                  // Subtitle (for feedback or text)
-                  if (_feedbackMessage != null)
-                     Padding(
-                       padding: const EdgeInsets.only(top: 16.0),
-                       child: Container(
-                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                         decoration: BoxDecoration(
-                           color: Colors.white.withOpacity(0.9),
-                           borderRadius: BorderRadius.circular(30),
-                         ),
-                         child: Text(
-                           _feedbackMessage!,
-                           style: GoogleFonts.poppins(color: Colors.deepPurple, fontSize: 16, fontWeight: FontWeight.w600),
-                         ),
-                       ),
-                     ),
-
-                  const Spacer(),
-                  const Spacer(),
-
-                  // Mic Button (Hero)
-                  GestureDetector(
-                    onTap: _listen,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      height: _isListening ? 100 : 90,
-                      width: _isListening ? 100 : 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isListening ? Colors.redAccent : Colors.white,
-                        boxShadow: [
-                           BoxShadow(
-                             color: (_isListening ? Colors.redAccent : Colors.white).withOpacity(0.5),
-                             blurRadius: _isListening ? 30 : 15,
-                             spreadRadius: _isListening ? 10 : 2,
-                           )
-                        ],
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white,
+                        backgroundImage: const AssetImage('assets/images/user_avatar.png'),
+                         onBackgroundImageError: (_, __) {},
+                        child: const Icon(Icons.person, color: Colors.grey, size: 24),
                       ),
-                      child: Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        color: _isListening ? Colors.white : const Color(0xFF6200EA),
-                        size: 45,
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  Text(
-                    _isListening ? "Listening..." : "Tap to Speak",
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 16),
-                  ),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
-              
-              // Loading Overlay
-              if (_isLoadingQuestion)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black45,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
+                    ],
                   ),
                 ),
-            ],
+
+                const SizedBox(height: 10),
+
+                // Main Content Area (Scrollable if needed, but fitting to screen is better)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        
+                        // Teacher/Image Area (Centered)
+                        Center(
+                          child: AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              return Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 2
+                                    )
+                                  ]
+                                ),
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: const AssetImage('assets/symbols/teacher1.png'),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // QUESTION CARD (The Story)
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3E0), // Light Orange/Peach
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                            ]
+                          ),
+                          child: Column(
+                            children: [
+                               if (_imageUrl != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(_imageUrl!, height: 120, fit: BoxFit.contain),
+                                  ),
+                                ),
+                              
+                              Text(
+                                _displayedQuestionText.isNotEmpty ? _displayedQuestionText : "Listening to teacher...",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  color: Colors.black87,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+
+                        // MATH EXPRESSION CARD
+                        if (_expression.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9), // Light Green
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _expression,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.rubik( // Rubik is good for math
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF2E7D32),
+                              ),
+                            ),
+                          ),
+                        
+                        // FEEDBACK AREA
+                        if (_feedbackMessage != null)
+                           Padding(
+                             padding: const EdgeInsets.only(top: 20.0),
+                             child: Container(
+                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                               decoration: BoxDecoration(
+                                 color: _feedbackMessage!.contains("Correct") || _feedbackMessage!.contains("Great") 
+                                     ? Colors.green[100] 
+                                     : Colors.red[100],
+                                 borderRadius: BorderRadius.circular(16),
+                               ),
+                               child: Text(
+                                 _feedbackMessage!,
+                                 textAlign: TextAlign.center,
+                                 style: GoogleFonts.poppins(
+                                   fontSize: 16,
+                                   fontWeight: FontWeight.w600,
+                                   color: _feedbackMessage!.contains("Correct") || _feedbackMessage!.contains("Great")
+                                     ? Colors.green[800]
+                                     : Colors.red[800],
+                                 ),
+                               ),
+                             ),
+                           ),
+
+                        const Spacer(),
+                        
+                        // MIC BUTTON & STATUS
+                        Center(
+                          child: GestureDetector(
+                            onTap: _listen,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: _isListening ? 90 : 80,
+                              width: _isListening ? 90 : 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _isListening ? Colors.redAccent : const Color(0xFF6200EA),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (_isListening ? Colors.redAccent : const Color(0xFF6200EA)).withOpacity(0.4),
+                                    blurRadius: _isListening ? 25 : 15,
+                                    spreadRadius: _isListening ? 8 : 2,
+                                  )
+                                ],
+                              ),
+                              child: Icon(
+                                _isListening ? Icons.mic : Icons.mic_none,
+                                color: Colors.white,
+                                size: 40,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _isListening ? "Listening..." : (_isChecking ? "Checking..." : "Tap to Answer"),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          
+          // Loading Overlay
+          if (_isLoadingQuestion)
+             Positioned.fill(
+               child: Container(
+                 color: Colors.white.withOpacity(0.8),
+                 child: const Center(
+                   child: CircularProgressIndicator(color: Color(0xFF6200EA)),
+                 ),
+               ),
+             ),
+        ],
       ),
     );
   }
