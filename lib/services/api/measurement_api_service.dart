@@ -9,7 +9,7 @@ import '../../models/ar_measurement.dart';
 class MeasurementApiService {
   // WiFi IP - works without ADB, just need same WiFi network
   static const List<String> _baseUrls = [
-    'http://10.169.0.71:8000/api/v1/measurements',    // WiFi - Mac IP (PRIMARY)
+    'http://192.168.1.18:8000/api/v1/measurements',   // WiFi IP (PRIMARY)
     'http://localhost:8000/api/v1/measurements',      // ADB reverse fallback
     'http://10.0.2.2:8000/api/v1/measurements',       // Android Emulator fallback
   ];

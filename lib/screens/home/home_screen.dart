@@ -7,6 +7,7 @@ import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
+import '../shapes/welcome_screen.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
@@ -312,21 +313,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: ResourceCard(
                 title: 'Shapes',
-                subtitle: '2D & 3D',
+                subtitle: 'Hunt & build 2D/3D',
                 icon: Icons.category_rounded,
                 backgroundColor: const Color(AppColors.shapeColor),
                 borderColor: const Color(AppColors.shapeBorder),
                 iconColor: const Color(AppColors.shapeIcon),
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Shapes will be available soon',
-                    backgroundColor: const Color(AppColors.infoColor),
-                    colorText: Colors.white,
-                    borderRadius: KidsSpacing.radiusMedium,
-                  );
-                },
-                isEnabled: false,
+                onTap: () => Get.to(() => const WelcomeScreen()),
+                isEnabled: true
               ),
             ),
           ],
