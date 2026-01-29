@@ -6,11 +6,13 @@ import 'package:ganithamithura/widgets/measurements/ar_challenge_card.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 
 import '../../widgets/shapes/shape_widgets.dart';
-import '../../widgets/shapes/camera_permission_dialog.dart';
+import '../../widgets/shapes/camera_permission_dialog.dart' as camera_permission;
 import 'games/shape_games_screen.dart';
 import 'shapes_selection_screen.dart';
 import 'find_real_shapes_screen.dart';
 import 'learn_shapes.dart';
+import 'ar_hunt_intro_screen.dart';
+import 'widgets/camera_permission_dialog.dart';
 
 
 /// ShapeHomeScreen - Main screen for Shape module
@@ -181,7 +183,19 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
                 backgroundColor: const Color(0xFFE76E50),
                 borderColor: const Color(AppColors.numberBorder),
                 onTap: () {
-                  // Navigate to AR measurement screen
+                  // Show camera permission dialog
+                  showDialog(
+                    context: context,
+                    builder: (context) => CameraPermissionDialog(
+                      onLetsGo: () {
+                        Navigator.pop(context); // Close dialog
+                        Get.to(() => const ArHuntIntroScreen());
+                      },
+                      onGoBack: () {
+                        Navigator.pop(context); // Close dialog
+                      },
+                    ),
+                  );
                 },
               ),
             ),
@@ -199,7 +213,7 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 onTap: () async {
                   // Show camera permission dialog
-                  final granted = await showCameraPermissionDialog(context);
+                  final granted = await camera_permission.showCameraPermissionDialog(context);
                   if (granted) {
                     Get.to(() => const FindRealShapesScreen());
                   }

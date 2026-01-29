@@ -50,6 +50,10 @@ dependencies:
   ar_flutter_plugin_updated: ^0.0.1
   vector_math: ^2.1.4
 
+  # 3D Model Rendering
+  model_viewer_plus: ^1.10.0
+  flutter_cube: ^0.1.1
+
   # Drawing / Canvas
   flutter_painter: ^1.0.1
 
@@ -59,6 +63,7 @@ dependencies:
   uuid: ^4.0.0
   json_annotation: ^4.8.1
   cupertino_icons: ^1.0.8
+  sensors_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -83,5 +88,8 @@ flutter:
     - assets/data/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
+    - assets/models/cone.glb
+    - assets/models/cylinder.glb
+    - assets/models/pyramid.glb
     - .env
     
