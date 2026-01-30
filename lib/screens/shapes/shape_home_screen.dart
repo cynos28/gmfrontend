@@ -13,6 +13,7 @@ import 'find_real_shapes_screen.dart';
 import 'learn_shapes.dart';
 import 'ar_hunt_intro_screen.dart';
 import 'widgets/camera_permission_dialog.dart';
+import 'build_and_match_screen.dart';
 
 
 /// ShapeHomeScreen - Main screen for Shape module
@@ -250,7 +251,7 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
                 backgroundColor: const Color(0xFF36D399),
                 borderColor: const Color(AppColors.numberBorder),
                 onTap: () {
-                  // Navigate to AR measurement screen
+                  Get.to(() => const BuildAndMatchScreen());
                 },
               ),
             ),
