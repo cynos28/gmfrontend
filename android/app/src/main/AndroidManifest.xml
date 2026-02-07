@@ -11,6 +11,10 @@
 
     <!-- Media access (Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    
+    <!-- Audio permission (REQUIRED for Voice Tutor) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Media access (Android 12 and below) -->
     <uses-permission
