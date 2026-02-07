@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/symbol/quiz/symbol_quiz_intro_screen.dart';
 import 'package:ganithamithura/screens/symbol/widgets/floating_symbols_background.dart';
+import 'package:ganithamithura/screens/symbol/gaming/gaming_intro_screen.dart';
 
 /// SymbolHomeScreen - Child-friendly screen with dynamic background
 class SymbolHomeScreen extends StatelessWidget {
@@ -74,13 +75,7 @@ class SymbolHomeScreen extends StatelessWidget {
                     imageAsset: null, 
                     isLarge: false,
                     onTap: () {
-                      Get.snackbar(
-                        'Symbol Games',
-                        'Coming Soon!',
-                        backgroundColor: Colors.purpleAccent,
-                        colorText: Colors.white,
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
+                      Get.to(() => const GamingIntroScreen());
                     },
                   ),
                 ],

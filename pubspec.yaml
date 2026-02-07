@@ -80,6 +80,7 @@ flutter:
     - assets/numbers/
     - assets/data/
     - assets/symbols/
+    - assets/symbols/game/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - .env
