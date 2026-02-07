@@ -30,10 +30,10 @@ class GanithamithuraApp extends StatelessWidget {
       title: 'Ganitha Mithura',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: Color(AppColors.primaryColor),
+        primaryColor: Color(AppColors.infoColor),
         scaffoldBackgroundColor: Color(AppColors.backgroundColor),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(AppColors.primaryColor),
+          seedColor: Color(AppColors.infoColor),
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
         useMaterial3: true,

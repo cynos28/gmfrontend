@@ -31,6 +31,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Speed optimization: Build only for your device architecture during development
+        ndk {
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a") // Most modern devices
+        }
     }
 
     buildTypes {

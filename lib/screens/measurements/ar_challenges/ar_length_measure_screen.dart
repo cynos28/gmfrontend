@@ -12,6 +12,7 @@ import 'package:ar_flutter_plugin_updated/managers/ar_object_manager.dart';
 import 'package:ar_flutter_plugin_updated/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin_updated/widgets/ar_view.dart';
+import 'package:ganithamithura/widgets/cute_character.dart';
 
 class ARLengthMeasureScreen extends StatefulWidget {
   const ARLengthMeasureScreen({Key? key}) : super(key: key);
@@ -52,43 +53,80 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1F3A),
+      backgroundColor: const Color(0xFFE8F4F8),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4ECDC4).withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: Color(0xFF4ECDC4),
+                size: 24,
+              ),
+              onPressed: () => Get.back(),
+            ),
+          ),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Text("📏", style: TextStyle(fontSize: 24)),
-            SizedBox(width: 8),
-            Text(
-              "Magic Ruler",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-              ),
+            Icon(
+              Icons.straighten_rounded,
+              size: 24,
+              color: Color(0xFF4ECDC4),
             ),
             SizedBox(width: 8),
-            Text("✨", style: TextStyle(fontSize: 20)),
+            Text(
+              "Measure Length",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                color: Color(0xFF4ECDC4),
+              ),
+            ),
           ],
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF6C63FF),
-        elevation: 0,
         actions: [
           if (startPoint != null || endPoint != null)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.refresh_rounded, size: 24),
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4ECDC4).withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                onPressed: _reset,
-                tooltip: 'Start Over',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: Color(0xFF4ECDC4),
+                    size: 24,
+                  ),
+                  onPressed: _reset,
+                  tooltip: 'Start Over',
+                ),
               ),
             ),
         ],
@@ -147,46 +185,39 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
             ),
           ),
 
-          // Fun character helper
+          // Cute character helper
           Positioned(
             top: 100,
             left: 20,
             right: 20,
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF6C63FF).withOpacity(0.95),
-                    const Color(0xFF5B54E8).withOpacity(0.95),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6C63FF).withOpacity(0.4),
+                    color: const Color(0xFF4ECDC4).withOpacity(0.2),
                     blurRadius: 20,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  Text(
-                    _getCharacterEmoji(),
-                    style: const TextStyle(fontSize: 40),
+                  CuteCharacter(
+                    size: 60,
+                    color: const Color(0xFF4ECDC4),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     _getInstructionText(),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF2C3E50),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      height: 1.4,
+                      height: 1.5,
                     ),
                   ),
                   if (startPoint != null || endPoint != null) ...[
@@ -195,11 +226,11 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (startPoint != null)
-                          _buildFunPointBadge('START', const Color(0xFF4ECDC4), '🔵'),
+                          _buildFunPointBadge('START', const Color(0xFF4ECDC4)),
                         if (startPoint != null && endPoint != null)
                           const SizedBox(width: 12),
                         if (endPoint != null)
-                          _buildFunPointBadge('END', const Color(0xFFFF6B9D), '🔴'),
+                          _buildFunPointBadge('END', const Color(0xFFFF6B9D)),
                       ],
                     ),
                   ],
@@ -218,7 +249,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                 children: [
                   Expanded(
                     child: _buildFunRepositionButton(
-                      'Move START 🔵',
+                      'Move START',
                       const Color(0xFF4ECDC4),
                           () => setState(() => isSettingStart = true),
                       isActive: isSettingStart,
@@ -227,7 +258,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildFunRepositionButton(
-                      'Move END 🔴',
+                      'Move END',
                       const Color(0xFFFF6B9D),
                           () => setState(() => isSettingStart = false),
                       isActive: !isSettingStart,
@@ -237,7 +268,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
               ),
             ),
 
-          // Awesome measurement result
+          // Measurement result
           if (lengthMeters != null)
             Positioned(
               bottom: 120,
@@ -246,70 +277,81 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFD93D),
-                      Color(0xFFFFA938),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD93D).withOpacity(0.5),
-                      blurRadius: 25,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 4),
+                      color: const Color(0xFF4ECDC4).withOpacity(0.25),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      "🎉 You Measured 🎉",
-                      style: TextStyle(
-                        color: Color(0xFF1A1F3A),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
+                    // Visual line diagram
+                    _buildLengthDiagram(),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.celebration_rounded,
+                          color: Color(0xFF4ECDC4),
+                          size: 24,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          "Great Job!",
+                          style: TextStyle(
+                            color: Color(0xFF4ECDC4),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
+                        horizontal: 24,
+                        vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF4ECDC4),
+                            Color(0xFF3DBDB3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         "${(lengthMeters! * 100).toStringAsFixed(1)} cm",
                         style: const TextStyle(
-                          color: Color(0xFF1A1F3A),
+                          color: Colors.white,
                           fontSize: 48,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -1,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
+                        horizontal: 16,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A1F3A).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         "That's ${lengthMeters!.toStringAsFixed(3)} meters!",
                         style: const TextStyle(
-                          color: Color(0xFF1A1F3A),
-                          fontSize: 14,
+                          color: Color(0xFF4ECDC4),
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -329,25 +371,25 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4ECDC4),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: const EdgeInsets.symmetric(vertical: 20),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(28),
             ),
-            elevation: 8,
-            shadowColor: const Color(0xFF4ECDC4).withOpacity(0.5),
+            elevation: 12,
+            shadowColor: const Color(0xFF4ECDC4).withOpacity(0.4),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
-              Text(
-                "🎯",
-                style: TextStyle(fontSize: 24),
+              Icon(
+                Icons.check_circle_rounded,
+                size: 28,
               ),
               SizedBox(width: 12),
               Text(
-                "Got It! Use This Size",
+                "Use This Measurement",
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
                 ),
@@ -361,24 +403,35 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     );
   }
 
-  Widget _buildFunPointBadge(String label, Color color, String emoji) {
+  Widget _buildFunPointBadge(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
+        border: Border.all(
+          color: color,
+          width: 2,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(width: 8),
           Text(
             label,
@@ -404,28 +457,28 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
       onTap: onPressed,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: isActive ? color : color.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(20),
+          color: isActive ? color : Colors.white,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: Colors.white,
-            width: isActive ? 3 : 2,
+            color: color,
+            width: 3,
           ),
-          boxShadow: isActive ? [
+          boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.6),
-              blurRadius: 20,
-              spreadRadius: 2,
+              color: color.withOpacity(isActive ? 0.4 : 0.15),
+              blurRadius: isActive ? 16 : 8,
+              offset: Offset(0, isActive ? 6 : 3),
             ),
-          ] : [],
+          ],
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 15,
+          style: TextStyle(
+            color: isActive ? Colors.white : color,
+            fontSize: 16,
             fontWeight: FontWeight.w900,
             letterSpacing: 0.5,
           ),
@@ -434,23 +487,23 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     );
   }
 
-  String _getCharacterEmoji() {
+  IconData _getCharacterIcon() {
     if (startPoint == null) {
-      return "🤖";
+      return Icons.touch_app_rounded;
     } else if (endPoint == null) {
-      return "🚀";
+      return Icons.my_location_rounded;
     } else {
-      return "⭐";
+      return Icons.done_all_rounded;
     }
   }
 
   String _getInstructionText() {
     if (startPoint == null) {
-      return "Hi! Let's measure something!\nPoint the 🔵 circle at where you want to START\nThen tap the screen!";
+      return "Hi! Let's measure something!\nPoint the blue circle at where you want to START\nThen tap the screen!";
     } else if (endPoint == null) {
-      return "Great job! 🎊\nNow point the 🔴 circle where you want to END\nThen tap the screen!";
+      return "Great job!\nNow point the pink circle where you want to END\nThen tap the screen!";
     } else {
-      return "Awesome! 🌟\nYou can move the points using buttons below\nor tap the big button to save!";
+      return "Awesome!\nYou can move the points using buttons below\nor tap the confirm button to save!";
     }
   }
 
@@ -477,7 +530,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
 
   void _onPlaneTapped(List<ARHitTestResult> hitTestResults) async {
     if (hitTestResults.isEmpty) {
-      _showFunSnackBar('Oops! 😅 Point at a flat surface and try again!', isError: true);
+      _showFunSnackBar('Oops! Point at a flat surface and try again!', isError: true);
       return;
     }
 
@@ -506,7 +559,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
       }
     });
 
-    _showFunSnackBar('🔵 Awesome! START point is set! 🎉', isSuccess: true);
+    _showFunSnackBar('Awesome! START point is set!', isSuccess: true);
   }
 
   void _setEndPoint(Vector3 point) {
@@ -517,7 +570,7 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     });
 
     _updateMeasurement();
-    _showFunSnackBar('🔴 Yay! END point is set! You did it! 🌟', isSuccess: true);
+    _showFunSnackBar('Yay! END point is set! You did it!', isSuccess: true);
   }
 
   void _updateMeasurement() {
@@ -547,18 +600,18 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
       isSettingStart = true;
     });
 
-    _showFunSnackBar('🔄 Let\'s start fresh! Ready to measure again! 🎮');
+    _showFunSnackBar('Let\'s start fresh! Ready to measure again!');
   }
 
   void _confirmMeasurement() {
     if (lengthMeters == null) {
-      _showFunSnackBar('Oops! No measurement yet! 😅', isError: true);
+      _showFunSnackBar('Oops! No measurement yet!', isError: true);
       return;
     }
 
     final valueInCm = (lengthMeters! * 100).toStringAsFixed(1);
 
-    _showFunSnackBar('🎉 Perfect! Measurement saved: $valueInCm cm! 🏆', isSuccess: true);
+    _showFunSnackBar('Perfect! Measurement saved: $valueInCm cm!', isSuccess: true);
 
     Future.delayed(const Duration(milliseconds: 500), () {
       Get.back(result: valueInCm);
@@ -615,10 +668,191 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
     );
   }
 
+  /// Visual diagram showing length line with start and end points
+  Widget _buildLengthDiagram() {
+    return Container(
+      height: 80,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F4F8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF4ECDC4).withOpacity(0.3), width: 1),
+      ),
+      child: CustomPaint(
+        size: const Size(double.infinity, 80),
+        painter: LengthLinePainter(
+          lengthMeters: lengthMeters,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _pulseController.dispose();
-    arSessionManager?.dispose();
+    
+    // Workaround for ar_flutter_plugin disposal crash
+    // The plugin has a race condition where the surface producer
+    // gets disposed before the AR session cleanup completes.
+    // We delay disposal slightly to avoid the crash.
+    if (arSessionManager != null) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        try {
+          arSessionManager?.dispose();
+        } catch (e) {
+          // Silently catch any disposal errors
+          print('AR session disposal error (can be ignored): $e');
+        }
+      });
+    }
+    
     super.dispose();
+  }
+}
+
+/// Custom painter to draw the length measurement line
+class LengthLinePainter extends CustomPainter {
+  final double? lengthMeters;
+
+  LengthLinePainter({required this.lengthMeters});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (lengthMeters == null) return;
+
+    final double padding = 40;
+    final double lineWidth = size.width - padding * 2;
+    final double centerY = size.height / 2;
+    
+    // Colors
+    const Color startColor = Color(0xFF4ECDC4);  // Teal
+    const Color endColor = Color(0xFFFF6B9D);    // Pink
+    const Color lineColor = Color(0xFF4ECDC4);
+
+    // Draw the main measurement line
+    final linePaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(padding, centerY),
+      Offset(padding + lineWidth, centerY),
+      linePaint,
+    );
+
+    // Draw START point (left)
+    final startPointPaint = Paint()
+      ..color = startColor
+      ..style = PaintingStyle.fill;
+    
+    // Outer glow for start point
+    final startGlowPaint = Paint()
+      ..color = startColor.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding, centerY), 12, startGlowPaint);
+    canvas.drawCircle(Offset(padding, centerY), 8, startPointPaint);
+    
+    // Inner white dot
+    final whiteDotPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding, centerY), 3, whiteDotPaint);
+
+    // Draw END point (right)
+    final endPointPaint = Paint()
+      ..color = endColor
+      ..style = PaintingStyle.fill;
+    
+    // Outer glow for end point
+    final endGlowPaint = Paint()
+      ..color = endColor.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 12, endGlowPaint);
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 8, endPointPaint);
+    canvas.drawCircle(Offset(padding + lineWidth, centerY), 3, whiteDotPaint);
+
+    // Draw START label
+    final startTextPainter = TextPainter(
+      text: const TextSpan(
+        text: 'START',
+        style: TextStyle(
+          color: startColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    startTextPainter.layout();
+    startTextPainter.paint(
+      canvas,
+      Offset(padding - startTextPainter.width / 2, centerY - 24),
+    );
+
+    // Draw END label
+    final endTextPainter = TextPainter(
+      text: const TextSpan(
+        text: 'END',
+        style: TextStyle(
+          color: endColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    endTextPainter.layout();
+    endTextPainter.paint(
+      canvas,
+      Offset(padding + lineWidth - endTextPainter.width / 2, centerY - 24),
+    );
+
+    // Draw measurement value in the middle
+    final lengthCm = lengthMeters! * 100;
+    final measurementTextPainter = TextPainter(
+      text: TextSpan(
+        text: '${lengthCm.toStringAsFixed(1)} cm',
+        style: const TextStyle(
+          color: lineColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    measurementTextPainter.layout();
+    
+    // Draw background for measurement text
+    final textBgRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(padding + lineWidth / 2, centerY),
+        width: measurementTextPainter.width + 16,
+        height: measurementTextPainter.height + 8,
+      ),
+      const Radius.circular(8),
+    );
+    final textBgPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(textBgRect, textBgPaint);
+    
+    // Draw text
+    measurementTextPainter.paint(
+      canvas,
+      Offset(
+        padding + lineWidth / 2 - measurementTextPainter.width / 2,
+        centerY - measurementTextPainter.height / 2,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant LengthLinePainter oldDelegate) {
+    return oldDelegate.lengthMeters != lengthMeters;
   }
 }

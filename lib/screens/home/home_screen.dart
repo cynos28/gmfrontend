@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
@@ -28,11 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     setState(() {
       _currentNavIndex = index;
     });
-    
+
     if (index == 1) {
       // Navigate to Learn screen
       Get.to(() => const LearnScreen())?.then((_) {
@@ -54,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
@@ -62,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(AppColors.infoColor),
       colorText: Colors.white,
     );
-    
+
     // Reset index since navigation didn't happen
     setState(() {
       _currentNavIndex = 0;
@@ -79,9 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
             // Main content with scroll
             SingleChildScrollView(
               padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 32,
+                left: KidsSpacing.screenPadding,
+                right: KidsSpacing.screenPadding,
+                top: KidsSpacing.xxxl,
                 bottom: 90, // Space for bottom nav
               ),
               child: Column(
@@ -89,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // Greeting section
                   _buildGreeting(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KidsSpacing.xl),
 
                   // Today's Activity Card
                   const TodayActivityCard(
@@ -99,33 +100,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     completedTasks: '8 tasks',
                     progressBadge: 'Great progress!',
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: KidsSpacing.xxl),
 
                   // Resources Section
-                  const Text(
-                    'Resources',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(AppColors.textBlack),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: KidsColors.primaryBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '📚',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Let\'s Learn!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: KidsColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KidsSpacing.cardMarginLarge),
 
                   // Resource Cards Grid
                   _buildResourceGrid(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: KidsSpacing.xxxl),
 
                   // Learning Tips Section
-                  const Text(
-                    'Learning Tips',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(AppColors.textBlack),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: KidsColors.starBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '💡',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Today\'s Tip',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: KidsColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KidsSpacing.cardMarginLarge),
 
                   // Daily Tip Card
                   LearningTipCard(key: _tipCardKey),
@@ -150,37 +183,72 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGreeting() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Hi, Shehan👋',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            const Icon(
-              Icons.local_fire_department,
-              size: 14,
-              color: Color(AppColors.subText2),
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              '5 day streak',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Color(AppColors.subText2),
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            KidsColors.primaryAccent.withOpacity(0.1),
+            KidsColors.secondaryAccent.withOpacity(0.05),
           ],
         ),
-      ],
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '👋 Hi, Shehan!',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: KidsColors.textPrimary,
+              height: 1.2,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: KidsColors.highlightBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: KidsColors.highlightAccent,
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 20,
+                      color: KidsColors.highlightAccent,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      '5 days!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: KidsColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -194,21 +262,21 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ResourceCard(
                 title: 'Numbers',
                 subtitle: 'Trace, read & say',
-                icon: Icons.pin,
-                backgroundColor: const Color(AppColors.numberColor).withOpacity(0.24),
+                icon: Icons.looks_one_rounded,
+                backgroundColor: const Color(AppColors.numberColor),
                 borderColor: const Color(AppColors.numberBorder),
                 iconColor: const Color(AppColors.numberIcon),
                 onTap: () => Get.to(() => const NumberHomeScreen()),
                 isEnabled: true,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: KidsSpacing.cardMarginLarge),
             Expanded(
               child: ResourceCard(
                 title: 'Symbols',
-                subtitle: '+ − × ÷ stories & quizzes',
-                icon: Icons.calculate,
-                backgroundColor: const Color(AppColors.symbolColor).withOpacity(0.24),
+                subtitle: '+ − × ÷',
+                icon: Icons.calculate_rounded,
+                backgroundColor: const Color(AppColors.symbolColor),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
                 onTap: () => Get.to(() => const SymbolHomeScreen()),
@@ -217,37 +285,38 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KidsSpacing.cardMarginLarge),
         // Second row: Measurements and Shapes
         Row(
           children: [
             Expanded(
               child: ResourceCard(
                 title: 'Measurement',
-                subtitle: 'Length, Area, Capacity, Weight',
-                icon: Icons.straighten,
-                backgroundColor: const Color(AppColors.measurementColor).withOpacity(0.24),
+                subtitle: 'Length, area & more',
+                icon: Icons.straighten_rounded,
+                backgroundColor: const Color(AppColors.measurementColor),
                 borderColor: const Color(AppColors.measurementBorder),
                 iconColor: const Color(AppColors.measurementIcon),
                 onTap: () => Get.to(() => const MeasurementHomeScreen()),
                 isEnabled: true,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: KidsSpacing.cardMarginLarge),
             Expanded(
               child: ResourceCard(
                 title: 'Shapes',
-                subtitle: 'Hunt & build 2D/3D',
-                icon: Icons.category,
-                backgroundColor: const Color(AppColors.shapeColor).withOpacity(0.24),
+                subtitle: '2D & 3D',
+                icon: Icons.category_rounded,
+                backgroundColor: const Color(AppColors.shapeColor),
                 borderColor: const Color(AppColors.shapeBorder),
                 iconColor: const Color(AppColors.shapeIcon),
                 onTap: () {
                   Get.snackbar(
                     'Coming Soon',
-                    'Shapes module will be available soon',
+                    'Shapes will be available soon',
                     backgroundColor: const Color(AppColors.infoColor),
                     colorText: Colors.white,
+                    borderRadius: KidsSpacing.radiusMedium,
                   );
                 },
                 isEnabled: false,

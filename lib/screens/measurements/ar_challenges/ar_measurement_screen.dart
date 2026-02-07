@@ -10,10 +10,13 @@ import 'package:get/get.dart';
 import 'package:ganithamithura/models/ar_measurement.dart';
 import 'package:ganithamithura/services/ar_learning_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/user_service.dart';
+import 'package:ganithamithura/widgets/cute_character.dart';
 import 'ar_questions_screen.dart';
 import 'object_capture_yolo_screen.dart';
 import 'ar_length_measure_screen.dart';
+import 'ar_area_measure_screen.dart';
 
 class ARMeasurementScreen extends StatefulWidget {
   const ARMeasurementScreen({Key? key}) : super(key: key);
@@ -95,21 +98,32 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     );
   }
 
-  /// Opens the AR length measurement screen and sets the value if returned
-  Future<void> _openARLengthMeasurement() async {
-    // Only allow for length type
-    if (_measurementType != MeasurementType.length) {
-      _showSnackBar('AR measurement is only available for length.', backgroundColor: Colors.orange);
+  /// Opens the AR measurement screen and sets the value if returned
+  Future<void> _openARMeasurement() async {
+    // Only allow for length and area types
+    if (_measurementType != MeasurementType.length && _measurementType != MeasurementType.area) {
+      _showSnackBar('AR measurement is only available for length and area.', backgroundColor: Colors.orange);
       return;
     }
+    
+    // Use different screens for length vs area
     final result = await Get.to<String?>(
-      () => ARLengthMeasureScreen(),
+      () => _measurementType == MeasurementType.length
+          ? const ARLengthMeasureScreen()
+          : const ARAreaMeasureScreen(),
     );
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
         _valueController.text = result;
+        // Auto-select the appropriate unit based on measurement type
+        if (_measurementType == MeasurementType.length) {
+          _selectedUnit = MeasurementUnit.cm;
+        } else if (_measurementType == MeasurementType.area) {
+          _selectedUnit = MeasurementUnit.cm2;
+        }
       });
-      _showSnackBar('Measurement captured: $result cm', backgroundColor: Colors.green);
+      final unit = _measurementType == MeasurementType.length ? 'cm' : 'cm²';
+      _showSnackBar('Measurement captured: $result $unit', backgroundColor: Colors.green);
     }
   }
 
@@ -154,26 +168,26 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   Color get _primaryColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberColor);
+        return KidsColors.lengthColor;
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolColor);
+        return KidsColors.capacityColor;
       case MeasurementType.weight:
-        return const Color(AppColors.shapeColor);
+        return KidsColors.weightColor;
       case MeasurementType.area:
-        return const Color(AppColors.measurementColor);
+        return KidsColors.areaColor;
     }
   }
   
   Color get _borderColor {
     switch (_measurementType) {
       case MeasurementType.length:
-        return const Color(AppColors.numberBorder);
+        return KidsColors.lengthColor;
       case MeasurementType.capacity:
-        return const Color(AppColors.symbolBorder);
+        return KidsColors.capacityColor;
       case MeasurementType.weight:
-        return const Color(AppColors.shapeBorder);
+        return KidsColors.weightColor;
       case MeasurementType.area:
-        return const Color(AppColors.measurementBorder);
+        return KidsColors.areaColor;
     }
   }
   
@@ -246,36 +260,56 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFA),
+      backgroundColor: _getBackgroundColor(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(AppColors.textBlack)),
-          onPressed: () => Get.back(),
-        ),
-        title: Row(
-          children: [
-            Text(
-              _measurementType.icon,
-              style: const TextStyle(fontSize: 24),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: KidsShadows.soft,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Measure ${_measurementType.displayName}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(AppColors.textBlack),
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: KidsColors.textPrimary,
+                size: 24,
               ),
+              padding: EdgeInsets.zero,
+              onPressed: () => Get.back(),
             ),
-          ],
+          ),
         ),
+        title: Text(
+          _measurementType.displayName,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: KidsColors.textPrimary,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: _buildManualMode(),
       ),
     );
+  }
+  
+  Color _getBackgroundColor() {
+    switch (_measurementType) {
+      case MeasurementType.length:
+        return KidsColors.lengthBackground;
+      case MeasurementType.capacity:
+        return KidsColors.capacityBackground;
+      case MeasurementType.weight:
+        return KidsColors.weightBackground;
+      case MeasurementType.area:
+        return KidsColors.areaBackground;
+    }
   }
   
   Widget _buildManualMode() {
@@ -284,6 +318,10 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Cute character with greeting
+          _buildCharacterGreeting(),
+          const SizedBox(height: 24),
+          
           // Instructions Card
           _buildInstructionsCard(),
           const SizedBox(height: 24),
@@ -302,36 +340,101 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           
           // Generate Questions Button
           _buildGenerateButton(),
-          const SizedBox(height: 16),
-          
-          // Example Card
-          _buildExampleCard(),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildCharacterGreeting() {
+    return CuteCard(
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CuteCharacter(
+                color: _primaryColor,
+                size: 60,
+                animate: true,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Hello, Friend!",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: KidsColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Let's measure together!",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: KidsColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
   
   Widget _buildInstructionsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor, width: 1),
-      ),
+    IconData getIcon() {
+      switch (_measurementType) {
+        case MeasurementType.length:
+          return Icons.straighten_rounded;
+        case MeasurementType.capacity:
+          return Icons.local_drink_rounded;
+        case MeasurementType.weight:
+          return Icons.scale_rounded;
+        case MeasurementType.area:
+          return Icons.grid_on_rounded;
+      }
+    }
+
+    return CuteCard(
+      backgroundColor: _primaryColor.withOpacity(0.1),
+      borderColor: _primaryColor.withOpacity(0.3),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _primaryColor,
+                  _primaryColor.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: _primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: const Icon(
-              Icons.info_outline,
-              color: Color(AppColors.infoColor),
+            child: Icon(
+              getIcon(),
               size: 28,
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 16),
@@ -339,26 +442,26 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'How it works',
+                Text(
+                  'What to do?',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(AppColors.textBlack),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: _borderColor,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Measure an object, enter the details, and get personalized questions!',
+                const Text(
+                  'Measure something and tell me about it!',
                   style: TextStyle(
                     fontSize: 14,
-                    color: const Color(AppColors.textBlack).withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          
         ],
       ),
     );
@@ -368,38 +471,65 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'What are you measuring?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.inventory_2_rounded,
+              size: 22,
+              color: KidsColors.textPrimary,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'What are you measuring?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _objectController,
-          decoration: InputDecoration(
-            hintText: 'e.g., pencil, water bottle, table',
-            prefixIcon: Icon(Icons.label_outline, color: _borderColor),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.camera_alt, color: _borderColor),
-              tooltip: 'Detect object with camera',
-              onPressed: _openObjectDetection,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor.withOpacity(0.3), width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor, width: 2),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _objectController,
+            decoration: InputDecoration(
+              hintText: 'e.g., pencil, water bottle',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: Icon(
+                Icons.edit_rounded,
+                color: _borderColor,
+                size: 20,
+              ),
+              suffixIcon: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.camera_alt, color: _borderColor, size: 20),
+                ),
+                tooltip: 'Use camera',
+                onPressed: _openObjectDetection,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             ),
           ),
         ),
@@ -411,39 +541,69 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Measurement Value',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.straighten_rounded,
+              size: 22,
+              color: KidsColors.textPrimary,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'How much did you measure?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _valueController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: 'Enter measurement',
-            prefixIcon: Icon(Icons.straighten, color: _borderColor),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.camera_alt, color: _borderColor.withOpacity(0.6)),
-              tooltip: 'Measure with AR camera',
-              onPressed: _openARLengthMeasurement,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor.withOpacity(0.3), width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _borderColor, width: 2),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _valueController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              hintText: 'Enter number',
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 18),
+              prefixIcon: Icon(
+                Icons.tag_rounded,
+                color: _borderColor,
+                size: 20,
+              ),
+              suffixIcon: (_measurementType == MeasurementType.length || _measurementType == MeasurementType.area)
+                  ? IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.camera_alt, color: _borderColor, size: 20),
+                      ),
+                      tooltip: _measurementType == MeasurementType.length ? 'AR Measure' : 'AR Measure Area',
+                      onPressed: _openARMeasurement,
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             ),
           ),
         ),
@@ -457,59 +617,35 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Unit',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(AppColors.textBlack),
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.square_foot_rounded,
+              size: 22,
+              color: KidsColors.textPrimary,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Choose a unit:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: units.map((unit) {
             final isSelected = _selectedUnit == unit;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedUnit = unit;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? _primaryColor.withOpacity(0.2) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? _borderColor : _borderColor.withOpacity(0.3),
-                    width: isSelected ? 2 : 1.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isSelected)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Icon(
-                          Icons.check_circle,
-                          color: _borderColor,
-                          size: 20,
-                        ),
-                      ),
-                    Text(
-                      unit.displayName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? _borderColor : const Color(AppColors.textBlack),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            return PillButton(
+              text: unit.displayName,
+              onPressed: () => setState(() => _selectedUnit = unit),
+              color: _borderColor,
+              isSelected: isSelected,
             );
           }).toList(),
         ),
@@ -518,85 +654,51 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   }
   
   Widget _buildGenerateButton() {
-    return ElevatedButton(
-      onPressed: _isProcessing ? null : _generateQuestions,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _borderColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 0,
-      ),
-      child: _isProcessing
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            )
-          : const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.auto_awesome, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Generate Questions',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-  
-  Widget _buildExampleCard() {
-    String example = '';
-    switch (_measurementType) {
-      case MeasurementType.length:
-        example = 'Example: "pencil" measured as "15" "Centimeters"';
-        break;
-      case MeasurementType.capacity:
-        example = 'Example: "water bottle" measured as "500" "Milliliters"';
-        break;
-      case MeasurementType.weight:
-        example = 'Example: "book" measured as "250" "Grams"';
-        break;
-      case MeasurementType.area:
-        example = 'Example: "notebook" measured as "300" "Square Centimeters"';
-        break;
-    }
-    
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.lightbulb_outline,
-            color: _borderColor,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              example,
-              style: TextStyle(
-                fontSize: 14,
-                color: const Color(AppColors.textBlack).withOpacity(0.7),
-              ),
-            ),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: _borderColor.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isProcessing ? null : _generateQuestions,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _borderColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: 0,
+        ),
+        child: _isProcessing
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.rocket_launch_rounded, size: 26),
+                  SizedBox(width: 12),
+                  Text(
+                    "Let's Start!",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
