@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/three_d_character_card.dart';
+import 'package:ganithamithura/screens/symbol/gaming/level_selection_screen.dart';
 
 class CharacterSelectionScreen extends StatefulWidget {
   const CharacterSelectionScreen({super.key});
@@ -31,17 +32,11 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
 
   void _onChoosePressed() {
     if (_selectedCharacterIndex != null) {
-      Get.snackbar(
-        'Character Selected',
-        'You chose character ${_selectedCharacterIndex! + 1}! 🎮',
-        backgroundColor: const Color(0xFF4CAF50),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 2),
+      Get.to(
+        () => const LevelSelectionScreen(),
+        transition: Transition.circularReveal,
+        duration: const Duration(milliseconds: 800),
       );
-      // Navigate to the next screen (Map/Level Selection) later
     } else {
        Get.snackbar(
         'Select a Character',

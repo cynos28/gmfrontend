@@ -8,7 +8,7 @@ import 'package:ganithamithura/screens/symbol/gaming/widgets/animated_title_card
 import 'package:ganithamithura/screens/symbol/gaming/widgets/animated_mascot.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/pulsating_play_button.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/three_d_game_button.dart';
-import 'package:ganithamithura/screens/symbol/gaming/character_selection_screen.dart';
+import 'package:ganithamithura/screens/symbol/gaming/game_welcome_screen.dart';
 
 /// Gaming Intro Screen - A visually engaging splash screen for the gaming section.
 /// 
@@ -146,9 +146,9 @@ class _GamingIntroScreenState extends State<GamingIntroScreen>
   }
 
   void _onPlayPressed() {
-    // Navigate to character selection screen
+    // Navigate to game welcome screen
     Get.to(
-      () => const CharacterSelectionScreen(),
+      () => const GameWelcomeScreen(),
       transition: Transition.zoom, // Fun zoom transition for gaming feel
       duration: const Duration(milliseconds: 500),
     );
