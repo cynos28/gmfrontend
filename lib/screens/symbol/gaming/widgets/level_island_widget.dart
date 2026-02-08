@@ -63,9 +63,7 @@ class _LevelIslandWidgetState extends State<LevelIslandWidget>
         builder: (context, child) {
           return Transform.translate(
             offset: Offset(0, widget.isLocked ? 0 : _floatAnimation.value),
-            child: Opacity(
-              opacity: widget.isLocked ? 0.6 : 1.0,
-              child: SizedBox(
+            child: SizedBox(
                 width: widget.size,
                 height: widget.size,
                 child: Stack(
@@ -110,8 +108,7 @@ class _LevelIslandWidgetState extends State<LevelIslandWidget>
                   ],
                 ),
               ),
-            ),
-          );
+            );
         },
       ),
     );

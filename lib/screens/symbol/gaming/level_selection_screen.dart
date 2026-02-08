@@ -12,10 +12,43 @@ class LevelSelectionScreen extends StatefulWidget {
   State<LevelSelectionScreen> createState() => _LevelSelectionScreenState();
 }
 
-class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
+class _LevelSelectionScreenState extends State<LevelSelectionScreen> 
+    with SingleTickerProviderStateMixin {
   // Simulate level data
   final int totalLevels = 7; // Restored to 7 levels
-  final int unlockedLevels = 3; 
+  final int unlockedLevels = 3;
+  
+  AnimationController? _playTextController;
+  Animation<double>? _playTextBounce;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimation();
+  }
+  
+  void _initializeAnimation() {
+    _playTextController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    
+    // Bouncing drop animation (0 to -15 pixels, like falling and bouncing)
+    _playTextBounce = Tween<double>(begin: -15.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _playTextController!,
+        curve: Curves.bounceOut,
+      ),
+    );
+    
+    _playTextController!.repeat();
+  }
+  
+  @override
+  void dispose() {
+    _playTextController?.dispose();
+    super.dispose();
+  } 
 
   void _onLevelTap(int level) {
     Get.snackbar(
@@ -115,10 +148,11 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                      children: [
                        // Text Content
                        Positioned(
-                         left: 24,
-                         top: 24,
+                         left: 0,
+                         right: 0,
+                         top: 50, // Moved down from 24 to 50
                          child: Column(
-                           crossAxisAlignment: CrossAxisAlignment.start,
+                           crossAxisAlignment: CrossAxisAlignment.center,
                            children: [
                              Text(
                                'Unlock your level',
@@ -127,14 +161,32 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                                  color: const Color(0xFF2E5E4E), // Dark Green text
                                ),
                              ),
-                             Text(
-                               'Play',
-                               style: GoogleFonts.luckiestGuy(
-                                 fontSize: 60,
-                                 color: const Color(0xFF2E5E4E), // Dark Green text
-                                 height: 1.0,
-                               ),
-                             ),
+                             const SizedBox(height: 18), // Increased spacing
+                             _playTextBounce != null
+                                 ? AnimatedBuilder(
+                                     animation: _playTextBounce!,
+                                     builder: (context, child) {
+                                       return Transform.translate(
+                                         offset: Offset(0, _playTextBounce!.value),
+                                         child: Text(
+                                           'PLAY',
+                                           style: GoogleFonts.luckiestGuy(
+                                             fontSize: 60,
+                                             color: const Color(0xFF2E5E4E), // Dark Green text
+                                             height: 1.0,
+                                           ),
+                                         ),
+                                       );
+                                     },
+                                   )
+                                 : Text(
+                                     'PLAY',
+                                     style: GoogleFonts.luckiestGuy(
+                                       fontSize: 60,
+                                       color: const Color(0xFF2E5E4E), // Dark Green text
+                                       height: 1.0,
+                                     ),
+                                   ),
                            ],
                          ),
                        ),
