@@ -17,7 +17,7 @@ class BalloonGameScreen extends StatefulWidget {
   State<BalloonGameScreen> createState() => _BalloonGameScreenState();
 }
 
-class _BalloonGameScreenState extends State<BalloonGameScreen> {
+class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTickerProviderStateMixin {
   int _score = 2755;
   int _num1 = 2;
   int _num2 = 2;
@@ -26,10 +26,39 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
   String _correctOperation = '+';
   List<String> _options = ['+', '-', '='];
 
+  final GlobalKey _overlayKey = GlobalKey();
+  final GlobalKey _monsterKey = GlobalKey();
+  final List<GlobalKey> _optionKeys = [GlobalKey(), GlobalKey(), GlobalKey()];
+
+  late AnimationController _feedController;
+  late Animation<Offset> _feedPositionAnim;
+  late Animation<double> _feedScaleAnim;
+
+  bool _isFeeding = false;
+  String _feedingText = '';
+  Color _feedingColor = Colors.white;
+
   @override
   void initState() {
     super.initState();
+    _feedController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _feedController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _finishFeeding();
+      }
+    });
+
+    _feedPositionAnim = Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(_feedController);
+    _feedScaleAnim = Tween<double>(begin: 1.0, end: 1.0).animate(_feedController);
+
     _generateQuestion();
+  }
+
+  @override
+  void dispose() {
+    _feedController.dispose();
+    super.dispose();
   }
 
   void _generateQuestion() {
@@ -70,18 +99,64 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
     _options.shuffle();
   }
 
-  void _checkAnswer(String operation) {
-    setState(() {
-      _selectedOperation = operation;
-    });
+  void _onOptionSelected(int index, String text, Color color) {
+    if (_isFeeding) return;
 
+    final RenderBox? optionBox =
+        _optionKeys[index].currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? monsterBox =
+        _monsterKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? overlayBox =
+        _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+
+    if (optionBox != null && monsterBox != null && overlayBox != null) {
+      final startPosGlobal = optionBox.localToGlobal(Offset.zero);
+      // Target center of monster mouth
+      final endPosGlobal = monsterBox.localToGlobal(Offset(
+        monsterBox.size.width / 2 - 52.5, // 52.5 is half flying widget width
+        monsterBox.size.height / 2 - 52.5 + 20, // +20 to aim slightly lower (mouth)
+      ));
+
+      final startPos = overlayBox.globalToLocal(startPosGlobal);
+      final endPos = overlayBox.globalToLocal(endPosGlobal);
+
+      setState(() {
+        _selectedOperation = text;
+        _feedingText = text;
+        _feedingColor = color;
+        _isFeeding = true;
+      });
+
+      _feedPositionAnim = Tween<Offset>(begin: startPos, end: endPos).animate(
+        CurvedAnimation(parent: _feedController, curve: Curves.easeInOut),
+      );
+      _feedScaleAnim = Tween<double>(begin: 1.0, end: 0.2).animate(
+        CurvedAnimation(parent: _feedController, curve: Curves.easeInOut),
+      );
+
+      _feedController.forward(from: 0.0);
+    } else {
+      _checkAnswer(text);
+    }
+  }
+
+  void _finishFeeding() {
+    setState(() {
+      _isFeeding = false;
+    });
+    _checkAnswer(_feedingText);
+  }
+
+  void _checkAnswer(String operation) {
     if (operation == _correctOperation) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          _score += 10;
-          _selectedOperation = null;
-          _generateQuestion();
-        });
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _score += 10;
+            _selectedOperation = null;
+            _generateQuestion();
+          });
+        }
         Get.snackbar(
           'Correct! 🎉',
           '+10 points',
@@ -93,10 +168,12 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
         );
       });
     } else {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          _selectedOperation = null;
-        });
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _selectedOperation = null;
+          });
+        }
         Get.snackbar(
           'Try Again! 💭',
           'Keep trying!',
@@ -121,8 +198,9 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
       child: Center(
         child: Text(
           text,
-          style: GoogleFonts.hennyPenny(
-            fontSize: 40,
+          style: GoogleFonts.lora(
+            fontSize: 44,
+            fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
@@ -151,31 +229,35 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
     );
   }
 
-  Widget _buildOptionCircle(String text, Color color) {
+  Widget _buildOptionCircle(int index, String text, Color color) {
     final isSelected = _selectedOperation == text;
-    final isCorrect = isSelected && text == _correctOperation;
-    final isWrong = isSelected && text != _correctOperation;
+    // Don't show correct/wrong border while flying
+    final isCorrect = isSelected && text == _correctOperation && !_isFeeding;
+    final isWrong = isSelected && text != _correctOperation && !_isFeeding;
 
     Color borderColor = Colors.transparent;
     if (isCorrect) borderColor = Colors.green;
     if (isWrong) borderColor = Colors.red;
 
     final shadowColor = color == Colors.white ? const Color(0xFFE0E0E0) : const Color(0xFFE4D82C);
+    
+    final bool isFlying = _isFeeding && isSelected;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          onTap: () => _checkAnswer(text),
+          onTap: () => _onOptionSelected(index, text, color),
           child: Container(
+            key: _optionKeys[index],
             width: 105,
             height: 105,
-            decoration: BoxDecoration(
+            decoration: isFlying ? const BoxDecoration(shape: BoxShape.circle) : BoxDecoration(
               color: shadowColor,
               shape: BoxShape.circle,
               border: Border.all(color: borderColor, width: isSelected ? 4 : 0),
             ),
-            child: Align(
+            child: isFlying ? null : Align(
               alignment: Alignment.topCenter,
               child: Container(
                 width: 105,
@@ -215,6 +297,40 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
     );
   }
 
+  Widget _buildFlyingOptionCircle(String text, Color color) {
+    final shadowColor = color == Colors.white ? const Color(0xFFE0E0E0) : const Color(0xFFE4D82C);
+    
+    return Container(
+      width: 105,
+      height: 105,
+      decoration: BoxDecoration(
+        color: shadowColor,
+        shape: BoxShape.circle,
+      ),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          width: 105,
+          height: 98,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(
+                fontSize: 55,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF19324B),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSideIcon(IconData icon) {
     return Container(
       width: 42,
@@ -241,6 +357,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFC2D2B8), // Matching pale green
       body: Stack(
+        key: _overlayKey,
         children: [
           // Background Landscape (Bottom Half only)
           Positioned(
@@ -369,6 +486,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
                         SizedBox(
                           height: 250,
                           child: Stack(
+                            key: _monsterKey,
                             alignment: Alignment.center,
                             children: [
                               Container(
@@ -398,9 +516,9 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildOptionCircle(_options[0], Colors.white),
-                      _buildOptionCircle(_options[1], const Color(0xFFFFF111)), // Bright yellow
-                      _buildOptionCircle(_options[2], Colors.white),
+                      _buildOptionCircle(0, _options[0], Colors.white),
+                      _buildOptionCircle(1, _options[1], const Color(0xFFFFF111)), // Bright yellow
+                      _buildOptionCircle(2, _options[2], Colors.white),
                     ],
                   ),
                 ),
@@ -422,6 +540,23 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> {
               ],
             ),
           ),
+
+          // Flying animation overlay
+          if (_isFeeding)
+            AnimatedBuilder(
+              animation: _feedController,
+              builder: (context, child) {
+                return Positioned(
+                  left: _feedPositionAnim.value.dx,
+                  top: _feedPositionAnim.value.dy,
+                  child: Transform.scale(
+                    scale: _feedScaleAnim.value,
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildFlyingOptionCircle(_feedingText, _feedingColor),
+            ),
         ],
       ),
     );
