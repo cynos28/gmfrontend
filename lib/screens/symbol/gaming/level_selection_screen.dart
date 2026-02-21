@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart' hide AnimatedBuilder; // Hide to avoid conflict
 import 'package:ganithamithura/screens/symbol/gaming/widgets/level_island_widget.dart';
+import 'package:ganithamithura/screens/symbol/gaming/balloon_game_screen.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
   const LevelSelectionScreen({super.key});
@@ -51,17 +52,11 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   } 
 
   void _onLevelTap(int level) {
-    Get.snackbar(
-      'Level $level',
-      'Starting Level $level... 🚀',
-      backgroundColor: const Color(0xFF4CAF50),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
-    );
-    // Navigate to actual game screen here
+    // Navigate to balloon math game
+    Get.to(() => BalloonGameScreen(
+      grade: 1,
+      level: level,
+    ));
   }
 
   @override
