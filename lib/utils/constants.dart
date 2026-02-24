@@ -53,6 +53,7 @@ class StorageKeys {
   static const String currentLevel = 'current_level';
   static const String progressData = 'progress_data';
   static const String lastActivityDate = 'last_activity_date';
+  static const String hasSeenOnboarding = 'has_seen_onboarding';
 }
 
 class NumberWords {
