@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/screens/onboarding/onboarding_screen.dart';
+import 'package:ganithamithura/services/user_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,14 +15,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _navigateForward();
   }
 
-  Future<void> _navigateToHome() async {
-    // Wait for 3 seconds before navigating to home
+  Future<void> _navigateForward() async {
+    // Wait for 3 seconds before navigating
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
+    if (!mounted) return;
+
+    final onboardingDone = await UserService.isOnboardingCompleted();
+    if (!mounted) return;
+
+    if (onboardingDone) {
       Get.offAll(() => const HomeScreen());
+    } else {
+      Get.offAll(() => const OnboardingScreen());
     }
   }
 
