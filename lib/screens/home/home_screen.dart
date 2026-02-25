@@ -7,8 +7,7 @@ import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
-import 'package:ganithamithura/services/api/auth_service.dart';
-import 'package:ganithamithura/models/user.dart';
+import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
@@ -52,11 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     setState(() {
       _currentNavIndex = index;
     });
-    
+
     if (index == 1) {
       // Navigate to Learn screen
       Get.to(() => const LearnScreen())?.then((_) {
@@ -78,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
@@ -86,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(AppColors.infoColor),
       colorText: Colors.white,
     );
-    
+
     // Reset index since navigation didn't happen
     setState(() {
       _currentNavIndex = 0;
@@ -316,16 +315,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(AppColors.symbolColor),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Symbols will be available soon',
-                    backgroundColor: const Color(AppColors.infoColor),
-                    colorText: Colors.white,
-                    borderRadius: KidsSpacing.radiusMedium,
-                  );
-                },
-                isEnabled: false,
+                onTap: () => Get.to(() => const SymbolHomeScreen()),
+                isEnabled: true,
               ),
             ),
           ],

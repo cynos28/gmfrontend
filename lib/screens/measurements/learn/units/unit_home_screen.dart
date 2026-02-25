@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
@@ -64,32 +65,58 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
   }
 
   Color _getTopicColor() {
-    return const Color(AppColors.measurementColor);
+    switch (widget.unit.topic.toLowerCase()) {
+      case 'length':
+        return KidsColors.lengthColor;
+      case 'area':
+        return KidsColors.areaColor;
+      case 'capacity':
+        return KidsColors.capacityColor;
+      case 'weight':
+        return KidsColors.weightColor;
+      default:
+        return KidsColors.lengthColor;
+    }
+  }
+
+  Color _getTopicBackgroundColor() {
+    switch (widget.unit.topic.toLowerCase()) {
+      case 'length':
+        return KidsColors.lengthBackground;
+      case 'area':
+        return KidsColors.areaBackground;
+      case 'capacity':
+        return KidsColors.capacityBackground;
+      case 'weight':
+        return KidsColors.weightBackground;
+      default:
+        return KidsColors.lengthBackground;
+    }
   }
 
   Color _getTopicIconColor() {
-    return const Color(AppColors.measurementIcon);
+    return _getTopicColor();
   }
 
   IconData _getTopicIcon() {
     switch (widget.unit.topic.toLowerCase()) {
       case 'length':
-        return Icons.straighten;
+        return Icons.straighten_rounded;
       case 'area':
-        return Icons.crop_square;
+        return Icons.grid_on_rounded;
       case 'capacity':
-        return Icons.local_drink;
+        return Icons.local_drink_rounded;
       case 'weight':
-        return Icons.fitness_center;
+        return Icons.scale_rounded;
       default:
-        return Icons.straighten;
+        return Icons.straighten_rounded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(AppColors.backgroundColor),
+      backgroundColor: _getTopicBackgroundColor(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -120,27 +147,52 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, size: 28),
-                          onPressed: () => Get.back(),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: KidsShadows.soft,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 24,
+                              color: KidsColors.textPrimary,
+                            ),
+                            onPressed: () => Get.back(),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: 14,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: _getTopicColor().withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              colors: [
+                                _getTopicColor(),
+                                _getTopicColor().withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getTopicColor().withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: Text(
                             'Grade ${widget.unit.grade}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: _getTopicIconColor(),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
                             ),
                           ),
                         ),
