@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/screens/onboards/onboarding_screen.dart';
+import 'package:ganithamithura/screens/authentication/sign_in_screen.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
+import 'package:ganithamithura/utils/constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,10 +22,36 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToHome() async {
-    // Wait for 3 seconds before navigating to home
+    // Wait for 3 seconds before navigating
     await Future.delayed(const Duration(seconds: 3));
+    
     if (mounted) {
-      Get.offAll(() => const HomeScreen());
+      // Check if onboarding has been seen
+      bool hasSeenOnboarding = false;
+      try {
+        hasSeenOnboarding = StorageService.instance.prefs.getBool(
+          StorageKeys.hasSeenOnboarding,
+        ) ?? false;
+      } catch (e) {
+        // If storage not initialized yet, assume first time
+        debugPrint('Storage not ready, showing onboarding: $e');
+      }
+
+      // Navigate based on onboarding and login status
+      if (!hasSeenOnboarding) {
+        // First time user - show onboarding
+        Get.offAll(() => const OnboardingScreen());
+      } else {
+        // Check if user is logged in
+        bool isLoggedIn = await AuthService.instance.isLoggedIn();
+        if (isLoggedIn) {
+          // User is logged in - go to home
+          Get.offAll(() => const HomeScreen());
+        } else {
+          // User not logged in - go to sign in
+          Get.offAll(() => const SignInScreen());
+        }
+      }
     }
   }
 
