@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:ganithamithura/models/onboarding_data.dart';
 import 'package:ganithamithura/widgets/onboard_page.dart';
 import 'package:ganithamithura/screens/onboards/permissions_screen.dart';
-import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/screens/authentication/sign_in_screen.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
@@ -63,10 +63,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       debugPrint('Error saving onboarding status: $e');
     }
 
-    // Navigate to home
+    // Navigate to sign in screen
     if (mounted) {
       Get.offAll(
-        () => const HomeScreen(),
+        () => const SignInScreen(),
         transition: Transition.fadeIn,
         duration: AppConstants.mediumAnimationDuration,
       );

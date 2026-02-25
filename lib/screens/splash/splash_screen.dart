@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/screens/home/home_screen.dart';
 import 'package:ganithamithura/screens/onboards/onboarding_screen.dart';
+import 'package:ganithamithura/screens/authentication/sign_in_screen.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -35,11 +37,20 @@ class _SplashScreenState extends State<SplashScreen> {
         debugPrint('Storage not ready, showing onboarding: $e');
       }
 
-      // Navigate to onboarding if not seen, otherwise go to home
-      if (hasSeenOnboarding) {
-        Get.offAll(() => const HomeScreen());
-      } else {
+      // Navigate based on onboarding and login status
+      if (!hasSeenOnboarding) {
+        // First time user - show onboarding
         Get.offAll(() => const OnboardingScreen());
+      } else {
+        // Check if user is logged in
+        bool isLoggedIn = await AuthService.instance.isLoggedIn();
+        if (isLoggedIn) {
+          // User is logged in - go to home
+          Get.offAll(() => const HomeScreen());
+        } else {
+          // User not logged in - go to sign in
+          Get.offAll(() => const SignInScreen());
+        }
       }
     }
   }

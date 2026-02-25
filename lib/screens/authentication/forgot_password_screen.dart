@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 
 /// Forgot Password Screen
 class ForgotPasswordScreen extends StatefulWidget {
@@ -28,23 +29,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _isLoading = true;
       });
 
-      // TODO: Implement actual password reset logic with your backend
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-        _emailSent = true;
-      });
-
-      if (mounted) {
-        Get.snackbar(
-          'Email Sent',
-          'Check your inbox for password reset instructions',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Color(AppColors.successColor),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 4),
+      try {
+        final response = await AuthService.instance.forgotPassword(
+          email: _emailController.text.trim(),
         );
+
+        setState(() {
+          _isLoading = false;
+          _emailSent = response.success;
+        });
+
+        if (mounted) {
+          Get.snackbar(
+            response.success ? 'Email Sent' : 'Error',
+            response.message ?? 'Please try again',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: response.success
+                ? Color(AppColors.successColor)
+                : Color(AppColors.errorColor),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          Get.snackbar(
+            'Error',
+            'An error occurred. Please try again.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Color(AppColors.errorColor),
+            colorText: Colors.white,
+          );
+        }
       }
     }
   }

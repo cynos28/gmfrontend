@@ -4,6 +4,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/authentication/sign_up_screen.dart';
 import 'package:ganithamithura/screens/authentication/forgot_password_screen.dart';
 import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 
 /// Sign In Screen - "Welcome Back!"
 class SignInScreen extends StatefulWidget {
@@ -33,19 +34,55 @@ class _SignInScreenState extends State<SignInScreen> {
         _isLoading = true;
       });
 
-      // TODO: Implement actual sign in logic with your backend
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      // TODO: Navigate to home after successful sign in
-      if (mounted) {
-        Get.offAll(
-          () => const HomeScreen(),
-          transition: Transition.fadeIn,
+      try {
+        final response = await AuthService.instance.signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
         );
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          if (response.success && response.user != null) {
+            Get.snackbar(
+              'Welcome Back',
+              'Hello ${response.user!.name}!',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Color(AppColors.successColor),
+              colorText: Colors.white,
+            );
+            
+            // Navigate to home screen
+            Get.offAll(
+              () => const HomeScreen(),
+              transition: Transition.fadeIn,
+            );
+          } else {
+            Get.snackbar(
+              'Error',
+              response.message ?? 'Invalid email or password',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Color(AppColors.errorColor),
+              colorText: Colors.white,
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          Get.snackbar(
+            'Error',
+            'An error occurred. Please try again.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Color(AppColors.errorColor),
+            colorText: Colors.white,
+          );
+        }
       }
     }
   }
