@@ -38,11 +38,14 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
   String _feedingText = '';
   Color _feedingColor = Colors.white;
 
+  late Animation<double> _feedRotateAnim;
+
   @override
   void initState() {
     super.initState();
+    // Increase duration slightly for a better visual
     _feedController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 750));
     _feedController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _finishFeeding();
@@ -51,6 +54,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
 
     _feedPositionAnim = Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(_feedController);
     _feedScaleAnim = Tween<double>(begin: 1.0, end: 1.0).animate(_feedController);
+    _feedRotateAnim = Tween<double>(begin: 0.0, end: 0.0).animate(_feedController);
 
     _generateQuestion();
   }
@@ -62,6 +66,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
   }
 
   void _generateQuestion() {
+    // ... no changes to _generateQuestion ...
     final random = math.Random();
     final operations = ['+', '-', '×', '÷'];
     _correctOperation = operations[random.nextInt(operations.length)];
@@ -111,10 +116,12 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
 
     if (optionBox != null && monsterBox != null && overlayBox != null) {
       final startPosGlobal = optionBox.localToGlobal(Offset.zero);
-      // Target center of monster mouth
+      // Target exact center of monster mouth. 
+      // The 105 is the width/height of the flying container itself so we offset by half (52.5) to align the centers.
+      // 30px offset on y targets the lower jaw/mouth specifically.
       final endPosGlobal = monsterBox.localToGlobal(Offset(
-        monsterBox.size.width / 2 - 52.5, // 52.5 is half flying widget width
-        monsterBox.size.height / 2 - 52.5 + 20, // +20 to aim slightly lower (mouth)
+        (monsterBox.size.width / 2) - 52.5,
+        (monsterBox.size.height / 2) - 52.5 + 35, 
       ));
 
       final startPos = overlayBox.globalToLocal(startPosGlobal);
@@ -127,10 +134,19 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
         _isFeeding = true;
       });
 
+      // Fly to mouth
       _feedPositionAnim = Tween<Offset>(begin: startPos, end: endPos).animate(
-        CurvedAnimation(parent: _feedController, curve: Curves.easeInOut),
+        CurvedAnimation(parent: _feedController, curve: Curves.easeInOutCubic),
       );
-      _feedScaleAnim = Tween<double>(begin: 1.0, end: 0.2).animate(
+      
+      // Keep normal size until it gets close, then shrink aggressively into the mouth
+      _feedScaleAnim = TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 60),
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 40),
+      ]).animate(CurvedAnimation(parent: _feedController, curve: Curves.easeIn));
+
+      // Add a playful spin while it flies
+      _feedRotateAnim = Tween<double>(begin: 0.0, end: 4 * math.pi).animate(
         CurvedAnimation(parent: _feedController, curve: Curves.easeInOut),
       );
 
@@ -551,7 +567,10 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                   top: _feedPositionAnim.value.dy,
                   child: Transform.scale(
                     scale: _feedScaleAnim.value,
-                    child: child,
+                    child: Transform.rotate(
+                      angle: _feedRotateAnim.value,
+                      child: child,
+                    ),
                   ),
                 );
               },
