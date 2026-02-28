@@ -59,7 +59,7 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
         final character = await SymbolService.instance.getCharacter(user.id);
         if (character != null) {
           Get.back(); // close loading
-          Get.to(
+          Get.off(
             () => const LevelSelectionScreen(),
             transition: Transition.rightToLeftWithFade,
             duration: const Duration(milliseconds: 500),
@@ -72,7 +72,7 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
     }
     
     Get.back(); // close loading
-    Get.to(
+    Get.off(
       () => const CharacterSelectionScreen(),
       transition: Transition.rightToLeftWithFade,
       duration: const Duration(milliseconds: 500),

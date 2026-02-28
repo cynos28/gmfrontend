@@ -8,6 +8,7 @@ import 'package:ganithamithura/screens/symbol/gaming/balloon_game_screen.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
+import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
   const LevelSelectionScreen({super.key});
@@ -117,29 +118,33 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
           SafeArea(
             child: Column(
               children: [
-                // Header Area
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      // Back Button (Brown Circle Home Icon)
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6D4C41), // Brown
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.home_outlined, color: Colors.white, size: 30),
-                          onPressed: () => Get.back(), 
-                          padding: EdgeInsets.zero,
+                      // Back Button (Left)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
+                            onPressed: () => Get.back(),
+                            padding: const EdgeInsets.only(left: 6), // slightly offset the back arrow for optical center
+                          ),
                         ),
                       ),
                       
-                      // Currency/Score Display (White Pill with Gold Coin)
+                      // Currency/Score Display (Center)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
@@ -155,6 +160,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                           ],
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.stars, color: Colors.amber, size: 28), // Gold Coin/Star
                             const SizedBox(width: 8),
@@ -162,13 +168,34 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                               : Text(
                                   '$_score',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                     color: Colors.black87,
                                   ),
                                 ),
                           ],
+                        ),
+                      ),
+
+                      // Home Button (Right)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.home_outlined, color: Colors.black87, size: 26),
+                            onPressed: () => Get.back(), 
+                            padding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
                     ],
