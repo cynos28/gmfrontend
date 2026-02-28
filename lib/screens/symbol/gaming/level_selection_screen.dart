@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart' hide AnimatedBuilder; // Hide to avoid conflict
 import 'package:ganithamithura/screens/symbol/gaming/widgets/level_island_widget.dart';
 import 'package:ganithamithura/screens/symbol/gaming/balloon_game_screen.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
+import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
   const LevelSelectionScreen({super.key});
@@ -17,7 +20,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     with SingleTickerProviderStateMixin {
   // Simulate level data
   final int totalLevels = 7; // Restored to 7 levels
-  final int unlockedLevels = 3;
+  int _unlockedLevels = 1;
+  int _score = 0;
+  bool _isLoading = true;
   
   AnimationController? _playTextController;
   Animation<double>? _playTextBounce;
@@ -26,6 +31,43 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   void initState() {
     super.initState();
     _initializeAnimation();
+    _loadProgress();
+  }
+  
+  Future<void> _loadProgress() async {
+    try {
+      final user = await AuthService.instance.getCurrentUser();
+      int userScore = 0;
+      
+      if (user != null) {
+        try {
+          final leaderboard = await SymbolService.instance.getLeaderboard();
+          for (var p in leaderboard) {
+            if (p['user_id'] == user.id) {
+              userScore = p['score'] ?? 0;
+              break;
+            }
+          }
+        } catch(e) {
+          print("Error fetching score: $e");
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _score = userScore;
+          // Dynamically check how many levels are unlocked from score
+          _unlockedLevels = LevelConfig.getUnlockedLevel(_score);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
   
   void _initializeAnimation() {
@@ -56,6 +98,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     Get.to(() => BalloonGameScreen(
       grade: 1,
       level: level,
+      initialScore: _score,
     ));
   }
 
@@ -115,14 +158,16 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                           children: [
                             const Icon(Icons.stars, color: Colors.amber, size: 28), // Gold Coin/Star
                             const SizedBox(width: 8),
-                            Text(
-                              '2755', // Mock score
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
+                            _isLoading 
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              : Text(
+                                  '$_score',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                           ],
                         ),
                       ),
@@ -209,10 +254,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       height: 850, // Reduced height for compact fit without scrolling
                       child: Stack(
                         children: [
-                          // 1 (Bottom Left) -> 2 (Up Right) -> 3 (Right) -> 4 (Up Center) -> 
-                          // 5 (Right) -> 6 (Up Right) -> 7 (Far Right Edge)
-                          
-                          // 1 (Bottom Left) -> 2/3 (Right) -> 4/5 (Left) -> 6/7 (Right) S-curve
+
                           
                           // Compact "No Scroll" Layout (60px vertical gaps, Level 1 fully visible)
                           _buildLevelIsland(context, 7, 340, 60),  // 7: Top Right (Below Banner)
@@ -236,15 +278,21 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   }
 
   Widget _buildLevelIsland(BuildContext context, int level, double left, double top) {
-     final isLocked = level > unlockedLevels;
+     final isLocked = level > _unlockedLevels;
      return Positioned(
        left: left,
        top: top,
        child: LevelIslandWidget(
          levelNumber: level,
          isLocked: isLocked,
-         isCompleted: level < unlockedLevels,
-         onTap: () => _onLevelTap(level),
+         isCompleted: level < _unlockedLevels,
+         onTap: () {
+           if (!isLocked) {
+             _onLevelTap(level);
+           } else {
+             Get.snackbar('Locked', 'This level is locked!', backgroundColor: Colors.orange, colorText: Colors.white);
+           }
+         },
          size: 125, // Increased size as requested
        ),
      );

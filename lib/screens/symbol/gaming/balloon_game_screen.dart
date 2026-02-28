@@ -11,11 +11,13 @@ import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dar
 class BalloonGameScreen extends StatefulWidget {
   final int grade;
   final int level;
+  final int initialScore;
 
   const BalloonGameScreen({
     super.key,
     required this.grade,
     required this.level,
+    required this.initialScore,
   });
 
   @override
@@ -23,7 +25,7 @@ class BalloonGameScreen extends StatefulWidget {
 }
 
 class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTickerProviderStateMixin {
-  int _score = 2755;
+  late int _score;
   int _num1 = 2;
   int _num2 = 2;
   int _result = 4;
@@ -48,6 +50,8 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
+    _score = widget.initialScore;
+    
     // Increase duration slightly for a better visual
     _feedController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 750));
