@@ -379,27 +379,6 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
     );
   }
 
-  Widget _buildSideIcon(IconData icon, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, color: Colors.black, size: 24),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -594,7 +573,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildOptionCircle(0, _options[0], Colors.white),
-                      _buildOptionCircle(1, _options[1], const Color(0xFFFFF111)), // Bright yellow
+                      _buildOptionCircle(1, _options[1], Colors.white),
                       _buildOptionCircle(2, _options[2], Colors.white),
                     ],
                   ),
@@ -603,23 +582,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
             ),
           ),
 
-          // Side icons
-          Positioned(
-            right: 8,
-            top: MediaQuery.of(context).padding.top + 100,
-            child: Column(
-              children: [
-                _buildSideIcon(Icons.volume_up),
-                const SizedBox(height: 18),
-                _buildSideIcon(Icons.pause),
-                const SizedBox(height: 18),
-                _buildSideIcon(Icons.settings),
-                const SizedBox(height: 18),
-                // Finish Game button
-                _buildSideIcon(Icons.flag_circle, onTap: () => _endGame(isWin: true)),
-              ],
-            ),
-          ),
+
 
           // Flying animation overlay
           if (_isFeeding)

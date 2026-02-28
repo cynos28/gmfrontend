@@ -108,11 +108,14 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withOpacity(0.9),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                          ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
                           onPressed: () => Get.back(),
                         ),
                       ),
@@ -252,7 +255,45 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
               ],
             ),
           ),
+
+          // Left side icons (migrated from Gaming Screen)
+          Positioned(
+            left: 16,
+            top: MediaQuery.of(context).padding.top + 100,
+            child: Column(
+              children: [
+                _buildSideIcon(Icons.volume_up),
+                const SizedBox(height: 18),
+                _buildSideIcon(Icons.pause),
+                const SizedBox(height: 18),
+                _buildSideIcon(Icons.settings),
+              ],
+            ),
+          ),
+
         ],
+      ),
+    );
+  }
+
+  Widget _buildSideIcon(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black87, size: 24),
       ),
     );
   }
