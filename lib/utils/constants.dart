@@ -3,8 +3,8 @@ library;
 
 class AppConstants {
   // API Configuration - Using WiFi IP (no ADB needed)
-  // Ensure phone and computer are on same WiFi network
-  static const String baseUrl = 'http://192.168.1.18:8000';
+  // Ensure phone and Mac are on same WiFi network
+  static const String baseUrl = 'http://10.0.2.2:8001';
   
   
   // Activity Types
@@ -34,7 +34,7 @@ class AppConstants {
   
   // Timeouts
   static const int videoLoadTimeout = 30; // seconds
-  static const int apiTimeout = 10; // seconds
+  static const int apiTimeout = 30; // seconds
   
   // UI Constants
   static const double buttonBorderRadius = 16.0;

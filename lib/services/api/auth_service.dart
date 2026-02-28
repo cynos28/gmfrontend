@@ -40,6 +40,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
+    required int grade,
   }) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/signup');
@@ -50,6 +51,7 @@ class AuthService {
           'name': name,
           'email': email,
           'password': password,
+          'grade': grade,
         }),
       ).timeout(
         Duration(seconds: AppConstants.apiTimeout),

@@ -3,6 +3,7 @@ class User {
   final String id;
   final String name;
   final String email;
+  final int grade;
   final DateTime? createdAt;
   final DateTime? lastLogin;
 
@@ -10,6 +11,7 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    this.grade = 1,
     this.createdAt,
     this.lastLogin,
   });
@@ -19,6 +21,7 @@ class User {
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
+      grade: json['grade'] ?? 1,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -33,6 +36,7 @@ class User {
       '_id': id,
       'name': name,
       'email': email,
+      'grade': grade,
       'createdAt': createdAt?.toIso8601String(),
       'lastLogin': lastLogin?.toIso8601String(),
     };
@@ -42,6 +46,7 @@ class User {
     String? id,
     String? name,
     String? email,
+    int? grade,
     DateTime? createdAt,
     DateTime? lastLogin,
   }) {
@@ -49,6 +54,7 @@ class User {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      grade: grade ?? this.grade,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
     );
