@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart' hide AnimatedBuilder;
 import 'package:ganithamithura/screens/symbol/gaming/character_selection_screen.dart';
+import 'package:ganithamithura/screens/symbol/gaming/level_selection_screen.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
+import 'package:ganithamithura/services/api/symbol_service.dart';
 
 class GameWelcomeScreen extends StatefulWidget {
   const GameWelcomeScreen({super.key});
@@ -48,7 +51,27 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
     super.dispose();
   }
 
-  void _onGetStartedPressed() {
+  void _onGetStartedPressed() async {
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    try {
+      final user = await AuthService.instance.getCurrentUser();
+      if (user != null) {
+        final character = await SymbolService.instance.getCharacter(user.id);
+        if (character != null) {
+          Get.back(); // close loading
+          Get.to(
+            () => const LevelSelectionScreen(),
+            transition: Transition.rightToLeftWithFade,
+            duration: const Duration(milliseconds: 500),
+          );
+          return;
+        }
+      }
+    } catch (e) {
+       print("Error fetching character: $e");
+    }
+    
+    Get.back(); // close loading
     Get.to(
       () => const CharacterSelectionScreen(),
       transition: Transition.rightToLeftWithFade,

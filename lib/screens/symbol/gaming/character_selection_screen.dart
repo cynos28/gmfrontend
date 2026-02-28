@@ -38,13 +38,15 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
       final user = await AuthService.instance.getCurrentUser();
       if (user != null) {
         final savedName = await SymbolService.instance.getCharacter(user.id);
-        // Map stored names back to index (assuming 1-indexed naming like 'character1.png')
-        for (int i = 0; i < _characterImages.length; i++) {
-          if (_characterImages[i].contains(savedName.toLowerCase())) {
-            setState(() {
-              _selectedCharacterIndex = i;
-            });
-            break;
+        if (savedName != null) {
+          // Map stored names back to index (assuming 1-indexed naming like 'character1.png')
+          for (int i = 0; i < _characterImages.length; i++) {
+            if (_characterImages[i].contains(savedName.toLowerCase())) {
+              setState(() {
+                _selectedCharacterIndex = i;
+              });
+              break;
+            }
           }
         }
       }
