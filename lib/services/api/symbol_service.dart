@@ -34,7 +34,7 @@ class SymbolService {
     }
   }
 
-  Future<String> getCharacter(String userId) async {
+  Future<String?> getCharacter(String userId) async {
     try {
       final url = Uri.parse('$_baseUrl/api/users/$userId/character');
       final response = await http.get(
@@ -44,13 +44,13 @@ class SymbolService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['character_name'] ?? 'Cat';
+        return data['character_name'];
       } else {
-        return 'Cat'; // default fallback
+        return null; // Explicitly returning null means they haven't chosen one
       }
     } catch (e) {
       print('Error loading character: $e');
-      return 'Cat'; // default fallback
+      return null;
     }
   }
 
@@ -79,4 +79,25 @@ class SymbolService {
       throw Exception('Network error saving score: $e');
     }
   }
+
+  Future<List<dynamic>> getLeaderboard() async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/game/leaderboard');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: AppConstants.apiTimeout));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['leaderboard'] ?? [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error parsing leaderboard: $e');
+      return [];
+    }
+  }
 }
+
