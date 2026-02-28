@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
+import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 
 class BalloonGameScreen extends StatefulWidget {
   final int grade;
@@ -203,6 +205,34 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
     }
   }
 
+  void _finishGame() async {
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    
+    try {
+      final user = await AuthService.instance.getCurrentUser();
+      if (user != null) {
+        await SymbolService.instance.saveScore(
+          userId: user.id,
+          gameName: 'BalloonGame',
+          score: _score,
+          level: widget.level,
+        );
+      }
+      Get.back(); // close loading
+      Get.back(); // Return to previous screen
+      Get.snackbar('Game Over!', 'Final Score: $_score points! 🎉', 
+        backgroundColor: Colors.green, 
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+      );
+    } catch (e) {
+      Get.back(); // close loading UI
+      print('Error saving score: $e');
+      Get.snackbar('Error', 'Could not save score, but great job!', backgroundColor: Colors.orange, colorText: Colors.white);
+    }
+  }
+
   Widget _buildTopCircle(String text) {
     return Container(
       width: 75,
@@ -347,22 +377,25 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
     );
   }
 
-  Widget _buildSideIcon(IconData icon) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  Widget _buildSideIcon(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black, size: 24),
       ),
-      child: Icon(icon, color: Colors.black, size: 24),
     );
   }
 
@@ -553,6 +586,9 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                 _buildSideIcon(Icons.pause),
                 const SizedBox(height: 18),
                 _buildSideIcon(Icons.settings),
+                const SizedBox(height: 18),
+                // Finish Game button
+                _buildSideIcon(Icons.flag_circle, onTap: _finishGame),
               ],
             ),
           ),
