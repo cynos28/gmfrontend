@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/screens/symbol/gaming/leaderboard_screen.dart';
-import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
 
 class CongratulationsScreen extends StatelessWidget {
   final int score;
@@ -51,7 +51,7 @@ class CongratulationsScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.home_outlined, color: Colors.black, size: 40),
-                          onPressed: () => Get.offAll(() => const HomeScreen()),
+                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
                         ),
                       ),
                       

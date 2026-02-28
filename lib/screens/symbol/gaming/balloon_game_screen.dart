@@ -6,6 +6,7 @@ import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/screens/symbol/gaming/leaderboard_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/congratulations_screen.dart';
+import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
 
 class BalloonGameScreen extends StatefulWidget {
   final int grade;
@@ -427,10 +428,10 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Home button
+                      // Back button (Left)
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
                           color: const Color(0xFF8B6447), // Dark brown color
                           shape: BoxShape.circle,
@@ -443,39 +444,64 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.home_outlined, color: Colors.black, size: 40),
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
                           onPressed: () => Get.back(),
                         ),
                       ),
-                      // Score
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8), // More rectangular in UI
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFDAA520), // Gold
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.eco, color: Colors.white, size: 20), // Clover substitute
+                      // Score and Home (Right)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.8),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '$_score',
-                              style: GoogleFonts.poppins(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFDAA520), // Gold
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.eco, color: Colors.white, size: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '$_score',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF8B6447),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.home_outlined, color: Colors.black, size: 28),
+                              onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -574,8 +600,8 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
 
           // Side icons
           Positioned(
-            right: 16,
-            top: 240,
+            right: 8,
+            top: MediaQuery.of(context).padding.top + 100,
             child: Column(
               children: [
                 _buildSideIcon(Icons.volume_up),

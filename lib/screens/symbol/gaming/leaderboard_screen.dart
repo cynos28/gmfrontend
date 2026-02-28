@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -116,8 +117,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.home_outlined, color: Colors.black, size: 40),
-                          onPressed: () => Get.back(),
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
+                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
                         ),
                       ),
                       
