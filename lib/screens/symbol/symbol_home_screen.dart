@@ -5,10 +5,35 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/symbol/quiz/symbol_quiz_intro_screen.dart';
 import 'package:ganithamithura/screens/symbol/widgets/floating_symbols_background.dart';
 import 'package:ganithamithura/screens/symbol/gaming/gaming_intro_screen.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
+import 'package:ganithamithura/models/user.dart';
 
 /// SymbolHomeScreen - Child-friendly screen with dynamic background
-class SymbolHomeScreen extends StatelessWidget {
+class SymbolHomeScreen extends StatefulWidget {
   const SymbolHomeScreen({super.key});
+
+  @override
+  State<SymbolHomeScreen> createState() => _SymbolHomeScreenState();
+}
+
+class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
+  String _userName = 'Student';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await AuthService.instance.getCurrentUser();
+    if (user != null && mounted) {
+      setState(() {
+        // Use just the first name if available, else full name
+        _userName = user.name.split(' ').first;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +128,7 @@ class SymbolHomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hello, Marion',
+                  'Hello, $_userName',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
