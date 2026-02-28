@@ -429,83 +429,84 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                 // Top bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
                       // Back button (Left)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
+                            onPressed: () => Get.back(),
+                            padding: const EdgeInsets.only(left: 6),
+                          ),
+                        ),
+                      ),
+
+                      // Score (Center)
                       Container(
-                        width: 50,
-                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B6447), // Dark brown color
-                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(25), // Pill shape for consistency
+                          border: Border.all(color: Colors.white, width: 1),
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFDAA520), // Gold
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.eco, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$_score',
+                              style: GoogleFonts.poppins(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
                           ],
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
-                          onPressed: () => Get.back(),
-                        ),
                       ),
-                      // Score and Home (Right)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFDAA520), // Gold
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.eco, color: Colors.white, size: 20),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$_score',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
+
+                      // Home button (Right)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B6447),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.home_outlined, color: Colors.black, size: 28),
-                              onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
-                            ),
+                          child: IconButton(
+                            icon: const Icon(Icons.home_outlined, color: Colors.black87, size: 26),
+                            onPressed: () => Get.close(2),
+                            padding: EdgeInsets.zero,
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),

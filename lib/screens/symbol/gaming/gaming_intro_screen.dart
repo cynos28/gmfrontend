@@ -167,16 +167,6 @@ class _GamingIntroScreenState extends State<GamingIntroScreen>
             driftDuration: Duration(seconds: 10),
           ),
 
-          // Layer 2: Back Button
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildBackButton(),
-              ),
-            ),
-          ),
 
           // Layer 3: Main Content with Entrance Animations
           AnimatedBuilder(
@@ -290,6 +280,17 @@ class _GamingIntroScreenState extends State<GamingIntroScreen>
                 ),
               );
             },
+          ),
+
+          // Layer 5: Back Button (Moved here so it's not blocked by other layers)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildBackButton(),
+              ),
+            ),
           ),
         ],
       ),
