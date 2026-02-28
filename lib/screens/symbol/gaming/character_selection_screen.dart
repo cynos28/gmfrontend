@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/three_d_character_card.dart';
 import 'package:ganithamithura/screens/symbol/gaming/level_selection_screen.dart';
+import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 
 class CharacterSelectionScreen extends StatefulWidget {
   const CharacterSelectionScreen({super.key});
@@ -14,6 +16,7 @@ class CharacterSelectionScreen extends StatefulWidget {
 
 class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
   int? _selectedCharacterIndex;
+  bool _isLoading = true;
 
   final List<String> _characterImages = [
     'assets/symbols/game/character1.png',
@@ -24,14 +27,57 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
     'assets/symbols/game/character6.png',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCharacter();
+  }
+
+  Future<void> _loadSavedCharacter() async {
+    try {
+      final user = await AuthService.instance.getCurrentUser();
+      if (user != null) {
+        final savedName = await SymbolService.instance.getCharacter(user.id);
+        // Map stored names back to index (assuming 1-indexed naming like 'character1.png')
+        for (int i = 0; i < _characterImages.length; i++) {
+          if (_characterImages[i].contains(savedName.toLowerCase())) {
+            setState(() {
+              _selectedCharacterIndex = i;
+            });
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading character: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _onCharacterSelected(int index) {
     setState(() {
       _selectedCharacterIndex = index;
     });
   }
 
-  void _onChoosePressed() {
+  void _onChoosePressed() async {
     if (_selectedCharacterIndex != null) {
+      // Save it first
+      try {
+        final user = await AuthService.instance.getCurrentUser();
+        if (user != null) {
+          // Extract character name like 'character1' from 'assets/.../character1.png'
+          final path = _characterImages[_selectedCharacterIndex!];
+          final charName = path.split('/').last.split('.').first;
+          await SymbolService.instance.saveCharacter(user.id, charName);
+        }
+      } catch (e) {
+        print('Error saving character: $e'); // Fail gracefully for kids
+      }
+
       Get.to(
         () => const LevelSelectionScreen(),
         transition: Transition.circularReveal,
@@ -114,7 +160,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
                     ),
-                    child: GridView.builder(
+                    child: _isLoading ? const Center(child: CircularProgressIndicator()) : GridView.builder(
                       physics: const BouncingScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2, // 2 columns
