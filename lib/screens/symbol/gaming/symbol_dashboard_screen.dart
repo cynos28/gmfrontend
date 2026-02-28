@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/screens/symbol/gaming/character_selection_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/game_welcome_screen.dart';
@@ -31,29 +32,39 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
     try {
       final user = await AuthService.instance.getCurrentUser();
       
-      String? charName;
-      int score = 0;
-      
-      if (user != null) {
+      if (mounted && user != null) {
+        // Fetch leaderboard to get total score
+        int score = 0;
         try {
-           charName = await SymbolService.instance.getCharacter(user.id);
-           final leaderboard = await SymbolService.instance.getLeaderboard();
-           for (var p in leaderboard) {
-             if (p['user_id'] == user.id) {
-               score = p['score'] ?? 0;
-               break;
-             }
-           }
+          final leaderboard = await SymbolService.instance.getLeaderboard();
+          for (var p in leaderboard) {
+            if (p['user_id'] == user.id) {
+              score = p['score'] ?? 0;
+              break;
+            }
+          }
         } catch(e) {
-           print("Error fetching game data: $e");
+          print("Error fetching score: $e");
         }
-      }
-      
-      if (mounted) {
+
         setState(() {
           _currentUser = user;
-          _characterName = charName;
           _totalScore = score;
+        });
+
+        // Calculate dynamic level based on score
+        final userLevel = LevelConfig.getUnlockedLevel(_totalScore);
+
+        // Fetch character
+        final characterName = await SymbolService.instance.getCharacter(user.id);
+        if (mounted) {
+          setState(() {
+            _characterName = characterName;
+            _isLoadingUser = false;
+          });
+        }
+      } else if (mounted) {
+        setState(() {
           _isLoadingUser = false;
         });
       }
@@ -172,7 +183,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                                    ),
                                  ),
                                  Text(
-                                   '$level',
+                                   '${LevelConfig.getUnlockedLevel(_totalScore)}',
                                    style: GoogleFonts.luckiestGuy(
                                      fontSize: 28,
                                      color: const Color(0xFF4CAF50),
