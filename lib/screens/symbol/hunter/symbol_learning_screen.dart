@@ -7,7 +7,8 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async'; // Added for Timer
 import 'dart:io' show Platform;
-import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart'; // Import Success Screen
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/config.dart';
 
 class SymbolLearningScreen extends StatefulWidget {
@@ -43,6 +44,7 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
   // NEW: Question Counters
   int _questionsAnswered = 0;
   int _correctAnswers = 0;
+  String? _userId;
 
   // NEW: Message Queue
   final List<Map<String, dynamic>> _messageQueue = [];
@@ -60,6 +62,14 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
     super.initState();
     _initTts();
     _connectWebSocket();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final user = await StorageService.instance.getCurrentUser();
+    if (user != null && mounted) {
+      setState(() => _userId = user.id);
+    }
   }
 
   Future<void> _initTts() async {
@@ -194,7 +204,12 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
        // Navigate to Success Screen
        Get.off(() => SymbolVoiceSuccessScreen(
          totalQuestions: 5, 
-         correctAnswers: _correctAnswers
+         correctAnswers: _correctAnswers,
+         userId: _userId,
+         grade: widget.grade,
+         sessionType: "typing",
+         level: widget.level,
+         sublevel: widget.sublevel,
        ));
     }
   }

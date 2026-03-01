@@ -7,7 +7,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart'; // Import Success Screen
+import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -58,6 +59,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
   // Stats
   int _questionsAnswered = 0;
   int _correctAnswers = 0;
+  String? _userId;
 
   @override
   void initState() {
@@ -75,6 +77,14 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     _initTts();
     _initSpeech();
     _connectWebSocket();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final user = await StorageService.instance.getCurrentUser();
+    if (user != null && mounted) {
+      setState(() => _userId = user.id);
+    }
   }
 
   Future<void> _initTts() async {
@@ -221,7 +231,12 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
        // Navigate to Success
        Get.off(() => SymbolVoiceSuccessScreen(
          totalQuestions: 5, 
-         correctAnswers: _correctAnswers
+         correctAnswers: _correctAnswers,
+         userId: _userId,
+         grade: widget.grade,
+         sessionType: "telling",
+         level: widget.level,
+         sublevel: widget.sublevel,
        ));
     }
   }
