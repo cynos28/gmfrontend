@@ -14,7 +14,7 @@ class AuthService {
   
   static AuthService get instance {
     _instance ??= AuthService._(
-      baseUrl: dotenv.env['BACKEND_URL'] ?? AppConstants.baseUrl,
+      baseUrl: dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl,
     );
     return _instance!;
   }
