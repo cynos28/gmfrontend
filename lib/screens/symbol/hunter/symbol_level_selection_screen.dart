@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/hunter/symbol_learning_screen.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
+import 'package:ganithamithura/services/api/symbol_service.dart';
 
 class SymbolLevelSelectionScreen extends StatefulWidget {
   const SymbolLevelSelectionScreen({super.key});
@@ -13,6 +14,8 @@ class SymbolLevelSelectionScreen extends StatefulWidget {
 
 class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen> {
   int _selectedGrade = 1;
+  int _unlockedLevel = 1;
+  String _unlockedSublevel = "Starter";
 
   @override
   void initState() {
@@ -24,6 +27,14 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
     final user = await StorageService.instance.getCurrentUser();
     if (user != null && mounted) {
       setState(() => _selectedGrade = user.grade);
+      
+      final summary = await SymbolService.instance.getPerformanceSummary(user.id!);
+      if (summary != null && summary['latest_prediction'] != null && mounted) {
+        setState(() {
+          _unlockedLevel = summary['latest_prediction']['predicted_level'] ?? 1;
+          _unlockedSublevel = summary['latest_prediction']['predicted_sublevel'] ?? "Starter";
+        });
+      }
     }
   }
 
@@ -165,7 +176,7 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                           Get.to(() => SymbolLearningScreen(
                             grade: _selectedGrade, 
                             level: 1, 
-                            sublevel: "Starter"
+                            sublevel: _unlockedSublevel
                           ));
                         },
                       ),
@@ -174,16 +185,20 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                         level: 2,
                         title: "Level 02",
                         description: "Test your knowledge with questions",
-                        isLocked: false, // Unlocked
-                        color: const Color(0xFFFFCCBC).withOpacity(0.5), 
+                        isLocked: _unlockedLevel < 2,
+                        color: const Color(0xFFFFCCBC).withOpacity(_unlockedLevel >= 2 ? 1.0 : 0.5), 
                         imageAsset: 'assets/symbols/levelselection.png', 
                         progress: "2/3",
                         onTap: () {
-                          Get.to(() => SymbolLearningScreen(
-                            grade: _selectedGrade, 
-                            level: 2, 
-                            sublevel: "Starter"
-                          ));
+                          if (_unlockedLevel < 2) {
+                            _showLockedSnackbar("Level 02");
+                          } else {
+                            Get.to(() => SymbolLearningScreen(
+                              grade: _selectedGrade, 
+                              level: 2, 
+                              sublevel: _unlockedSublevel
+                            ));
+                          }
                         },
                       ),
                       const SizedBox(height: 20),
@@ -191,16 +206,20 @@ class _SymbolLevelSelectionScreenState extends State<SymbolLevelSelectionScreen>
                         level: 3,
                         title: "Level 03",
                         description: "Test your knowledge with questions",
-                        isLocked: false, // Unlocked
-                        color: const Color(0xFFFFCCBC).withOpacity(0.5),
+                        isLocked: _unlockedLevel < 3,
+                        color: const Color(0xFFFFCCBC).withOpacity(_unlockedLevel >= 3 ? 1.0 : 0.5),
                         imageAsset: 'assets/symbols/levelselection.png', 
                         progress: "3/3",
                         onTap: () {
-                           Get.to(() => SymbolLearningScreen(
-                            grade: _selectedGrade, 
-                            level: 3, 
-                            sublevel: "Starter"
-                          ));
+                           if (_unlockedLevel < 3) {
+                             _showLockedSnackbar("Level 03");
+                           } else {
+                             Get.to(() => SymbolLearningScreen(
+                              grade: _selectedGrade, 
+                              level: 3, 
+                              sublevel: _unlockedSublevel
+                            ));
+                           }
                         },
                       ),
                       const SizedBox(height: 90), 
