@@ -99,5 +99,84 @@ class SymbolService {
       return [];
     }
   }
+
+  /// Save learning curve session performance (typing or telling)
+  Future<Map<String, dynamic>?> savePerformance({
+    required String userId,
+    required int grade,
+    required String sessionType,
+    required int level,
+    required String sublevel,
+    required int totalQuestions,
+    required int correctAnswers,
+  }) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/users/$userId/performance');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'grade': grade,
+          'session_type': sessionType,
+          'level': level,
+          'sublevel': sublevel,
+          'total_questions': totalQuestions,
+          'correct_answers': correctAnswers,
+        }),
+      ).timeout(const Duration(seconds: AppConstants.apiTimeout));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['performance'];
+      } else {
+        print('Failed to save performance: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error saving performance: $e');
+      return null;
+    }
+  }
+
+  /// Get performance history for a user
+  Future<List<dynamic>> getPerformanceHistory(String userId) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/users/$userId/performance');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: AppConstants.apiTimeout));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['history'] ?? [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching performance history: $e');
+      return [];
+    }
+  }
+
+  /// Get aggregated performance summary with latest ML prediction
+  Future<Map<String, dynamic>?> getPerformanceSummary(String userId) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/users/$userId/performance/summary');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: AppConstants.apiTimeout));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching performance summary: $e');
+      return null;
+    }
+  }
 }
 

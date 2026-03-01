@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_tutor_screen.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
 
 class SymbolVoiceLevelSelectionScreen extends StatefulWidget {
   const SymbolVoiceLevelSelectionScreen({super.key});
@@ -12,6 +13,19 @@ class SymbolVoiceLevelSelectionScreen extends StatefulWidget {
 
 class _SymbolVoiceLevelSelectionScreenState extends State<SymbolVoiceLevelSelectionScreen> {
   int _selectedGrade = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserGrade();
+  }
+
+  Future<void> _loadUserGrade() async {
+    final user = await StorageService.instance.getCurrentUser();
+    if (user != null && mounted) {
+      setState(() => _selectedGrade = user.grade);
+    }
+  }
 
   void _showGradeSelector() {
     showDialog(
