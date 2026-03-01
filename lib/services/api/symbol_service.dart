@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
 class SymbolService {
@@ -8,13 +9,12 @@ class SymbolService {
 
   SymbolService._init();
 
-  // URL for the symbol-service (running on port 8000)
-  // Re-use emulator logic or constants. Since auth is 8001, symbol is usually 8000
   String get _baseUrl {
-    if (AppConstants.baseUrl.contains('8001')) {
-      return AppConstants.baseUrl.replaceAll('8001', '8000');
+    String? envUrl = dotenv.env['SYMBOL_BACKEND_URL'];
+    if (envUrl != null && envUrl.isNotEmpty) {
+      return envUrl;
     }
-    return 'http://10.0.2.2:8000'; // Default for android emulator
+    return AppConstants.symbolBaseUrl;
   }
 
   Future<void> saveCharacter(String userId, String characterName) async {
