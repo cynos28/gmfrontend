@@ -104,7 +104,6 @@ class SymbolService {
   Future<Map<String, dynamic>?> savePerformance({
     required String userId,
     required int grade,
-    required String sessionType,
     required int level,
     required String sublevel,
     required int totalQuestions,
@@ -117,7 +116,6 @@ class SymbolService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'grade': grade,
-          'session_type': sessionType,
           'level': level,
           'sublevel': sublevel,
           'total_questions': totalQuestions,

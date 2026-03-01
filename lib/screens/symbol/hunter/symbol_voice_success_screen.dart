@@ -9,7 +9,6 @@ class SymbolVoiceSuccessScreen extends StatefulWidget {
   final int correctAnswers;
   final String? userId;
   final int? grade;
-  final String? sessionType; // "typing" or "telling"
   final int? level;
   final String? sublevel;
 
@@ -19,7 +18,6 @@ class SymbolVoiceSuccessScreen extends StatefulWidget {
     required this.correctAnswers,
     this.userId,
     this.grade,
-    this.sessionType,
     this.level,
     this.sublevel,
   });
@@ -39,7 +37,7 @@ class _SymbolVoiceSuccessScreenState extends State<SymbolVoiceSuccessScreen> {
   }
 
   Future<void> _savePerformance() async {
-    if (widget.userId == null || widget.grade == null || widget.sessionType == null) {
+    if (widget.userId == null || widget.grade == null) {
       setState(() => _isSaving = false);
       return;
     }
@@ -48,7 +46,6 @@ class _SymbolVoiceSuccessScreenState extends State<SymbolVoiceSuccessScreen> {
       final result = await SymbolService.instance.savePerformance(
         userId: widget.userId!,
         grade: widget.grade!,
-        sessionType: widget.sessionType!,
         level: widget.level ?? 1,
         sublevel: widget.sublevel ?? "Starter",
         totalQuestions: widget.totalQuestions,

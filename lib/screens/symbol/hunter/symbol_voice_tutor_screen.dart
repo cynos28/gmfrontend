@@ -234,7 +234,6 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
          correctAnswers: _correctAnswers,
          userId: _userId,
          grade: widget.grade,
-         sessionType: "telling",
          level: widget.level,
          sublevel: widget.sublevel,
        ));

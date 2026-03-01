@@ -207,7 +207,6 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
          correctAnswers: _correctAnswers,
          userId: _userId,
          grade: widget.grade,
-         sessionType: "typing",
          level: widget.level,
          sublevel: widget.sublevel,
        ));
