@@ -1,20 +1,20 @@
-/// Length Game Hub
-/// Ruler Explorer and Build the Bridge games for kids
+/// Area Game Hub
+/// Area games for kids: Tile Rectangle and Tiny Builders
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
-import 'length_game_play_screen.dart';
+import 'area_game_play_screen.dart';
 
 // ─── variant metadata ──────────────────────────────────────────────────────
 
 class _VariantInfo {
-  final String code; // e.g. "L-V1"
+  final String code;
   final String title;
   final String subtitle;
   final String emoji;
   final String description;
-  final int stars; // 1-4
+  final int stars;
   final Color color;
   final Color lightColor;
 
@@ -32,39 +32,39 @@ class _VariantInfo {
 
 const List<_VariantInfo> _variants = [
   _VariantInfo(
-    code: 'L-V1',
-    title: 'Ruler Explorer',
-    subtitle: 'Measure 1 thing',
-    emoji: '📏',
-    description: 'Use the ruler to measure one object. How long is it?',
+    code: 'A-V1',
+    title: 'Tile Rectangle',
+    subtitle: 'Cover the shape',
+    emoji: '🟩',
+    description: 'Fill a rectangle with 1 cm² tiles. Count rows × columns!',
     stars: 1,
-    color: Color(0xFF4285F4),
-    lightColor: Color(0xFFE8F4FF),
+    color: Color(0xFF34C759),
+    lightColor: Color(0xFFE6F9EC),
   ),
   _VariantInfo(
-    code: 'L-V4',
-    title: 'Build a Bridge',
-    subtitle: 'Combine lengths',
-    emoji: '🌉',
-    description: 'Pick strips that add up to the target length. Can you build it?',
+    code: 'A-V2',
+    title: 'Tiny Builders',
+    subtitle: 'Cover objects',
+    emoji: '🏠',
+    description: 'Roll the dice and build fun shapes! Drag blocks to cover exactly.',
     stars: 2,
-    color: Color(0xFF9C27B0),
-    lightColor: Color(0xFFF3E5F5),
+    color: Color(0xFF5AC8FA),
+    lightColor: Color(0xFFE3F6FD),
   ),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class LengthGameHubScreen extends StatefulWidget {
-  const LengthGameHubScreen({super.key});
+class AreaGameHubScreen extends StatefulWidget {
+  const AreaGameHubScreen({super.key});
 
   @override
-  State<LengthGameHubScreen> createState() => _LengthGameHubScreenState();
+  State<AreaGameHubScreen> createState() => _AreaGameHubScreenState();
 }
 
-class _LengthGameHubScreenState extends State<LengthGameHubScreen>
+class _AreaGameHubScreenState extends State<AreaGameHubScreen>
     with SingleTickerProviderStateMixin {
-  String _currentVariant = 'L-V1';
+  String _currentVariant = 'A-V1';
   bool _isLoading = true;
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
@@ -89,10 +89,10 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
   }
 
   Future<void> _loadParams() async {
-    // Both variants always unlocked
+    // Only one variant (A-V1), always unlocked
     if (mounted) {
       setState(() {
-        _currentVariant = 'L-V4'; // All unlocked
+        _currentVariant = 'A-V1';
         _isLoading = false;
       });
     }
@@ -116,9 +116,12 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
       return;
     }
     Get.to(
-      () => LengthGamePlayScreen(variant: info.code),
+      () => AreaGamePlayScreen(variant: info.code),
       transition: Transition.rightToLeft,
-    );
+    )?.then((_) {
+      // Refresh unlock state when returning from game
+      _loadParams();
+    });
   }
 
   // ─── build ─────────────────────────────────────────────────────────────
@@ -126,7 +129,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F7FF),
+      backgroundColor: const Color(0xFFF0FFF4),
       body: SafeArea(
         child: Column(
           children: [
@@ -135,7 +138,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
               child: _isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: KidsColors.lengthColor,
+                        color: KidsColors.areaColor,
                         strokeWidth: 3,
                       ),
                     )
@@ -153,7 +156,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF4285F4), Color(0xFF0D47A1)],
+          colors: [Color(0xFF34C759), Color(0xFF1B8A3E)],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
@@ -174,7 +177,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'Length Games',
+                  'Area Games',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
@@ -187,7 +190,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
                 animation: _bounceAnimation,
                 builder: (_, __) => Transform.translate(
                   offset: Offset(0, -_bounceAnimation.value),
-                  child: const Text('📏', style: TextStyle(fontSize: 36)),
+                  child: const Text('📐', style: TextStyle(fontSize: 36)),
                 ),
               ),
             ],
@@ -261,7 +264,6 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Icon circle
                 Container(
                   width: 68,
                   height: 68,
@@ -277,7 +279,6 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Text
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +297,6 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
                               ),
                             ),
                           ),
-                          // Stars
                           Row(
                             children: List.generate(
                               info.stars,
@@ -338,7 +338,6 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Arrow / play btn
                 if (unlocked)
                   Container(
                     width: 44,

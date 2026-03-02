@@ -104,10 +104,18 @@ class GamesApiService {
       case 'area':
         return {
           'current_variant': 'A-V1',
-          'tile_goal': 4,
+          'hints': 2,
+          // V1 (Tile Rectangle) params
+          'max_rect_size': 6,
+          'min_rect_size': 2,
           'grid_visible': true,
+          // V2 (Tile Irregular Shape) params
           'shape_complexity': 1,
-          'outline': true,
+          // V3 (Build Target Area) params
+          'target_area_range': [8, 20],
+          'require_two_solutions': false,
+          // V4 (Composite Area) params
+          'max_parts': 2,
         };
       case 'capacity':
         return {

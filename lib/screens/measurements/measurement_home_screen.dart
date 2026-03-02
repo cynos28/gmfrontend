@@ -5,6 +5,7 @@ import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'games/length_game_hub_screen.dart';
+import 'games/area_game_hub_screen.dart';
 
 /// MeasurementHomeScreen - Main screen for Measurement module
 class MeasurementHomeScreen extends StatefulWidget {
@@ -563,13 +564,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
                 backgroundColor: KidsColors.areaBackground,
                 iconColor: KidsColors.areaColor,
                 onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Area game is under development',
-                    backgroundColor: KidsColors.primaryAccent,
-                    colorText: Colors.white,
-                    icon: const Icon(Icons.info_rounded, color: Colors.white),
-                  );
+                  Get.to(() => const AreaGameHubScreen());
                 },
               ),
             ),
