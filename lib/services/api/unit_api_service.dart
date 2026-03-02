@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:ganithamithura/models/unit_models.dart';
+import 'package:ganithamithura/services/api/io_config.dart';
 
 /// API Service for Unit-based Learning
 /// Base URL should be configured in production
 class UnitApiService {
-  // Using WiFi IP - works on any device without ADB setup
-  // Make sure phone and Mac are on same WiFi network
-  static const String baseUrl = 'http://10.169.0.71:8000/api';
-  static const String ragBaseUrl = 'http://10.169.0.71:8000'; // RAG Service
+  // Uses centralized IP from IoConfig
+  static String get baseUrl => '${IoConfig.symbolBaseUrl}/api';
+  static String get ragBaseUrl => IoConfig.symbolBaseUrl; // RAG Service
   
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();

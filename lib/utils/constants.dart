@@ -1,12 +1,13 @@
 /// Constants for the Ganithamithura Learning App - Phase 1
 library;
 
+import 'package:ganithamithura/services/api/io_config.dart';
+
 class AppConstants {
-  // API Configuration - Set fallback to Android Emulator default.
-  // Physical devices should use their Mac's IP in the ignored .env file!
-  static const String baseUrl = 'http://10.0.2.2:8001';
-  static const String authBaseUrl = 'http://10.0.2.2:8001';
-  static const String symbolBaseUrl = 'http://10.0.2.2:8000';
+  // API Configuration - Uses centralized IoConfig
+  static String get baseUrl => IoConfig.authBaseUrl;
+  static String get authBaseUrl => IoConfig.authBaseUrl;
+  static String get symbolBaseUrl => IoConfig.symbolBaseUrl;
   
   
   // Activity Types

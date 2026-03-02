@@ -91,6 +91,8 @@ class AuthService {
   }) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/signin');
+      print('🔐 AUTH DEBUG: Attempting sign in to: $url');
+      print('🔐 AUTH DEBUG: baseUrl=$baseUrl');
       final response = await http.post(
         url,
         headers: _getHeaders(),
@@ -101,6 +103,9 @@ class AuthService {
       ).timeout(
         Duration(seconds: AppConstants.apiTimeout),
       );
+      
+      print('🔐 AUTH DEBUG: Response status=${response.statusCode}');
+      print('🔐 AUTH DEBUG: Response body=${response.body}');
       
       final jsonData = jsonDecode(response.body);
       
@@ -120,6 +125,7 @@ class AuthService {
         );
       }
     } catch (e) {
+      print('🔐 AUTH DEBUG: Exception during sign in: $e');
       return AuthResponse(
         success: false,
         message: 'Error during sign in: $e',

@@ -5,13 +5,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
+import 'package:ganithamithura/services/api/io_config.dart';
 
 class MeasurementApiService {
-  // WiFi IP - works without ADB, just need same WiFi network
-  static const List<String> _baseUrls = [
-    'http://10.169.0.71:8000/api/v1/measurements',    // WiFi - Mac IP (PRIMARY)
-    'http://localhost:8000/api/v1/measurements',      // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/measurements',       // Android Emulator fallback
+  // Uses centralized IP from IoConfig
+  static List<String> get _baseUrls => [
+    '${IoConfig.symbolBaseUrl}/api/v1/measurements',    // WiFi - Mac IP (PRIMARY)
+    'http://localhost:${IoConfig.symbolPort}/api/v1/measurements',      // ADB reverse fallback
   ];
   
   static Future<String> _getWorkingBaseUrl() async {
@@ -105,7 +105,7 @@ class MeasurementApiService {
   Future<bool> checkHealth() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8001/health'),
+        Uri.parse('${IoConfig.authBaseUrl}/health'),
       ).timeout(const Duration(seconds: 3));
       
       return response.statusCode == 200;
