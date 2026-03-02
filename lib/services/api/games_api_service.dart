@@ -28,7 +28,7 @@ class GamesApiService {
 
   // ─── public API ──────────────────────────────────────────────────────────
 
-  /// Fetch current game parameters for a domain (length / area / capacity / weight).
+  /// Fetch current game parameters for a domain (length / area / volume / weight).
   /// Falls back to sensible defaults when offline.
   static Future<Map<String, dynamic>> getParameters(String domain) async {
     try {
@@ -117,7 +117,7 @@ class GamesApiService {
           // V4 (Composite Area) params
           'max_parts': 2,
         };
-      case 'capacity':
+      case 'volume':
         return {
           'current_variant': 'C-V1',
           'target_volume': 200,

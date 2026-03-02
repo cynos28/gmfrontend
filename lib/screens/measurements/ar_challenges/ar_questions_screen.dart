@@ -123,7 +123,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
     switch (_measurementType) {
       case MeasurementType.length:
         return const Color(0xFF4285F4); // Blue
-      case MeasurementType.capacity:
+      case MeasurementType.volume:
         return const Color(0xFF00BCD4); // Cyan
       case MeasurementType.weight:
         return const Color(0xFFFF9500); // Orange
@@ -136,7 +136,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
     switch (_measurementType) {
       case MeasurementType.length:
         return const Color(0xFFE8F4FF); // Soft blue
-      case MeasurementType.capacity:
+      case MeasurementType.volume:
         return const Color(0xFFE0F7FA); // Soft cyan
       case MeasurementType.weight:
         return const Color(0xFFFFF3E0); // Soft orange
@@ -149,7 +149,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
     switch (_measurementType) {
       case MeasurementType.length:
         return const Color(0xFF4285F4); // Blue
-      case MeasurementType.capacity:
+      case MeasurementType.volume:
         return const Color(0xFF00BCD4); // Cyan
       case MeasurementType.weight:
         return const Color(0xFFFF9500); // Orange

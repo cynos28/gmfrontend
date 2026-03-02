@@ -31,7 +31,7 @@ Map<String, dynamic> _$ARMeasurementRequestToJson(
 
 const _$MeasurementTypeEnumMap = {
   MeasurementType.length: 'length',
-  MeasurementType.capacity: 'capacity',
+  MeasurementType.volume: 'volume',
   MeasurementType.weight: 'weight',
   MeasurementType.area: 'area',
 };

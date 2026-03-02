@@ -345,13 +345,13 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       return false;
     }
     
-    // Check if it's a capacity/volume unit
-    if (unitId.contains('capacity') || unitId.contains('volume')) {
-      // Capacity keywords
+    // Check if it's a volume unit
+    if (unitId.contains('volume')) {
+      // Volume keywords
       if (lowerQuestion.contains('hold') || 
           lowerQuestion.contains('contain') || 
           lowerQuestion.contains('fill') ||
-          lowerQuestion.contains('capacity') ||
+          lowerQuestion.contains('volume') ||
           lowerQuestion.contains('volume') ||
           lowerQuestion.contains('liter') ||
           lowerQuestion.contains('ml') ||

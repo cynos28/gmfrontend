@@ -13,8 +13,8 @@ part 'ar_measurement.g.dart';
 enum MeasurementType {
   @JsonValue('length')
   length,
-  @JsonValue('capacity')
-  capacity,
+  @JsonValue('volume')
+  volume,
   @JsonValue('weight')
   weight,
   @JsonValue('area')
@@ -33,7 +33,7 @@ enum MeasurementUnit {
   @JsonValue('km')
   km,
   
-  // Capacity units
+  // Volume units
   @JsonValue('ml')
   ml,
   @JsonValue('l')
@@ -135,8 +135,8 @@ class MeasurementContext {
     switch (measurementType) {
       case MeasurementType.length:
         return 'Length';
-      case MeasurementType.capacity:
-        return 'Capacity';
+      case MeasurementType.volume:
+        return 'Volume';
       case MeasurementType.weight:
         return 'Weight';
       case MeasurementType.area:
@@ -335,8 +335,8 @@ extension MeasurementTypeExtension on MeasurementType {
     switch (this) {
       case MeasurementType.length:
         return 'Length';
-      case MeasurementType.capacity:
-        return 'Capacity';
+      case MeasurementType.volume:
+        return 'Volume';
       case MeasurementType.weight:
         return 'Weight';
       case MeasurementType.area:
@@ -348,7 +348,7 @@ extension MeasurementTypeExtension on MeasurementType {
     switch (this) {
       case MeasurementType.length:
         return '📏';
-      case MeasurementType.capacity:
+      case MeasurementType.volume:
         return '🥤';
       case MeasurementType.weight:
         return '⚖️';

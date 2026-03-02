@@ -6,8 +6,10 @@ import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'games/length_game_hub_screen.dart';
 import 'games/area_game_hub_screen.dart';
+import 'games/volume_game_hub_screen.dart';
+import 'dart:math' as math;
 
-/// MeasurementHomeScreen - Main screen for Measurement module
+/// MeasurementHomeScreen - Kindergarten-friendly measurement module
 class MeasurementHomeScreen extends StatefulWidget {
   const MeasurementHomeScreen({super.key});
 
@@ -15,15 +17,37 @@ class MeasurementHomeScreen extends StatefulWidget {
   State<MeasurementHomeScreen> createState() => _MeasurementHomeScreenState();
 }
 
-class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
+class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> 
+    with TickerProviderStateMixin {
   int _currentNavIndex = 0;
   int _currentGrade = 1;
   bool _isLoadingGrade = true;
+  late AnimationController _floatingController;
+  late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
     _loadGrade();
+    
+    // Floating animation for decorative elements
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+    
+    // Pulse animation for interactive elements
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadGrade() async {
@@ -39,7 +63,6 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
     }
   }
 
-  /// Get available topics based on grade level
   List<String> _getAvailableTopics(int grade) {
     switch (grade) {
       case 1:
@@ -47,9 +70,9 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
       case 2:
         return ['Length', 'Area'];
       case 3:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
+        return ['Length', 'Area', 'Weight', 'Volume'];
       case 4:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
+        return ['Length', 'Area', 'Weight', 'Volume'];
       default:
         return ['Length'];
     }
@@ -57,17 +80,12 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
 
   void _onNavTap(int index) {
     if (index == 0) {
-      // Navigate to home
       Get.back();
       return;
     }
     
-    if (index == _currentNavIndex) {
-      // Already on current tab
-      return;
-    }
+    if (index == _currentNavIndex) return;
     
-    // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',
@@ -83,123 +101,28 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
+            // Animated background decorations
+            _buildFloatingDecorations(),
+            
             // Main content
             Column(
               children: [
-                // Header with gradient background
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        KidsColors.primaryAccent.withOpacity(0.1),
-                        KidsColors.secondaryAccent.withOpacity(0.05),
-                      ],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: KidsShadows.soft,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_rounded,
-                            size: 24,
-                            color: KidsColors.textPrimary,
-                          ),
-                          padding: EdgeInsets.zero,
-                          onPressed: () => Get.back(),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Measurements',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: KidsColors.textPrimary,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.straighten_rounded,
-                                  size: 16,
-                                  color: KidsColors.highlightAccent,
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'Learn to measure!',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: KidsColors.textSecondary,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Simplified header
+                _buildHeader(),
                 
                 // Scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      top: 24,
-                      bottom: 80, // Space for bottom nav
+                      left: 24,
+                      right: 24,
+                      top: 20,
+                      bottom: 100,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // AR Challenges Section
-                        _buildSectionHeader(
-                          title: 'AR Challenges',
-                          icon: Icons.camera_alt_rounded,
-                          subtitle: 'Scan & Learn',
-                          color: KidsColors.primaryAccent,
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // AR Challenges Grid
-                        _buildARChallengesGrid(),
-                        const SizedBox(height: 28),
-                        
-                        // Learning Games Section
-                        _buildSectionHeader(
-                          title: 'Learning Games',
-                          icon: Icons.games_rounded,
-                          subtitle: 'Fun Practice',
-                          color: KidsColors.secondaryAccent,
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Games Grid
-                        _buildGamesGrid(),
+                        // Main activity cards
+                        _buildActivityCards(),
                       ],
                     ),
                   ),
@@ -223,487 +146,424 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader({
-    required String title,
-    required IconData icon,
-    required String subtitle,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color,
-                color.withOpacity(0.7),
-              ],
+  Widget _buildFloatingDecorations() {
+    return AnimatedBuilder(
+      animation: _floatingController,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Top right decoration
+            Positioned(
+              top: 100 + (_floatingController.value * 20),
+              right: 20,
+              child: Opacity(
+                opacity: 0.15,
+                child: Transform.rotate(
+                  angle: _floatingController.value * math.pi / 4,
+                  child: Icon(
+                    Icons.straighten_rounded,
+                    size: 80,
+                    color: KidsColors.lengthColor,
+                  ),
+                ),
+              ),
             ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            size: 24,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: KidsColors.textPrimary,
-                  height: 1.2,
+            // Bottom left decoration
+            Positioned(
+              bottom: 200 + (_floatingController.value * -15),
+              left: 30,
+              child: Opacity(
+                opacity: 0.1,
+                child: Transform.rotate(
+                  angle: -_floatingController.value * math.pi / 6,
+                  child: Icon(
+                    Icons.grid_on_rounded,
+                    size: 60,
+                    color: KidsColors.areaColor,
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: KidsColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildARChallengesGrid() {
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            KidsColors.primaryAccent.withOpacity(0.08),
+            KidsColors.secondaryAccent.withOpacity(0.05),
+          ],
+        ),
+      ),
+      child: Row(
+        children: [
+          // Back button with bounce animation
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: child,
+              );
+            },
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: KidsColors.primaryAccent.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 28,
+                  color: KidsColors.textPrimary,
+                ),
+                padding: EdgeInsets.zero,
+                onPressed: () => Get.back(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Title with slide animation
+          Expanded(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(30 * (1 - value), 0),
+                  child: Opacity(
+                    opacity: value,
+                    child: child,
+                  ),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.straighten_rounded,
+                        size: 32,
+                        color: KidsColors.highlightAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Let\'s Measure!',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: KidsColors.textPrimary,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityCards() {
     if (_isLoadingGrade) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(
+            strokeWidth: 5,
+          ),
+        ),
+      );
     }
 
     final availableTopics = _getAvailableTopics(_currentGrade);
-    final List<Widget> firstRow = [];
-    final List<Widget> secondRow = [];
+    final activities = <Map<String, dynamic>>[];
 
-    // Build first row
+    // Build activity list based on available topics
     if (availableTopics.contains('Length')) {
-      firstRow.add(Expanded(
-        child: _buildARCard(
-          title: 'Length',
-          subtitle: 'Measure objects',
-          units: 'mm · cm · m',
-          icon: Icons.straighten_rounded,
-          backgroundColor: KidsColors.lengthBackground,
-          iconColor: KidsColors.lengthColor,
-          onTap: () {
-            Get.toNamed('/ar-measurement', arguments: {
-              'type': 'length',
-            });
-          },
-        ),
-      ));
-    }
-
-    if (availableTopics.contains('Capacity')) {
-      if (firstRow.isNotEmpty) {
-        firstRow.add(const SizedBox(width: 16));
-      }
-      firstRow.add(Expanded(
-        child: _buildARCard(
-          title: 'Capacity',
-          subtitle: 'Measure liquids',
-          units: 'ml · L',
-          icon: Icons.local_drink_rounded,
-          backgroundColor: KidsColors.capacityBackground,
-          iconColor: KidsColors.capacityColor,
-          onTap: () {
-            Get.toNamed('/ar-measurement', arguments: {
-              'type': 'capacity',
-            });
-          },
-        ),
-      ));
-    }
-
-    // Build second row
-    if (availableTopics.contains('Weight')) {
-      secondRow.add(Expanded(
-        child: _buildARCard(
-          title: 'Weight',
-          subtitle: 'Measure mass',
-          units: 'g · kg',
-          icon: Icons.scale_rounded,
-          backgroundColor: KidsColors.weightBackground,
-          iconColor: KidsColors.weightColor,
-          onTap: () {
-            Get.toNamed('/ar-measurement', arguments: {
-              'type': 'weight',
-            });
-          },
-        ),
-      ));
+      activities.add({
+        'title': 'Length',
+        'emoji': '📏',
+        'color': KidsColors.lengthColor,
+        'bgColor': KidsColors.lengthBackground,
+        'icon': Icons.straighten_rounded,
+        'arRoute': '/ar-measurement',
+        'arArgs': {'type': 'length'},
+        'gameScreen': const LengthGameHubScreen(),
+      });
     }
 
     if (availableTopics.contains('Area')) {
-      if (secondRow.isNotEmpty) {
-        secondRow.add(const SizedBox(width: 16));
-      }
-      secondRow.add(Expanded(
-        child: _buildARCard(
-          title: 'Area',
-          subtitle: 'Measure surfaces',
-          units: 'cm² · m²',
-          icon: Icons.grid_on_rounded,
-          backgroundColor: KidsColors.areaBackground,
-          iconColor: KidsColors.areaColor,
-          onTap: () {
-            Get.toNamed('/ar-measurement', arguments: {
-              'type': 'area',
-            });
-          },
-        ),
-      ));
+      activities.add({
+        'title': 'Area',
+        'emoji': '⬜',
+        'color': KidsColors.areaColor,
+        'bgColor': KidsColors.areaBackground,
+        'icon': Icons.grid_on_rounded,
+        'arRoute': '/ar-measurement',
+        'arArgs': {'type': 'area'},
+        'gameScreen': const AreaGameHubScreen(),
+      });
     }
 
-    // Build column with available rows
+    if (availableTopics.contains('Volume')) {
+      activities.add({
+        'title': 'Volume',
+        'emoji': '🥤',
+        'color': KidsColors.volumeColor,
+        'bgColor': KidsColors.volumeBackground,
+        'icon': Icons.local_drink_rounded,
+        'arRoute': '/ar-measurement',
+        'arArgs': {'type': 'volume'},
+        'gameScreen': const VolumeGameHubScreen(),
+      });
+    }
+
+    if (availableTopics.contains('Weight')) {
+      activities.add({
+        'title': 'Weight',
+        'emoji': '⚖️',
+        'color': KidsColors.weightColor,
+        'bgColor': KidsColors.weightBackground,
+        'icon': Icons.scale_rounded,
+        'arRoute': '/ar-measurement',
+        'arArgs': {'type': 'weight'},
+        'gameScreen': null,
+      });
+    }
+
     return Column(
-      children: [
-        if (firstRow.isNotEmpty) Row(children: firstRow),
-        if (firstRow.isNotEmpty && secondRow.isNotEmpty) const SizedBox(height: 16),
-        if (secondRow.isNotEmpty) Row(children: secondRow),
-      ],
+      children: activities.asMap().entries.map((entry) {
+        final index = entry.key;
+        final activity = entry.value;
+        
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 600 + (index * 150)),
+          curve: Curves.easeOutBack,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, 50 * (1 - value)),
+              child: Opacity(
+                opacity: value,
+                child: child,
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: _buildBigActivityCard(
+              title: activity['title'],
+              emoji: activity['emoji'],
+              color: activity['color'],
+              bgColor: activity['bgColor'],
+              icon: activity['icon'],
+              onARTap: () {
+                Get.toNamed(
+                  activity['arRoute'],
+                  arguments: activity['arArgs'],
+                );
+              },
+              onGameTap: activity['gameScreen'] != null
+                  ? () {
+                      Get.to(
+                        () => activity['gameScreen'],
+                        transition: Transition.rightToLeft,
+                      );
+                    }
+                  : () {
+                      Get.snackbar(
+                        'Coming Soon',
+                        '${activity['title']} game is under development',
+                        backgroundColor: activity['color'],
+                        colorText: Colors.white,
+                        icon: const Icon(Icons.info_rounded, color: Colors.white),
+                      );
+                    },
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildARCard({
+  Widget _buildBigActivityCard({
     required String title,
-    required String subtitle,
-    required String units,
+    required String emoji,
+    required Color color,
+    required Color bgColor,
     required IconData icon,
-    required Color backgroundColor,
-    required Color iconColor,
-    required VoidCallback onTap,
+    required VoidCallback onARTap,
+    required VoidCallback onGameTap,
   }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 400),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.8 + (0.2 * value),
-          child: Opacity(
-            opacity: value,
-            child: child,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            bgColor,
+            bgColor.withOpacity(0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 3,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        );
-      },
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 160,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                backgroundColor,
-                backgroundColor.withOpacity(0.7),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title section with emoji
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                // Animated emoji
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: 1.0 + (_pulseController.value * 0.1),
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: 56),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: iconColor.withOpacity(0.3),
-              width: 2,
+          ),
+          
+          // Action buttons
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Row(
+              children: [
+                // AR Camera button
+                Expanded(
+                  child: _buildActionButton(
+                    label: 'Camera',
+                    icon: Icons.camera_alt_rounded,
+                    color: color,
+                    onTap: onARTap,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Play Game button
+                Expanded(
+                  child: _buildActionButton(
+                    label: 'Play',
+                    icon: Icons.videogame_asset_rounded,
+                    color: color,
+                    onTap: onGameTap,
+                  ),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: iconColor.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      iconColor,
-                      iconColor.withOpacity(0.8),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: iconColor.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  icon,
-                  size: 26,
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: KidsColors.textPrimary,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: KidsColors.textSecondary,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  units,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: iconColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildGamesGrid() {
-    return Column(
-      children: [
-        // First row: Length and Capacity games
-        Row(
-          children: [
-            Expanded(
-              child: _buildGameCard(
-                title: 'Length',
-                subtitle: 'Find & measure',
-                icon: Icons.straighten_rounded,
-                backgroundColor: KidsColors.lengthBackground,
-                iconColor: KidsColors.lengthColor,
-                onTap: () {
-                  Get.to(
-                    () => const LengthGameHubScreen(),
-                    transition: Transition.rightToLeft,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildGameCard(
-                title: 'Capacity',
-                subtitle: 'Unit conversion',
-                icon: Icons.local_drink_rounded,
-                backgroundColor: KidsColors.capacityBackground,
-                iconColor: KidsColors.capacityColor,
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Capacity game is under development',
-                    backgroundColor: KidsColors.primaryAccent,
-                    colorText: Colors.white,
-                    icon: const Icon(Icons.info_rounded, color: Colors.white),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Second row: Area and Weight games
-        Row(
-          children: [
-            Expanded(
-              child: _buildGameCard(
-                title: 'Area',
-                subtitle: 'Estimate size',
-                icon: Icons.grid_on_rounded,
-                backgroundColor: KidsColors.areaBackground,
-                iconColor: KidsColors.areaColor,
-                onTap: () {
-                  Get.to(() => const AreaGameHubScreen());
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildGameCard(
-                title: 'Weight',
-                subtitle: 'Beat the scale',
-                icon: Icons.scale_rounded,
-                backgroundColor: KidsColors.weightBackground,
-                iconColor: KidsColors.weightColor,
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Weight game is under development',
-                    backgroundColor: KidsColors.primaryAccent,
-                    colorText: Colors.white,
-                    icon: const Icon(Icons.info_rounded, color: Colors.white),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGameCard({
-    required String title,
-    required String subtitle,
+  Widget _buildActionButton({
+    required String label,
     required IconData icon,
-    required Color backgroundColor,
-    required Color iconColor,
+    required Color color,
     required VoidCallback onTap,
   }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color,
+                  color.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.4 + (_pulseController.value * 0.2)),
+                  blurRadius: 12 + (_pulseController.value * 4),
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 32,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 140,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: iconColor.withOpacity(0.3),
-              width: 2,
-            ),
-            boxShadow: KidsShadows.soft,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  size: 24,
-                  color: iconColor,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: KidsColors.textPrimary,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: KidsColors.textSecondary,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: iconColor.withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.play_arrow_rounded,
-                      size: 14,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Play',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

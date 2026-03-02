@@ -43,7 +43,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       MeasurementUnit.m,
       MeasurementUnit.km,
     ],
-    MeasurementType.capacity: [
+    MeasurementType.volume: [
       MeasurementUnit.ml,
       MeasurementUnit.l,
     ],
@@ -148,8 +148,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (type.toLowerCase()) {
       case 'length':
         return MeasurementType.length;
-      case 'capacity':
-        return MeasurementType.capacity;
+      case 'volume':
+        return MeasurementType.volume;
       case 'weight':
         return MeasurementType.weight;
       case 'area':
@@ -163,8 +163,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthColor;
-      case MeasurementType.capacity:
-        return KidsColors.capacityColor;
+      case MeasurementType.volume:
+        return KidsColors.volumeColor;
       case MeasurementType.weight:
         return KidsColors.weightColor;
       case MeasurementType.area:
@@ -176,8 +176,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthColor;
-      case MeasurementType.capacity:
-        return KidsColors.capacityColor;
+      case MeasurementType.volume:
+        return KidsColors.volumeColor;
       case MeasurementType.weight:
         return KidsColors.weightColor;
       case MeasurementType.area:
@@ -297,8 +297,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthBackground;
-      case MeasurementType.capacity:
-        return KidsColors.capacityBackground;
+      case MeasurementType.volume:
+        return KidsColors.volumeBackground;
       case MeasurementType.weight:
         return KidsColors.weightBackground;
       case MeasurementType.area:
@@ -390,7 +390,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       switch (_measurementType) {
         case MeasurementType.length:
           return Icons.straighten_rounded;
-        case MeasurementType.capacity:
+        case MeasurementType.volume:
           return Icons.local_drink_rounded;
         case MeasurementType.weight:
           return Icons.scale_rounded;

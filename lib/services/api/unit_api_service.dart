@@ -382,11 +382,11 @@ class UnitApiService {
         iconName: 'crop_square',
       ),
       Unit(
-        id: 'unit_capacity_$grade',
-        name: 'Capacity – ml and l',
-        topic: 'Capacity',
+        id: 'unit_volume_$grade',
+        name: 'Volume – ml and l',
+        topic: 'Volume',
         grade: grade,
-        description: 'Learn about volume and capacity measurements',
+        description: 'Learn about volume and liquid measurements',
         iconName: 'local_drink',
       ),
       Unit(

@@ -77,7 +77,7 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
         return Icons.straighten;
       case 'area':
         return Icons.crop_square;
-      case 'capacity':
+      case 'volume':
         return Icons.local_drink;
       case 'weight':
         return Icons.fitness_center;

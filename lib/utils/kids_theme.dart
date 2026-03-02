@@ -59,8 +59,8 @@ class KidsColors {
   static const Color lengthBackground = Color(0xFFE8F4FF);
   static const Color areaColor = Color(0xFF34C759);
   static const Color areaBackground = Color(0xFFE6F9EC);
-  static const Color capacityColor = Color(0xFF00BCD4);
-  static const Color capacityBackground = Color(0xFFE0F7FA);
+  static const Color volumeColor = Color(0xFF00BCD4);
+  static const Color volumeBackground = Color(0xFFE0F7FA);
   static const Color weightColor = Color(0xFFFF9500);
   static const Color weightBackground = Color(0xFFFFF3E0);
   
@@ -373,7 +373,7 @@ class KidsIcons {
         return Icons.straighten_rounded;
       case 'area':
         return Icons.crop_square_rounded;
-      case 'capacity':
+      case 'volume':
         return Icons.local_drink_rounded;
       case 'weight':
         return Icons.fitness_center_rounded;

@@ -3,7 +3,7 @@
 class Unit {
   final String id;
   final String name;
-  final String topic; // Length, Area, Capacity, Weight
+  final String topic; // Length, Area, Volume, Weight
   final int grade;
   final String? description;
   final String? iconName;
