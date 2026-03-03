@@ -2,9 +2,11 @@
 library;
 
 class AppConstants {
-  // API Configuration - Using WiFi IP (no ADB needed)
-  // Ensure phone and computer are on same WiFi network
-  static const String baseUrl = 'http://192.168.1.18:8000';
+  // API Configuration - Set fallback to Android Emulator default.
+  // Physical devices should use their Mac's IP in the ignored .env file!
+  static const String baseUrl = 'http://10.0.2.2:8001';
+  static const String authBaseUrl = 'http://10.0.2.2:8001';
+  static const String symbolBaseUrl = 'http://10.0.2.2:8000';
   
   
   // Activity Types
@@ -34,7 +36,7 @@ class AppConstants {
   
   // Timeouts
   static const int videoLoadTimeout = 30; // seconds
-  static const int apiTimeout = 10; // seconds
+  static const int apiTimeout = 30; // seconds
   
   // UI Constants
   static const double buttonBorderRadius = 16.0;
