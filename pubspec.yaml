@@ -23,7 +23,7 @@ dependencies:
   dio: ^5.4.0
   flutter_dotenv: ^6.0.0
   web_socket_channel: ^3.0.3
-  flutter_tts: ^4.2.5
+
 
   # UI & Animations
   lottie: ^3.0.0

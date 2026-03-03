@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:ganithamithura/services/api/shapes_api_service.dart';
+import 'package:ganithamithura/models/shape_models.dart';
 
 // Custom painter for dashed border
 class DashedBorderPainter extends CustomPainter {
@@ -64,6 +66,8 @@ class BuildAndMatchScreen extends StatefulWidget {
 }
 
 class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
+  final _apiService = ShapesApiService.instance;
+  final String userId = 'user1'; // Hardcoded user for now
   int _selectedChallengeIndex = 0;
   final List<PlacedShape> _placedShapes = [];
   double _initialScale = 1.0;
@@ -71,6 +75,107 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
   PlacedShape? _shapeWithMenu;
   bool _isFullScreen = false;
   Offset _currentLandmarkOffset = Offset.zero;
+  int _highestUnlockedChallenge = 0; // Track highest unlocked challenge (0-based)
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBuildChallengeProgress();
+  }
+
+  /// Fetch user's build challenge progress from database
+  Future<void> _fetchBuildChallengeProgress() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final buildProgress = await _apiService.getBuildMatchProgress();
+      final highestChallenge = buildProgress['highest_build_challenge'] as int? ?? 0;
+      
+      setState(() {
+        _highestUnlockedChallenge = highestChallenge;
+        _isLoading = false;
+      });
+      
+      print('Loaded build challenge progress: $highestChallenge challenges completed');
+    } catch (e) {
+      print('Error fetching build challenge progress: $e');
+      // On error, start with first challenge unlocked
+      setState(() {
+        _highestUnlockedChallenge = 0;
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool _isChallengeLocked(int challengeIndex) {
+    // Only challenges up to _highestUnlockedChallenge are unlocked
+    return challengeIndex > _highestUnlockedChallenge;
+  }
+
+  void _handleChallengeTap(int index) {
+    if (_isChallengeLocked(index)) {
+      final nextLevelNeeded = index; // Which challenge needs to be completed (1-based for display)
+      
+      Get.snackbar(
+        '🔒 Challenge Locked',
+        'Complete "${challenges[index - 1]['name']}" challenge first to unlock this one!',
+        backgroundColor: const Color(0xFFFF6B6B),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+        icon: const Icon(Icons.lock, color: Colors.white),
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
+    } else {
+      setState(() {
+        _selectedChallengeIndex = index;
+        _clearCanvas();
+      });
+    }
+  }
+
+  /// Save challenge completion to database and unlock next challenge
+  Future<void> _saveChallengeCompletionAndUnlock() async {
+    if (_selectedChallengeIndex >= _highestUnlockedChallenge && 
+        _selectedChallengeIndex < challenges.length - 1) {
+      
+      try {
+        // Build challenges are levels 7-13 (after 6 shape game levels)
+        final levelNum = _selectedChallengeIndex + 7; // level1=7, level2=8, etc.
+        final gameId = 'level$levelNum';
+        
+        // Submit a "completed" answer to save progress
+        final gameAnswer = GameAnswer(
+          gameId: gameId,
+          answers: {'challenge': 'completed'}, // Simple completion marker
+        );
+        
+        print('Saving build challenge ${_selectedChallengeIndex + 1} completion (level $levelNum)...');
+        final result = await _apiService.checkAnswers(gameAnswer);
+        
+        if (result.isPassed) {
+          print('✅ Build challenge ${_selectedChallengeIndex + 1} saved to database');
+          // Unlock next challenge
+          setState(() {
+            _highestUnlockedChallenge = _selectedChallengeIndex + 1;
+          });
+        }
+      } catch (e) {
+        print('⚠️ Error saving build challenge progress: $e');
+        // Still unlock locally even if save fails
+        setState(() {
+          _highestUnlockedChallenge = _selectedChallengeIndex + 1;
+        });
+      }
+    } else if (_selectedChallengeIndex < _highestUnlockedChallenge) {
+      // Already completed, no need to save again
+      print('Build challenge ${_selectedChallengeIndex + 1} already completed');
+    }
+  }
 
   final List<Map<String, dynamic>> challenges = [
     {
@@ -443,7 +548,7 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
     }
   }
 
-  void _checkBuild() {
+  Future<void> _checkBuild() async {
     if (_placedShapes.isEmpty) {
       showDialog(
         context: context,
@@ -478,6 +583,11 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
     final isCorrect = _validateBuild();
     final feedback = _getDetailedFeedback();
     
+    // Save challenge completion to database and unlock next challenge
+    if (isCorrect) {
+      await _saveChallengeCompletionAndUnlock();
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -503,6 +613,32 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
+            if (isCorrect && _selectedChallengeIndex < challenges.length - 1) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CEEB2).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF4CEEB2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_open, color: Color(0xFF4CEEB2), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Next challenge unlocked! 🎉',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (!isCorrect) ...[
               const SizedBox(height: 16),
               Container(
@@ -543,10 +679,8 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                setState(() {
-                  _selectedChallengeIndex++;
-                  _clearCanvas();
-                });
+                final nextIndex = _selectedChallengeIndex + 1;
+                _handleChallengeTap(nextIndex);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CEEB2),
@@ -622,12 +756,14 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
 
             // Scrollable content
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 33),
-                child: Column(
-                  children: [
-                    // Build Challenges Section
-                    Container(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 33),
+                      child: Column(
+                        children: [
+                          // Build Challenges Section
+                          Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: const Color(0xFFC2E9DB),
@@ -658,42 +794,65 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
                                 final challenge = challenges[index];
                                 final isSelected = index == _selectedChallengeIndex;
                                 
+                                final isLocked = _isChallengeLocked(index);
+                                
                                 return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedChallengeIndex = index;
-                                      _clearCanvas();
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 71,
-                                    margin: const EdgeInsets.only(right: 13),
-                                    decoration: BoxDecoration(
-                                      color: isSelected 
-                                          ? const Color(0xFF4CEEB2) 
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          challenge['icon'],
-                                          style: const TextStyle(fontSize: 32),
+                                  onTap: () => _handleChallengeTap(index),
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: 71,
+                                        margin: const EdgeInsets.only(right: 13),
+                                        decoration: BoxDecoration(
+                                          color: isSelected 
+                                              ? const Color(0xFF4CEEB2) 
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          challenge['name'],
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: isSelected 
-                                                ? Colors.white 
-                                                : Colors.black,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              challenge['icon'],
+                                              style: TextStyle(
+                                                fontSize: 32,
+                                                color: isLocked 
+                                                    ? Colors.grey.withOpacity(0.5) 
+                                                    : null,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              challenge['name'],
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: isLocked
+                                                    ? Colors.grey
+                                                    : (isSelected 
+                                                        ? Colors.white 
+                                                        : Colors.black),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isLocked)
+                                        Positioned.fill(
+                                          child: Container(
+                                            margin: const EdgeInsets.only(right: 13),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.3),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Icon(
+                                              Icons.lock,
+                                              color: Colors.white,
+                                              size: 28,
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 );
                               },

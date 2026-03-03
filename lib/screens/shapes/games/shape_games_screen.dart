@@ -31,30 +31,53 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
   }
   
   Future<void> _fetchLevelAccess() async {
-    final accessData = await _apiService.getLevelAccessStatus();
-    setState(() {
-      _levelAccessData = accessData;
-      _isLoading = false;
-    });
+    try {
+      final accessData = await _apiService.getLevelAccessStatus();
+      setState(() {
+        _levelAccessData = accessData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching level access: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
   
   bool _isLevelLocked(int level) {
-    // All levels are unlocked
-    return false;
+    if (_levelAccessData == null) return level > 1; // Default: only level 1 unlocked
+    
+    final levels = _levelAccessData!['level_details'] as List<dynamic>;
+    final levelInfo = levels.firstWhere(
+      (l) => l['level'] == level,
+      orElse: () => {'is_locked': true},
+    );
+    
+    return levelInfo['is_locked'] ?? true;
   }
   
-  void _handleLevelTap(int level, VoidCallback onNavigate) {
+  Future<void> _handleLevelTap(int level, Future<dynamic> Function() onNavigate) async {
     if (_isLevelLocked(level)) {
       final highestPassed = _levelAccessData?['highest_passed_level'] ?? 0;
+      final nextLevelNeeded = level - 1;
+      
       Get.snackbar(
-        'Level Locked',
-        'Complete Level ${highestPassed + 1} to unlock this level',
-        backgroundColor: Colors.orange,
+        '🔒 Level Locked',
+        'Complete Level $nextLevelNeeded with full marks to unlock this level!',
+        backgroundColor: const Color(0xFFFF6B6B),
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
+        icon: const Icon(Icons.lock, color: Colors.white),
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
       );
     } else {
-      onNavigate();
+      // Navigate and wait for return
+      await onNavigate();
+      // Refresh level access when user returns
+      _fetchLevelAccess();
     }
   }
 
@@ -178,8 +201,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(1),
-                onTap: () => _handleLevelTap(1, () {
-                  Get.to(() => Match2DShapesAPIScreen(gameId: 'level1'));
+                onTap: () => _handleLevelTap(1, () async {
+                  return Get.to(() => Match2DShapesAPIScreen(gameId: 'level1'));
                 }),
               ),
             ),
@@ -198,8 +221,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(2),
-                onTap: () => _handleLevelTap(2, () {
-                  Get.to(() => Questions2DShapesAPIScreen(gameId: 'level2'));
+                onTap: () => _handleLevelTap(2, () async {
+                  return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level2'));
                 }),
               ),
             ),
@@ -218,8 +241,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(3),
-                onTap: () => _handleLevelTap(3, () {
-                  Get.to(() => Match2DShapesAPIScreen(gameId: 'level3'));
+                onTap: () => _handleLevelTap(3, () async {
+                  return Get.to(() => Match2DShapesAPIScreen(gameId: 'level3'));
                 }),
               ),
             ),
@@ -238,8 +261,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(4),
-                onTap: () => _handleLevelTap(4, () {
-                  Get.to(() => Questions2DShapesAPIScreen(gameId: 'level4'));
+                onTap: () => _handleLevelTap(4, () async {
+                  return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level4'));
                 }),
               ),
             ),
@@ -258,8 +281,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(5),
-                onTap: () => _handleLevelTap(5, () {
-                  Get.to(() => PatternMatchingAPIScreen(gameId: 'level5'));
+                onTap: () => _handleLevelTap(5, () async {
+                  return Get.to(() => PatternMatchingAPIScreen(gameId: 'level5'));
                 }),
               ),
             ),
@@ -278,8 +301,8 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
                 borderColor: const Color(AppColors.numberBorder),
                 starCount: 3,
                 isLocked: _isLevelLocked(6),
-                onTap: () => _handleLevelTap(6, () {
-                  Get.to(() => PatternMatchingAPIScreen(gameId: 'level6'));
+                onTap: () => _handleLevelTap(6, () async {
+                  return Get.to(() => PatternMatchingAPIScreen(gameId: 'level6'));
                 }),
               ),
             ),

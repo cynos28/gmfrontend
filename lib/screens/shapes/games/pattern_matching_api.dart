@@ -714,6 +714,71 @@ class _PatternMatchingAPIScreenState extends State<PatternMatchingAPIScreen> {
                       ],
                     ),
                     
+                    // Show unlock message if passed
+                    const SizedBox(height: 20),
+                    if (result.isPassed) Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF36D399).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF36D399),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.lock_open,
+                            color: Color(0xFF36D399),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Next level unlocked! 🎉',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF36D399),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ) else Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFA726).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFFFA726),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFFFFA726),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Flexible(
+                            child: Text(
+                              'Get all answers correct to unlock next level!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFFFA726),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
                     const SizedBox(height: 24),
                     
                     Row(

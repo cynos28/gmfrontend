@@ -295,6 +295,58 @@ class ShapesApiService {
     }
   }
   
+  /// Get Build & Match challenge progress
+  /// 
+  /// Returns:
+  /// {
+  ///   "highest_build_challenge": 0,
+  ///   "challenges": [
+  ///     {
+  ///       "challenge": 1,
+  ///       "is_locked": false,
+  ///       "is_passed": false,
+  ///       "status": "available",
+  ///       "attempts": 0
+  ///     },
+  ///     ...
+  ///   ]
+  /// }
+  Future<Map<String, dynamic>> getBuildMatchProgress() async {
+    try {
+      final headers = _getHeaders();
+      final url = Uri.parse('$baseUrl/game/build-match-progress');
+      
+      final response = await http.get(
+        url,
+        headers: headers,
+      ).timeout(
+        Duration(seconds: AppConstants.apiTimeout),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data;
+      } else if (response.statusCode == 401) {
+        throw Exception('Authentication required. Please login.');
+      } else {
+        throw Exception('Failed to get build match progress: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return default unlocked state instead of throwing
+      // This allows the app to work in offline mode
+      return {
+        'highest_build_challenge': 0,
+        'challenges': List.generate(7, (index) => {
+          'challenge': index + 1,
+          'is_locked': index > 0,
+          'is_passed': false,
+          'status': index > 0 ? 'locked' : 'available',
+          'attempts': 0,
+        }),
+      };
+    }
+  }
+  
   // ==================== Mock Data (for offline development/testing) ====================
   
   /// Get mock data for testing without backend
