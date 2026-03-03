@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/models/models.dart';
+import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
 /// StorageService - Handles all local storage operations
@@ -236,4 +237,61 @@ class StorageService {
   Future<bool> clearProgressData() async {
     return await prefs.remove(StorageKeys.progressData);
   }
+  
+  // ==================== User Authentication ====================
+  
+  /// Save current user data
+  Future<bool> saveCurrentUser(User user) async {
+    try {
+      final userJson = jsonEncode(user.toJson());
+      return await prefs.setString(StorageKeys.currentUser, userJson);
+    } catch (e) {
+      throw Exception('Error saving user data: $e');
+    }
+  }
+  
+  /// Get current user data
+  Future<User?> getCurrentUser() async {
+    try {
+      final userJson = prefs.getString(StorageKeys.currentUser);
+      if (userJson == null) return null;
+      
+      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+      return User.fromJson(userMap);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  /// Save authentication token
+  Future<bool> saveAuthToken(String token) async {
+    try {
+      return await prefs.setString(StorageKeys.authToken, token);
+    } catch (e) {
+      throw Exception('Error saving auth token: $e');
+    }
+  }
+  
+  /// Get authentication token
+  String? getAuthToken() {
+    return prefs.getString(StorageKeys.authToken);
+  }
+  
+  /// Clear user data (logout)
+  Future<bool> clearUserData() async {
+    try {
+      await prefs.remove(StorageKeys.currentUser);
+      await prefs.remove(StorageKeys.authToken);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  /// Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    final user = await getCurrentUser();
+    return user != null;
+  }
 }
+

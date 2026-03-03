@@ -8,6 +8,7 @@ import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
 import '../shapes/welcome_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
@@ -20,6 +21,28 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
   Key _tipCardKey = UniqueKey();
+  User? _currentUser;
+  bool _isLoadingUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final user = await AuthService.instance.getCurrentUser();
+      setState(() {
+        _currentUser = user;
+        _isLoadingUser = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingUser = false;
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     if (index == 0) {
@@ -29,11 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     setState(() {
       _currentNavIndex = index;
     });
-    
+
     if (index == 1) {
       // Navigate to Learn screen
       Get.to(() => const LearnScreen())?.then((_) {
@@ -55,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    
+
     // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
@@ -63,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(AppColors.infoColor),
       colorText: Colors.white,
     );
-    
+
     // Reset index since navigation didn't happen
     setState(() {
       _currentNavIndex = 0;
@@ -161,12 +184,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: KidsSpacing.cardMarginLarge),
 
                   // Daily Tip Card
-                  LearningTipCard(key: _tipCardKey),
+                  _buildDailyTipCard(),
                 ],
               ),
             ),
 
-            // Bottom Navigation Bar
+            // Bottom Navigation
             Positioned(
               left: 0,
               right: 0,
@@ -183,6 +206,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGreeting() {
+    final userName = _currentUser?.name ?? 'Friend';
+    final firstName = userName.split(' ').first;
+    
     return Container(
       padding: const EdgeInsets.all(KidsSpacing.cardPadding),
       decoration: BoxDecoration(
@@ -199,16 +225,27 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '👋 Hi, Shehan!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: KidsColors.textPrimary,
-              height: 1.2,
-              letterSpacing: -0.5,
-            ),
-          ),
+          _isLoadingUser
+              ? const Text(
+                  '👋 Hi!',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: KidsColors.textPrimary,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                )
+              : Text(
+                  '👋 Hi, $firstName!',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: KidsColors.textPrimary,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -279,16 +316,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(AppColors.symbolColor),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
-                onTap: () {
-                  Get.snackbar(
-                    'Coming Soon',
-                    'Symbols will be available soon',
-                    backgroundColor: const Color(AppColors.infoColor),
-                    colorText: Colors.white,
-                    borderRadius: KidsSpacing.radiusMedium,
-                  );
-                },
-                isEnabled: false,
+                onTap: () => Get.to(() => const SymbolHomeScreen()),
+                isEnabled: true,
               ),
             ),
           ],
@@ -325,6 +354,71 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDailyTipCard() {
+    return Container(
+      key: _tipCardKey,
+      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            KidsColors.success.withOpacity(0.1),
+            KidsColors.primaryAccent.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+        border: Border.all(
+          color: KidsColors.success.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: KidsColors.success.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+            ),
+            child: const Icon(
+              Icons.lightbulb_rounded,
+              size: 32,
+              color: KidsColors.success,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '💡 Daily Tip',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.success,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Practice counting for 10 minutes every day!',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.textPrimary,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
