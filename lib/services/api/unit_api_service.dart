@@ -9,8 +9,8 @@ import 'package:ganithamithura/models/unit_models.dart';
 class UnitApiService {
   // Using WiFi IP - works on any device without ADB setup
   // Make sure phone and Mac are on same WiFi network
-  static const String baseUrl = 'http://10.169.0.71:8000/api';
-  static const String ragBaseUrl = 'http://10.169.0.71:8000'; // RAG Service
+  static const String baseUrl = 'http://192.168.1.18:8000/api';
+  static const String ragBaseUrl = 'http://192.168.1.18:8000'; // RAG Service
   
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();
