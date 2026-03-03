@@ -53,7 +53,7 @@ dependencies:
   vector_math: ^2.1.4
 
   # 3D Model Rendering
-  model_viewer_plus: ^1.10.0
+  model_viewer_plus: ^1.9.3
   flutter_cube: ^0.1.1
 
   # Drawing / Canvas
