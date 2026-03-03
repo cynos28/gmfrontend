@@ -366,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     height: cardHeight,
                     child: _buildModuleCard(
                       title: 'Measurement',
-                      imagePath: 'assets/vectors/tom.png',
+                      imagePath: 'assets/vectors/stitch3.png',
                       color: const Color(0xFF7FA99B),
                       enabled: true,
                       onTap: () => Get.to(() => const MeasurementHomeScreen()),

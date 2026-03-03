@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'volume_game_play_screen.dart';
-import 'fish_tank_game_screen.dart';
+import 'volume_compare_game_screen.dart';
 
 // ─── variant metadata ──────────────────────────────────────────────────────
 
@@ -44,10 +44,10 @@ const List<_VariantInfo> _variants = [
   ),
   _VariantInfo(
     code: 'V-V2',
-    title: 'Fish Tank Filler',
-    subtitle: 'Help the fish!',
-    emoji: '🐟',
-    description: 'Fill the tank to make fish happy! Choose buckets wisely - too much or too little makes fish sad!',
+    title: 'Volume Compare',
+    subtitle: 'Which holds more?',
+    emoji: '🥛',
+    description: 'Compare containers and find which holds the most, least, or same amount!',
     stars: 2,
     color: Color(0xFF2196F3),
     lightColor: Color(0xFFE3F2FD),
@@ -247,7 +247,7 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
             onTap: () {
               if (variant.code == 'V-V2') {
                 Get.to(
-                  () => const FishTankGameScreen(),
+                  () => const VolumeCompareGameScreen(),
                   transition: Transition.rightToLeft,
                 );
               } else {

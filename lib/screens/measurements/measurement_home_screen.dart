@@ -7,6 +7,7 @@ import 'package:ganithamithura/services/user_service.dart';
 import 'games/length_game_hub_screen.dart';
 import 'games/area_game_hub_screen.dart';
 import 'games/volume_game_hub_screen.dart';
+import 'games/weight_game_hub_screen.dart';
 import 'dart:math' as math;
 
 /// MeasurementHomeScreen - Kindergarten-friendly measurement module
@@ -22,19 +23,12 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
   int _currentNavIndex = 0;
   int _currentGrade = 1;
   bool _isLoadingGrade = true;
-  late AnimationController _floatingController;
   late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
     _loadGrade();
-    
-    // Floating animation for decorative elements
-    _floatingController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
     
     // Pulse animation for interactive elements
     _pulseController = AnimationController(
@@ -45,7 +39,6 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
 
   @override
   void dispose() {
-    _floatingController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -97,13 +90,10 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: KidsColors.backgroundLight,
+      backgroundColor: const Color(AppColors.backgroundColor),
       body: SafeArea(
         child: Stack(
           children: [
-            // Animated background decorations
-            _buildFloatingDecorations(),
-            
             // Main content
             Column(
               children: [
@@ -146,50 +136,6 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     );
   }
 
-  Widget _buildFloatingDecorations() {
-    return AnimatedBuilder(
-      animation: _floatingController,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            // Top right decoration
-            Positioned(
-              top: 100 + (_floatingController.value * 20),
-              right: 20,
-              child: Opacity(
-                opacity: 0.15,
-                child: Transform.rotate(
-                  angle: _floatingController.value * math.pi / 4,
-                  child: Icon(
-                    Icons.straighten_rounded,
-                    size: 80,
-                    color: KidsColors.lengthColor,
-                  ),
-                ),
-              ),
-            ),
-            // Bottom left decoration
-            Positioned(
-              bottom: 200 + (_floatingController.value * -15),
-              left: 30,
-              child: Opacity(
-                opacity: 0.1,
-                child: Transform.rotate(
-                  angle: -_floatingController.value * math.pi / 6,
-                  child: Icon(
-                    Icons.grid_on_rounded,
-                    size: 60,
-                    color: KidsColors.areaColor,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -198,8 +144,8 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            KidsColors.primaryAccent.withOpacity(0.08),
-            KidsColors.secondaryAccent.withOpacity(0.05),
+            const Color(0xFFF5F5F5),
+            const Color(0xFFE8E8E8),
           ],
         ),
       ),
@@ -224,8 +170,8 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: KidsColors.primaryAccent.withOpacity(0.2),
-                    blurRadius: 12,
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -234,7 +180,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                 icon: const Icon(
                   Icons.arrow_back_rounded,
                   size: 28,
-                  color: KidsColors.textPrimary,
+                  color: Colors.black,
                 ),
                 padding: EdgeInsets.zero,
                 onPressed: () => Get.back(),
@@ -257,29 +203,14 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                   ),
                 );
               },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.straighten_rounded,
-                        size: 32,
-                        color: KidsColors.highlightAccent,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Let\'s Measure!',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: KidsColors.textPrimary,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              child: const Text(
+                'Measurement',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                  height: 1.1,
+                ),
               ),
             ),
           ),
@@ -352,7 +283,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
         'icon': Icons.scale_rounded,
         'arRoute': '/ar-measurement',
         'arArgs': {'type': 'weight'},
-        'gameScreen': null,
+        'gameScreen': const WeightGameHubScreen(),
       });
     }
 
@@ -369,7 +300,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
             return Transform.translate(
               offset: Offset(0, 50 * (1 - value)),
               child: Opacity(
-                opacity: value,
+                opacity: value.clamp(0.0, 1.0),
                 child: child,
               ),
             );
@@ -391,7 +322,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
               onGameTap: activity['gameScreen'] != null
                   ? () {
                       Get.to(
-                        () => activity['gameScreen'],
+                        activity['gameScreen'] as Widget,
                         transition: Transition.rightToLeft,
                       );
                     }

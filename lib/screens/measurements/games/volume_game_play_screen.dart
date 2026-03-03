@@ -91,8 +91,9 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
       _fineTuneStepMl = 5;
     } else if (_consecutiveSuccesses >= 2 || successRate > 0.7) {
       // Intermediate level - medium difficulty
+      // Targets must be reachable with 100+50+10 combinations
       _capacityMl = 500;
-      _targetMl = [175, 225, 325, 425].elementAt(_questionNumber % 4);
+      _targetMl = [160, 220, 280, 340, 410, 460].elementAt(_questionNumber % 6);
       _toleranceMl = 10;
       _normalPourStepMl = 100;
       _fastPourStepMl = 50;
