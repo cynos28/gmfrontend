@@ -9,6 +9,8 @@ import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
 import '../shapes/welcome_screen.dart';
 import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
+import 'package:ganithamithura/models/user.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
 
 /// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {

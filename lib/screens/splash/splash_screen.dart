@@ -26,6 +26,10 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 3));
     
     if (mounted) {
+      // TEMPORARY: Bypass authentication - go directly to HomeScreen
+      Get.offAll(() => const HomeScreen());
+      
+      /* AUTHENTICATION TEMPORARILY DISABLED
       // Check if onboarding has been seen
       bool hasSeenOnboarding = false;
       try {
@@ -52,6 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Get.offAll(() => const SignInScreen());
         }
       }
+      */
     }
   }
 
