@@ -7,11 +7,16 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/api/games_api_service.dart';
+import 'package:flutter_unit_ruler/flutter_unit_ruler.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:confetti/confetti.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/measurements/ar_challenges/ar_length_measure_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS
@@ -19,27 +24,41 @@ import 'package:ganithamithura/services/api/games_api_service.dart';
 
 class _Obj {
   final String name;
-  final String svg;  // asset path for the SVG illustration
+  final String img;  // asset path for the PNG illustration
   final int cm;      // real approximate length in centimetres
   final Color color;
-  const _Obj(this.name, this.svg, this.cm, this.color);
+  const _Obj(this.name, this.img, this.cm, this.color);
 }
 
 // Real-world school objects with approximate cm lengths.
+// Images live in assets/images/length/ — each PNG shows the object
+// horizontally so it aligns perfectly with ruler marks.
 const List<_Obj> _objects = [
-  _Obj('Pencil',     'assets/images/obj_pencil.svg',     17, Color(0xFFFFCA28)),
-  _Obj('Glue Stick', 'assets/images/obj_glue_stick.svg', 10, Color(0xFFBA68C8)),
-  _Obj('Crayon',     'assets/images/obj_crayon.svg',     12, Color(0xFFFF7043)),
-  _Obj('Scissors',   'assets/images/obj_scissors.svg',   15, Color(0xFF66BB6A)),
-  _Obj('Paperclip',  'assets/images/obj_paperclip.svg',   3, Color(0xFF42A5F5)),
-  _Obj('Eraser',     'assets/images/obj_eraser.svg',      5, Color(0xFFFF80AB)),
-  _Obj('Pen',        'assets/images/obj_pen.svg',        14, Color(0xFF29B6F6)),
-  _Obj('Spoon',      'assets/images/obj_spoon.svg',      18, Color(0xFF78909C)),
+  _Obj('Pencil',     'assets/images/length/pencil.png',    17, Color(0xFFFFCA28)),
+  _Obj('Glue Stick', 'assets/images/length/glustick.png',  10, Color(0xFFBA68C8)),
+  _Obj('Crayon',     'assets/images/length/crayon.png',    12, Color(0xFFFF7043)),
+  _Obj('Scissors',   'assets/images/length/scissors.png',  15, Color(0xFF66BB6A)),
+  _Obj('Paperclip',  'assets/images/length/paperclip.png',  3, Color(0xFF42A5F5)),
+  _Obj('Eraser',     'assets/images/length/eraser.png',     5, Color(0xFFFF80AB)),
+  _Obj('Pen',        'assets/images/length/pen.png',       14, Color(0xFF29B6F6)),
+  _Obj('Spoon',      'assets/images/length/spoon.png',     18, Color(0xFF78909C)),
 ];
 
 const List<int> _combineStrips = [3, 5, 7, 10, 12, 15, 20, 25];
 
 enum _Phase { playing, wrongAnswer, showResult, complete }
+
+class _BeanMission {
+  final String title;
+  final double targetMin;
+  final double targetMax;
+  final String label;
+  final bool showBand;
+  final bool freeGrow;
+  const _BeanMission(this.title, this.targetMin, this.targetMax,
+      {required this.label, this.showBand = true, this.freeGrow = false});
+  double get center => (targetMin + targetMax) / 2;
+}
 
 // Per-variant target times (seconds per round)
 const Map<String, int> _targetSeconds = {
@@ -47,6 +66,7 @@ const Map<String, int> _targetSeconds = {
   'L-V2': 60,
   'L-V3': 60,
   'L-V4': 90,
+  'L-V5': 120,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,7 +74,7 @@ const Map<String, int> _targetSeconds = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LengthGamePlayScreen extends StatefulWidget {
-  final String variant; // 'L-V1' | 'L-V2' | 'L-V3' | 'L-V4'
+  final String variant; // 'L-V1' | 'L-V2' | 'L-V3' | 'L-V4' | 'L-V5'
   const LengthGamePlayScreen({required this.variant});
 
   @override
@@ -85,15 +105,10 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   int _elapsedSeconds = 0;
 
   // ── round data by variant ────────────────────────────────────────────────
-  // V1
-  _Obj? _v1Object;
+  // V1 - AR camera measurement
+  double? _v1MeasuredCm;  // measured value from AR camera
   List<int> _v1Choices = [];
   int _v1Correct = 0;
-  // V1 drag
-  Offset _v1DragOffset    = Offset.zero;
-  bool   _v1Snapped       = false;
-  bool   _v1IsDragging    = false;
-  double _v1SnapThreshY   = 80.0; // computed per object in _genV1
 
   // V2
   _Obj? _v2ObjA;
@@ -113,6 +128,26 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   Set<int> _v4Selected = {};
   List<int> _v4PlacedOrder = []; // placement order for visual bridge rendering
 
+  // ── V5: Magic Beanstalk Grower (unit ruler driven) ─────────────────────
+  final ScaleController _beanstalkScaleCtrl = ScaleController(value: 0);
+  double _beanstalkValue = 0; // cm
+  bool _beanstalkUnitSwitched = false;
+  bool _beanstalkInputLocked = false;
+  int _beanstalkMissionIndex = 0; // 0-based
+  bool _beanstalkMissionComplete = false;
+  bool _beanstalkWinSequence = false;
+  late ConfettiController _beanstalkConfetti;
+  final AudioPlayer _bgmPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  final List<_BeanMission> _beanMissions = const [
+    _BeanMission('Water the sprout! Grow to 50 cm', 50, 50, label: 'Sprout 50 cm', showBand: true),
+    _BeanMission('Reach the butterfly at 80 cm!', 80, 80, label: 'Butterfly 80 cm', showBand: true),
+    _BeanMission('Touch the cloud! Grow to 1 meter!', 100, 100, label: 'Cloud 1 m', showBand: true),
+    _BeanMission('Reach the rainbow at 2.5 meters!', 250, 250, label: 'Rainbow 2.5 m', showBand: true),
+    _BeanMission('Find the giant\'s castle at 4.5 meters!', 450, 450, label: 'Castle 4.5 m', showBand: true),
+    _BeanMission('Free grow — reach the sun!', 520, 600, label: 'Free Grow', showBand: true, freeGrow: true),
+  ];
+
   // ── completion ───────────────────────────────────────────────────────────
   int _totalStarsEarned = 0;
   bool _submitting = false;
@@ -131,7 +166,9 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   static const int _passPercent = 60;
 
   // ── ordered variant list ─────────────────────────────────────────────────
-  static const List<String> _variantOrder = ['L-V1', 'L-V2', 'L-V3', 'L-V4'];
+  static const List<String> _variantOrder = ['L-V1', 'L-V2', 'L-V3', 'L-V4', 'L-V5'];
+
+  int get _activeTotalRounds => widget.variant == 'L-V5' ? _beanMissions.length : _totalRounds;
 
   String? get _nextVariantCode {
     final idx = _variantOrder.indexOf(widget.variant);
@@ -139,11 +176,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     return _variantOrder[idx + 1];
   }
 
-  // ── L-V1 bench layout constants ─────────────────────────────────────────
-  static const double _kBenchH        = 310.0;
-  static const double _kRulerTopY     = 228.0; // ruler top Y inside bench
-  static const double _kObjBarStartY  =  60.0; // initial bar top Y inside bench
-  static const double _kObjVisualH    =  56.0; // emoji object visual height
+  // V1 bench layout is computed responsively inside _buildV1 from MediaQuery.
 
   @override
   void initState() {
@@ -204,9 +237,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
       _roundAttempts = 0;
       _hintsUsedThisRound = 0;
       _roundStars = 3;
-      _v1DragOffset  = Offset.zero;
-      _v1Snapped     = false;
-      _v1IsDragging  = false;
+      _v1MeasuredCm = null;
       _v4Selected    = {};
       _v4PlacedOrder = [];
       _shakeCtrl.reset();
@@ -225,40 +256,12 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   }
 
   void _genV1() {
-    // Get adaptive params from backend
-    final sizeRange = (_params['object_size_range'] as List?)?.cast<num>() ?? [5, 15];
-    final minSize = sizeRange[0].toInt();
-    final maxSize = sizeRange[1].toInt();
-    final choiceSpread = (_params['choice_spread'] as num?)?.toInt() ?? 3;
-
-    // Filter objects within the adaptive size range
-    final eligible = _objects.where((o) => o.cm >= minSize && o.cm <= maxSize).toList();
-    if (eligible.isEmpty) {
-      // Fallback to all objects if no match
-      eligible.addAll(_objects);
-    }
-
-    final obj = eligible[_rng.nextInt(eligible.length)];
-    final correct = obj.cm;
-
-    // Generate decoys based on adaptive choice_spread
-    final decoys = <int>{};
-    while (decoys.length < 3) {
-      final offset = (_rng.nextInt(choiceSpread) + 1) * (_rng.nextBool() ? 1 : -1);
-      final decoy = (correct + offset).clamp(1, 30);
-      if (decoy != correct) decoys.add(decoy);
-    }
-    final choices = [correct, ...decoys]..shuffle(_rng);
-
-    // Compute snap threshold: how far down the user must drag
-    // so the object bottom reaches the ruler top (-30 px buffer)
-    final snapThresh = _kRulerTopY - _kObjBarStartY - _kObjVisualH - 30.0;
-
+    // V1 uses AR measurement - no pre-generation needed
+    // Choices will be generated after AR measurement completes
     setState(() {
-      _v1Object       = obj;
-      _v1Choices      = choices;
-      _v1Correct      = correct;
-      _v1SnapThreshY  = snapThresh;
+      _v1MeasuredCm = null;
+      _v1Choices = [];
+      _v1Correct = 0;
     });
   }
 
@@ -408,12 +411,15 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   // ─────────────────────────────────────────────────────────────────────────
 
   void _submitV1(int choice) {
-    if (_phase != _Phase.playing) return;
+    if (_phase != _Phase.playing || _v1MeasuredCm == null) return;
     setState(() => _roundAttempts++);
-    if (choice == _v1Correct) {
-      _roundCorrect('🎉 Awesome! The ${_v1Object!.name} is $_v1Correct cm!');
+    
+    // Check if choice is within ±2 cm of measured value
+    final diff = (choice - _v1MeasuredCm!).abs();
+    if (diff <= 2.0) {
+      _roundCorrect('🎉 Great job! You measured ${_v1MeasuredCm!.toStringAsFixed(1)} cm and picked $choice cm!');
     } else {
-      _roundWrong('Oops! Try again 💪');
+      _roundWrong('Try again! Think about your measurement 📏');
     }
   }
 
@@ -508,9 +514,9 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     switch (widget.variant) {
       case 'L-V1':
         hint =
-            'Drag the ${_v1Object!.name} all the way down to the ruler. '
-            'Look where its right end stops — that number is the length! '
-            'The ${_v1Object!.name} is about ${_v1Object!.cm} cm.';
+            'Open your camera and measure a real object around you! '
+            'Point at both ends carefully, then pick the closest answer. '
+            'Remember: the answer should be within 2 cm of what you measured!';
       case 'L-V2':
         hint =
             'Compare the two objects side by side. Which one reaches further to the right?';
@@ -568,7 +574,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   }
 
   void _nextRound() {
-    if (_round >= _totalRounds) {
+    if (_round >= _activeTotalRounds) {
       _completeGame();
     } else {
       setState(() => _round++);
@@ -586,7 +592,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     final sessionDuration =
         DateTime.now().difference(_sessionStart).inSeconds.toDouble();
     final targetTime =
-        (_targetSeconds[widget.variant] ?? 60) * _totalRounds.toDouble();
+      (_targetSeconds[widget.variant] ?? 60) * _activeTotalRounds.toDouble();
 
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('student_id') ?? 'student_001';
@@ -595,7 +601,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
       await GamesApiService.evaluateSession(
         userId: userId,
         domain: 'length',
-        attempts: (_totalAttempts / _totalRounds).round(),
+        attempts: (_totalAttempts / _activeTotalRounds).round(),
         time: sessionDuration,
         targetTime: targetTime,
         hints: _totalHints,
@@ -604,7 +610,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
 
     // If player passed, save the unlocked variant locally so the hub
     // reflects it immediately even before the backend response refreshes.
-    final maxStars = _totalRounds * 3;
+    final maxStars = _activeTotalRounds * 3;
     final percent  = (_totalStarsEarned / maxStars * 100).round();
     if (percent >= _passPercent) {
       final next = _nextVariantCode;
@@ -733,7 +739,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: KidsColors.textPrimary)),
-                    Text('Round $_round of $_totalRounds',
+                    Text('Round $_round of $_activeTotalRounds',
                         style: const TextStyle(
                             fontSize: 12,
                             color: KidsColors.textSecondary,
@@ -802,7 +808,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
           const SizedBox(height: 12),
           // Round progress dots
           Row(
-            children: List.generate(_totalRounds, (i) {
+            children: List.generate(_activeTotalRounds, (i) {
               Color dotColor;
               if (i + 1 < _round) {
                 dotColor = KidsColors.success;
@@ -848,7 +854,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   Widget _buildGameArea() {
     switch (widget.variant) {
       case 'L-V1':
-        return _buildV1(_v1Object);
+        return _buildV1(null);
       case 'L-V2':
         return _buildV2(_v2ObjA, _v2ObjB);
       case 'L-V3':
@@ -861,419 +867,283 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // L-V1: Measure 1 Object
+  // L-V1: AR Camera Measurement
   // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildV1(_Obj? obj) {
-    if (obj == null) return const SizedBox();
-    return LayoutBuilder(builder: (context, constraints) {
-      // ── scale so the ruler fills the available width exactly ──────────
-      // Only extend 2-3 cm past the object so each cm mark is large
-      // and kids can count them one by one.
-      final int rulerMaxCm  = obj.cm + 3;
-      final double availW   = constraints.maxWidth - 40.0; // 20px pad each side
-      final double pxPerCm  = availW / rulerMaxCm;
-      final double objBarW  = (obj.cm * pxPerCm).clamp(20.0, availW);
-      final double objStartX = (availW - objBarW) / 2.0; // centre in bench
-
-      // ── near-ruler detection for visual feedback ──────────────────────
-      final bool isNearRuler =
-          !_v1Snapped && _v1DragOffset.dy >= _v1SnapThreshY - 35;
-
-      return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── instruction banner ──────────────────────────────────────
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: _v1Snapped ? KidsColors.successLight : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: KidsShadows.soft,
-                border: Border.all(
-                  color: _v1Snapped
-                      ? KidsColors.success.withOpacity(0.45)
-                      : Colors.transparent,
-                ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Instruction card
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4ECDC4), Color(0xFF3DBDB3)],
               ),
-              child: Row(
-                children: [
-                  Text(_v1Snapped ? '🎉' : '📏',
-                      style: const TextStyle(fontSize: 28)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _v1Snapped
-                              ? 'Count the marks and pick the length! 👇'
-                              : 'Drag the ${obj.name} to the ruler!',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: _v1Snapped
-                                ? KidsColors.successDark
-                                : KidsColors.textPrimary,
-                          ),
-                        ),
-                        if (!_v1Snapped)
-                          const Text(
-                            'Drop it at the 0 mark to measure',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: KidsColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4ECDC4).withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  '📱',
+                  style: TextStyle(fontSize: 56),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _v1MeasuredCm == null
+                      ? 'Measure a Real Object!'
+                      : 'Pick the Closest Answer!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
-                ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _v1MeasuredCm == null
+                      ? 'Use your camera to measure something around you.\nIt could be a book, pencil, or anything!'
+                      : 'You measured ${_v1MeasuredCm!.toStringAsFixed(1)} cm.\nWhich answer is closest?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.95),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // AR measurement button or result
+          if (_v1MeasuredCm == null)
+            _buildARLaunchButton()
+          else
+            _buildMeasurementResult(),
+
+          // Answer choices (only after measurement)
+          if (_v1MeasuredCm != null && _v1Choices.isNotEmpty) ...[  
+            const SizedBox(height: 28),
+            const Text(
+              'Pick the closest answer:',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: KidsColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 14),
-
-            // ── measuring bench ─────────────────────────────────────────
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: _kBenchH,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F8FF),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isNearRuler
-                      ? KidsColors.success
-                      : _v1Snapped
-                          ? KidsColors.lengthColor.withOpacity(0.35)
-                          : const Color(0xFFD8E4FF),
-                  width: isNearRuler ? 3 : 2,
-                ),
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // ── ruler at the bottom of the bench ──────────────
-                  Positioned(
-                    left: 8, right: 8,
-                    top: _kRulerTopY,
-                    height: 60,
-                    child: _buildInteractiveRuler(
-                      pxPerCm: pxPerCm,
-                      maxCm: rulerMaxCm,
-                      highlightCm: _v1Snapped ? obj.cm : 0,
-                      obj: obj,
-                    ),
-                  ),
-
-                  // ── drop-zone arrow guide ──────────────────────────
-                  if (!_v1Snapped)
-                    Positioned(
-                      left: 0, right: 0,
-                      top: _kRulerTopY - 28,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.arrow_downward_rounded,
-                            size: 15,
-                            color: isNearRuler
-                                ? KidsColors.success
-                                : KidsColors.textTertiary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isNearRuler ? 'Let go! 🎯' : 'drop here',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isNearRuler
-                                  ? KidsColors.success
-                                  : KidsColors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // ── draggable object (before snap) ────────────────
-                  if (!_v1Snapped)
-                    Positioned(
-                      left: objStartX + _v1DragOffset.dx,
-                      top: _kObjBarStartY + _v1DragOffset.dy,
-                      child: GestureDetector(
-                        onPanUpdate: (d) {
-                          setState(() {
-                            _v1IsDragging = true;
-                            _v1DragOffset += d.delta;
-                            // clamp horizontally within bench
-                            final dx = _v1DragOffset.dx.clamp(
-                              -objStartX + 8,
-                              availW - objBarW - objStartX - 8,
-                            );
-                            // clamp vertically: don't go above start, stop at ruler
-                            final dy = _v1DragOffset.dy.clamp(
-                              -(_kObjBarStartY - 8),
-                              _kRulerTopY - _kObjBarStartY - _kObjVisualH + 14,
-                            );
-                            _v1DragOffset = Offset(dx, dy);
-                          });
-                        },
-                        onPanEnd: (_) {
-                          setState(() {
-                            _v1IsDragging = false;
-                            if (_v1DragOffset.dy >= _v1SnapThreshY) {
-                              _v1Snapped = true;
-                            } else {
-                              // spring back to start
-                              _v1DragOffset = Offset.zero;
-                            }
-                          });
-                        },
-                        child: _buildObjectBar(
-                          obj, pxPerCm,
-                          isDragging: _v1IsDragging,
-                          isPlaced: false,
-                        ),
-                      ),
-                    ),
-
-                  // ── object placed on ruler (after snap) ───────────
-                  if (_v1Snapped)
-                    Positioned(
-                      left: 9, // aligns with ruler 0 mark
-                      top: _kRulerTopY - _kObjVisualH - 2,
-                      child: _buildObjectBar(
-                        obj, pxPerCm,
-                        isDragging: false,
-                        isPlaced: true,
-                      ),
-                    ),
-
-                  // ── "hold & drag" bounce hint ─────────────────────
-                  if (!_v1Snapped && !_v1IsDragging)
-                    Positioned(
-                      left: 0, right: 0,
-                      top: _kObjBarStartY + _kObjVisualH + 10,
-                      child: AnimatedBuilder(
-                        animation: _bounceAnim,
-                        builder: (_, __) => Transform.translate(
-                          offset: Offset(0, _bounceAnim.value * 0.6),
-                          child: const Center(
-                            child: Text(
-                              'Hold & drag it down ↓',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: KidsColors.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            const SizedBox(height: 16),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 2.2,
+              children: _v1Choices
+                  .map((c) => _choiceBtn('$c cm', () => _submitV1(c)))
+                  .toList(),
             ),
+          ],
+        ],
+      ),
+    );
+  }
 
-            // ── answer choices (only after object is placed) ─────────────
-            if (_v1Snapped) ...[  
-              const SizedBox(height: 20),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 2.1,
-                children: _v1Choices
-                    .map((c) => _choiceBtn('$c cm', () => _submitV1(c)))
-                    .toList(),
-              ),
-            ],
+  Widget _buildARLaunchButton() {
+    return GestureDetector(
+      onTap: _launchARMeasurement,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 28),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: const Color(0xFF4ECDC4),
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4ECDC4).withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
-      );
-    });
-  }
-
-  // ── draggable object visual ────────────────────────────────────────────
-  //
-  // Shows the SVG illustration of the object. Width is still proportional
-  // to obj.cm * pxPerCm so it aligns with the ruler marks.
-  Widget _buildObjectBar(
-    _Obj obj,
-    double pxPerCm, {
-    bool isDragging = false,
-    bool isPlaced   = false,
-  }) {
-    final double w = (obj.cm * pxPerCm).clamp(20.0, 500.0);
-
-    return SizedBox(
-      width: w,
-      height: _kObjVisualH,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          // ── SVG object illustration ────────────────────────────────
-          // Only constrain height so the SVG keeps its natural proportions.
-          // The SizedBox width (= obj.cm * pxPerCm) still dictates how wide
-          // the draggable hit-area is so it aligns with the ruler.
-          SvgPicture.asset(
-            obj.svg,
-            height: _kObjVisualH - 14,
-            fit: BoxFit.contain,
-          ),
-          // ── object name label ─────────────────────────────────────
-          if (w > 50)
-            Positioned(
-              bottom: 0,
-              child: Text(
-                obj.name,
-                style: TextStyle(
-                  fontSize: w > 100 ? 11 : 9,
-                  fontWeight: FontWeight.w700,
-                  color: KidsColors.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          // ── drag handle (hidden once placed) ──────────────────────
-          if (!isPlaced && !isDragging)
-            Positioned(
-              bottom: 0, right: 0,
-              child: Icon(
-                Icons.drag_indicator_rounded,
-                size: 14,
-                color: KidsColors.textTertiary.withOpacity(0.5),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ── interactive ruler ──────────────────────────────────────────────────
-  //
-  // Shows a yellow ruler with tick marks. Every cm gets a numbered label so
-  // kids can count one-by-one. No measurement bubble — the child must count
-  // the marks themselves and pick the answer from the choices.
-  Widget _buildInteractiveRuler({
-    required double pxPerCm,
-    required int    maxCm,
-    required int    highlightCm,
-    required _Obj   obj,
-  }) {
-    // When pxPerCm is large enough show every‐cm labels,
-    // otherwise fall back to every 2 cm to avoid overlap.
-    final int labelEvery = pxPerCm >= 18 ? 1 : 2;
-
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF9C4),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFFCC02), width: 2),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // ── highlight fill (no number, just colour) ─────────────
-          if (highlightCm > 0)
-            Positioned(
-              left: 2, top: 2, bottom: 2,
-              width: max(0.0, highlightCm * pxPerCm - 4),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: obj.color.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-              ),
-            ),
-
-          // ── 0-mark label always visible ──────────────────────────
-          Positioned(
-            left: 2,
-            top: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+        child: Column(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF795548),
-                borderRadius: BorderRadius.circular(4),
+                color: const Color(0xFF4ECDC4).withOpacity(0.15),
+                shape: BoxShape.circle,
               ),
-              child: const Text(
-                '0',
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                size: 50,
+                color: Color(0xFF4ECDC4),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Open Camera',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF4ECDC4),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap to start measuring!',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: KidsColors.textSecondary.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMeasurementResult() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4ECDC4).withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF4ECDC4),
+                size: 28,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Measurement Complete!',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: Color(0xFF4ECDC4),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4ECDC4), Color(0xFF3DBDB3)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${_v1MeasuredCm!.toStringAsFixed(1)} cm',
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
               ),
             ),
           ),
-
-          // ── ticks & every-cm labels ──────────────────────────────
-          ...List.generate(maxCm + 1, (i) {
-            final bool showLabel = i > 0 && i % labelEvery == 0;
-            final bool isMajor  = i > 0 && i % 5 == 0;
-            final double tickH  = isMajor ? 26 : (showLabel ? 20 : 12);
-            return Positioned(
-              left: i * pxPerCm,
-              top: 0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (showLabel)
-                    Text(
-                      '$i',
-                      style: TextStyle(
-                        fontSize: isMajor ? 12 : 10,
-                        fontWeight:
-                            isMajor ? FontWeight.w800 : FontWeight.w600,
-                        color: const Color(0xFF795548),
-                      ),
-                    )
-                  else
-                    SizedBox(height: isMajor ? 14 : 12),
-                  Container(
-                    width: isMajor ? 2.0 : 1.5,
-                    height: tickH,
-                    color: const Color(0xFF795548),
-                  ),
-                ],
-              ),
-            );
-          }),
-
-          // ── "count the marks!" nudge when placed ────────────────
-          if (highlightCm > 0)
-            Positioned(
-              right: 6,
-              bottom: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF795548).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'count! 👆',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF795548),
-                  ),
-                ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: _launchARMeasurement,
+            icon: const Icon(
+              Icons.refresh_rounded,
+              size: 20,
+            ),
+            label: const Text(
+              'Measure Again',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
               ),
             ),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4ECDC4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _launchARMeasurement() async {
+    final result = await Get.to<String>(
+      () => const ARLengthMeasureScreen(),
+      transition: Transition.fadeIn,
+    );
+
+    if (result != null && mounted) {
+      final measuredCm = double.tryParse(result);
+      if (measuredCm != null && measuredCm > 0) {
+        _generateChoicesFromMeasurement(measuredCm);
+      }
+    }
+  }
+
+  void _generateChoicesFromMeasurement(double measuredCm) {
+    final rounded = measuredCm.round();
+    final choiceSpread = (_params['choice_spread'] as num?)?.toInt() ?? 3;
+
+    // Generate decoys around the measured value
+    final decoys = <int>{};
+    while (decoys.length < 3) {
+      final offset = (_rng.nextInt(choiceSpread * 2) + 1) * (_rng.nextBool() ? 1 : -1);
+      final decoy = (rounded + offset).clamp(1, 100);
+      if (decoy != rounded && !decoys.contains(decoy)) {
+        decoys.add(decoy);
+      }
+    }
+
+    final choices = [rounded, ...decoys]..shuffle(_rng);
+
+    setState(() {
+      _v1MeasuredCm = measuredCm;
+      _v1Choices = choices;
+      _v1Correct = rounded;
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1362,11 +1232,27 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
             padding: const EdgeInsets.fromLTRB(4, 12, 4, 16),
             child: Column(
               children: [
-                // ── Object SVG at natural proportions ───────────────────
-                SvgPicture.asset(
-                  obj.svg,
-                  height: 60,
-                  fit: BoxFit.contain,
+                // ── Object PNG scaled proportionally ──────────────────
+                // Width = barW so the image visually matches the length bar.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    obj.img,
+                    width: barW,
+                    height: 88,
+                    fit: BoxFit.fill,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: barW,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: obj.color.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(obj.name,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: obj.color)),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -1473,7 +1359,21 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                       color: KidsColors.textSecondary),
                 ),
                 const SizedBox(height: 16),
-                SvgPicture.asset(obj.svg, height: 90, fit: BoxFit.contain),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    obj.img,
+                    height: 140,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 140,
+                      padding: const EdgeInsets.all(12),
+                      alignment: Alignment.center,
+                      child: Text(obj.name,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 // Measurement badge
                 Container(
@@ -2330,7 +2230,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                     ],
                   ),
                   child: Text(
-                    _round < _totalRounds ? '➡️ Next Round!' : '🏁 Finish!',
+                    _round < _activeTotalRounds ? '➡️ Next Round!' : '🏁 Finish!',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                         fontSize: 20,
@@ -2351,7 +2251,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildCompleteScreen() {
-    final maxStars = _totalRounds * 3;
+    final maxStars = _activeTotalRounds * 3;
     final percent = (_totalStarsEarned / maxStars * 100).round();
     String medal;
     String praise;
@@ -2389,7 +2289,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                   fontWeight: FontWeight.w900,
                   color: KidsColors.textPrimary)),
           const SizedBox(height: 8),
-          Text('You finished all $_totalRounds rounds!',
+          Text('You finished all $_activeTotalRounds rounds!',
               style: const TextStyle(
                   fontSize: 17, color: KidsColors.textSecondary, fontWeight: FontWeight.w600)),
           const SizedBox(height: 28),
@@ -2448,7 +2348,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
 
           // ── primary action: unlock next level OR play again ─────────────
           Builder(builder: (_) {
-            final maxStars = _totalRounds * 3;
+            final maxStars = _activeTotalRounds * 3;
             final percent  = (_totalStarsEarned / maxStars * 100).round();
             final passed   = percent >= _passPercent;
             final next     = _nextVariantCode;

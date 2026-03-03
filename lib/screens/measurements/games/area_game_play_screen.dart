@@ -1,12 +1,16 @@
 /// Area Game Play Screen
-/// Renders all four area game variants (A-V1 → A-V4) with kids-friendly UI,
+/// Renders area game variants (A-V1, A-V3, A-V4) with kids-friendly UI,
 /// adaptive difficulty, and backend integration.
 
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/api/games_api_service.dart';
 
@@ -19,7 +23,6 @@ enum _Phase { playing, wrongAnswer, showResult, complete }
 /// Per-variant target times (seconds per round)
 const Map<String, int> _targetSeconds = {
   'A-V1': 60,
-  'A-V2': 90,
   'A-V3': 90,
   'A-V4': 90,
 };
@@ -39,7 +42,7 @@ class _LShape {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AreaGamePlayScreen extends StatefulWidget {
-  final String variant; // 'A-V1' | 'A-V2' | 'A-V3'
+  final String variant; // 'A-V1' | 'A-V3' | 'A-V4'
   const AreaGamePlayScreen({super.key, required this.variant});
 
   @override
@@ -86,50 +89,31 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
   bool _v1ShowGrid = true;
   int _v1FilledCount = 0;
 
-  // ─── V2 state: Shape Building Game (Drag labeled shapes to build object) ─
-  List<Map<String, dynamic>> _v2Parts = [];   // Correct shape parts: {type, width, height, area, targetPos, color, label, id}
-  List<Map<String, dynamic>> _v2Distractors = []; // Distractor shapes with wrong areas
-  int _v2TotalArea = 0;                       // Total area of correct parts
-  int _v2DieRoll = 0;                         // die result (1-5)
-  bool _v2ShowDie = false;                    // showing die animation
-  bool _v2DieRolling = false;                 // die is rolling
-  String _v2ObjectName = 'House';             // current object name
-  String _v2ObjectEmoji = '🏠';               // current object emoji
-  int? _v2DraggingPartId;                     // ID of part being dragged
-  Map<int, Offset> _v2PlacedParts = {};       // partId -> current placed position
-  int _v2Streak = 0;                          // consecutive correct builds
+  // ─── V3 state: Fill the Shape (Drag & Drop) ───────────────────────────────
+  int _v3GridW = 0;
+  int _v3GridH = 0;
+  List<List<bool>> _v3Silhouette = [];
+  List<List<int>> _v3Board = [];
+  int _v3TargetArea = 0;
+  int _v3FilledArea = 0;
+  String _v3ShapeName = '';
+  int _v3HintsUsed = 0;
+  int _v3PieceIdCounter = 1;
+  List<Map<String, dynamic>> _v3Pieces = [];
+  int _v3DraggingIndex = -1;
+  int? _v3HoverX;
+  int? _v3HoverY;
+  bool _v3CanPlace = false;
 
-  // ─── V3 state: Fill the Shape (Drag & Drop) ─────────────────────────────
-  int _v3GridW = 10;
-  int _v3GridH = 8;
-  List<List<bool>> _v3Silhouette = [];        // target shape (true = needs fill)
-  List<List<int>> _v3Board = [];              // placed pieces (0 = empty, >0 = piece ID)
-  int _v3TargetArea = 0;                      // total squares in silhouette
-  int _v3FilledArea = 0;                      // current filled squares
-  String _v3ShapeName = 'House';              // silhouette name
-  int _v3HintsUsed = 0;                       // hints used
-  int _v3PieceIdCounter = 1;                  // for unique piece IDs on board
-  
-  // Piece tray
-  List<Map<String, dynamic>> _v3Pieces = [];  // available pieces [{cells, area, color, name}]
-  int _v3DraggingIndex = -1;                  // index of piece being dragged (-1 = none)
-  Offset _v3DragOffset = Offset.zero;         // drag position
-  int? _v3HoverX, _v3HoverY;                  // hover cell during drag
-  bool _v3CanPlace = false;                   // can place at current hover
-  
-  // Adaptive settings
-  bool _v3ShowAreaMeter = true;               // show running total
-  bool _v3SnapHighlight = true;               // highlight valid cells
-
-  // ─── V4 state: Composite Area ──────────────────────────────────────────
-  late _LShape _v4Shape;
+  // ─── V4 state: L‑Shaped Rooms (Distributive Property) ─────────────────────
+  _LShape? _v4Shape;
   List<int> _v4PartAreas = [];
   List<int> _v4Choices = [];
   int _v4SelectedTotal = 0;
 
   // ─── Unlock progression ────────────────────────────────────────────────
   static const int _passPercent = 60;
-  static const List<String> _variantOrder = ['A-V1', 'A-V2', 'A-V3', 'A-V4'];
+  static const List<String> _variantOrder = ['A-V1'];
   String? get _nextVariantCode {
     final idx = _variantOrder.indexOf(widget.variant);
     return idx < _variantOrder.length - 1 ? _variantOrder[idx + 1] : null;
@@ -204,12 +188,6 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     switch (widget.variant) {
       case 'A-V1':
         _genV1();
-      case 'A-V2':
-        _genV2();
-      case 'A-V3':
-        _genV3();
-      case 'A-V4':
-        _genV4();
     }
   }
 
@@ -243,195 +221,11 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     });
   }
 
-  // ─── V2 generation: Tiny Builders ──────────────────────────────────────
-
-  void _genV2() {
-    // Show die waiting to be tapped
-    setState(() {
-      _v2ShowDie = true;
-      _v2DieRolling = false;
-      _v2DieRoll = 0;
-    });
-  }
-  
-  void _animateDieRoll() async {
-    setState(() => _v2DieRolling = true);
-    
-    // Roll animation: show random numbers quickly
-    for (int i = 0; i < 20; i++) {
-      if (!mounted) return;
-      setState(() {
-        _v2DieRoll = 1 + _rng.nextInt(5); // 1-5 preview
-      });
-      await Future.delayed(Duration(milliseconds: 40 + i * 8));
-    }
-    
-    // Final roll
-    final roll = 1 + _rng.nextInt(5); // 1-5
-    
-    if (!mounted) return;
-    setState(() {
-      _v2DieRoll = roll;
-      _v2DieRolling = false;
-    });
-    
-    // Wait to show object, then reveal
-    await Future.delayed(const Duration(milliseconds: 1200));
-    
-    if (!mounted) return;
-    _setupV2Object(roll);
-  }
-  
-  void _setupV2Object(int roll) {
-    // Objects: 1=House, 2=Bus, 3=Tree, 4=Robot, 5=Boat
-    late List<Map<String, dynamic>> parts;
-    late String name;
-    late String emoji;
-    
-    switch (roll) {
-      case 1:
-        parts = _genV2HouseParts();
-        name = 'House';
-        emoji = '🏠';
-        break;
-      case 2:
-        parts = _genV2BusParts();
-        name = 'Bus';
-        emoji = '🚌';
-        break;
-      case 3:
-        parts = _genV2TreeParts();
-        name = 'Tree';
-        emoji = '🌳';
-        break;
-      case 4:
-        parts = _genV2RobotParts();
-        name = 'Robot';
-        emoji = '🤖';
-        break;
-      default:
-        parts = _genV2BoatParts();
-        name = 'Boat';
-        emoji = '⛵';
-    }
-    
-    // Calculate total area
-    final totalArea = parts.fold<int>(0, (sum, p) => sum + (p['area'] as int));
-    
-    // Generate distractor shapes (4-6 shapes with different areas)
-    final distractors = _genV2Distractors(parts);
-    
-    setState(() {
-      _v2ShowDie = false;
-      _v2Parts = parts;
-      _v2Distractors = distractors;
-      _v2TotalArea = totalArea;
-      _v2ObjectName = name;
-      _v2ObjectEmoji = emoji;
-      _v2DraggingPartId = null;
-      _v2PlacedParts = {};
-    });
-  }
-  
-  /// Generate distractor shapes with wrong areas
-  List<Map<String, dynamic>> _genV2Distractors(List<Map<String, dynamic>> correctParts) {
-    // Get ID counter starting after correct parts
-    int nextId = correctParts.fold<int>(0, (max, p) => (p['id'] as int) > max ? p['id'] as int : max) + 1;
-    
-    // Distractor areas (different from correct parts)
-    final distractorAreas = [4, 5, 7, 9, 10, 15];
-    final colors = [
-      const Color(0xFFE0E0E0),
-      const Color(0xFFBDBDBD),
-      const Color(0xFF9E9E9E),
-      const Color(0xFF757575),
-    ];
-    
-    final distractors = <Map<String, dynamic>>[];
-    
-    // Generate 4-6 distractor shapes
-    final count = 4 + _rng.nextInt(3); // 4-6 shapes
-    for (int i = 0; i < count; i++) {
-      final area = distractorAreas[i % distractorAreas.length];
-      final type = ['rect', 'circle', 'triangle'][_rng.nextInt(3)];
-      final color = colors[i % colors.length];
-      
-      // Placeholder dimensions (not used in building area, only for tray display)
-      final width = type == 'circle' ? 30.0 : 35.0 + (area * 2.0);
-      final height = type == 'circle' ? 30.0 : 30.0;
-      
-      distractors.add({
-        'id': nextId++,
-        'type': type,
-        'width': width,
-        'height': height,
-        'area': area,
-        'targetPos': const Offset(-1000, -1000), // Off-screen (not part of target)
-        'color': color,
-        'label': '$area cm²',
-      });
-    }
-    
-    return distractors;
-  }
-  
-  // ─── V2 Shape Part Generators (Labeled shapes with areas) ────────────────
-  
-  /// House: Roof (triangle), Body (rect), Door, 2 Windows
-  List<Map<String, dynamic>> _genV2HouseParts() {
-    return [
-      {'id': 1, 'type': 'triangle', 'width': 112.0, 'height': 70.0, 'area': 6, 'targetPos': const Offset(133, 182), 'color': const Color(0xFFFF6B6B), 'label': '6 cm²'},
-      {'id': 2, 'type': 'rect', 'width': 98.0, 'height': 112.0, 'area': 12, 'targetPos': const Offset(140, 252), 'color': const Color(0xFFFFE5B4), 'label': '12 cm²'},
-      {'id': 3, 'type': 'rect', 'width': 28.0, 'height': 49.0, 'area': 2, 'targetPos': const Offset(175, 315), 'color': const Color(0xFF8B4513), 'label': '2 cm²'},
-      {'id': 4, 'type': 'rect', 'width': 25.0, 'height': 25.0, 'area': 1, 'targetPos': const Offset(151, 273), 'color': const Color(0xFF87CEEB), 'label': '1 cm²'},
-      {'id': 5, 'type': 'rect', 'width': 25.0, 'height': 25.0, 'area': 1, 'targetPos': const Offset(195, 273), 'color': const Color(0xFF87CEEB), 'label': '1 cm²'},
-    ];
-  }
-  
-  /// Bus: Body, 2 Windows, 3 Wheels
-  List<Map<String, dynamic>> _genV2BusParts() {
-    return [
-      {'id': 1, 'type': 'rect', 'width': 154.0, 'height': 91.0, 'area': 18, 'targetPos': const Offset(105, 224), 'color': const Color(0xFFFFD93D), 'label': '18 cm²'},
-      {'id': 2, 'type': 'rect', 'width': 53.0, 'height': 39.0, 'area': 3, 'targetPos': const Offset(119, 241), 'color': const Color(0xFF87CEEB), 'label': '3 cm²'},
-      {'id': 3, 'type': 'rect', 'width': 53.0, 'height': 39.0, 'area': 3, 'targetPos': const Offset(185, 241), 'color': const Color(0xFF87CEEB), 'label': '3 cm²'},
-      {'id': 4, 'type': 'circle', 'width': 36.0, 'height': 36.0, 'area': 3, 'targetPos': const Offset(133, 319), 'color': const Color(0xFF424242), 'label': '3 cm²'},
-      {'id': 5, 'type': 'circle', 'width': 36.0, 'height': 36.0, 'area': 3, 'targetPos': const Offset(182, 319), 'color': const Color(0xFF424242), 'label': '3 cm²'},
-      {'id': 6, 'type': 'circle', 'width': 36.0, 'height': 36.0, 'area': 3, 'targetPos': const Offset(231, 319), 'color': const Color(0xFF424242), 'label': '3 cm²'},
-    ];
-  }
-  
-  /// Tree: Leaves (circle), Trunk (rect)
-  List<Map<String, dynamic>> _genV2TreeParts() {
-    return [
-      {'id': 1, 'type': 'circle', 'width': 126.0, 'height': 126.0, 'area': 12, 'targetPos': const Offset(147, 189), 'color': const Color(0xFF6BCB77), 'label': '12 cm²'},
-      {'id': 2, 'type': 'rect', 'width': 31.0, 'height': 98.0, 'area': 6, 'targetPos': const Offset(167, 280), 'color': const Color(0xFF8B4513), 'label': '6 cm²'},
-    ];
-  }
-  
-  /// Robot: Head, Body, 2 Arms, 2 Legs
-  List<Map<String, dynamic>> _genV2RobotParts() {
-    return [
-      {'id': 1, 'type': 'rect', 'width': 63.0, 'height': 45.0, 'area': 4, 'targetPos': const Offset(150, 193), 'color': const Color(0xFFBDBDBD), 'label': '4 cm²'},
-      {'id': 2, 'type': 'rect', 'width': 77.0, 'height': 91.0, 'area': 12, 'targetPos': const Offset(143, 242), 'color': const Color(0xFF4ECDC4), 'label': '12 cm²'},
-      {'id': 3, 'type': 'rect', 'width': 22.0, 'height': 59.0, 'area': 3, 'targetPos': const Offset(116, 256), 'color': const Color(0xFFBDBDBD), 'label': '3 cm²'},
-      {'id': 4, 'type': 'rect', 'width': 22.0, 'height': 59.0, 'area': 3, 'targetPos': const Offset(225, 256), 'color': const Color(0xFFBDBDBD), 'label': '3 cm²'},
-      {'id': 5, 'type': 'rect', 'width': 22.0, 'height': 53.0, 'area': 3, 'targetPos': const Offset(155, 339), 'color': const Color(0xFF424242), 'label': '3 cm²'},
-      {'id': 6, 'type': 'rect', 'width': 22.0, 'height': 53.0, 'area': 3, 'targetPos': const Offset(186, 339), 'color': const Color(0xFF424242), 'label': '3 cm²'},
-    ];
-  }
-  
-  /// Boat: Sail (triangle), Mast (rect), Hull (rect)
-  List<Map<String, dynamic>> _genV2BoatParts() {
-    return [
-      {'id': 1, 'type': 'triangle', 'width': 77.0, 'height': 91.0, 'area': 8, 'targetPos': const Offset(150, 193), 'color': const Color(0xFFFFFFFF), 'label': '8 cm²'},
-      {'id': 2, 'type': 'rect', 'width': 8.0, 'height': 105.0, 'area': 2, 'targetPos': const Offset(178, 221), 'color': const Color(0xFF8B4513), 'label': '2 cm²'},
-      {'id': 3, 'type': 'rect', 'width': 133.0, 'height': 45.0, 'area': 12, 'targetPos': const Offset(119, 305), 'color': const Color(0xFF5AC8FA), 'label': '12 cm²'},
-    ];
-  }
-
   // ─── V3 generation: Fill the Shape (Drag & Drop) ───────────────────────
 
   void _genV3() {
+
+
     // Generate a kid-friendly silhouette to fill with pieces
     final shapes = ['house', 'rocket', 'tree', 'robot', 'car', 'boat'];
     final shapeType = shapes[_rng.nextInt(shapes.length)];
@@ -769,77 +563,7 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     }
   }
 
-  void _submitV2() {
-    if (_phase != _Phase.playing) return;
-    setState(() => _roundAttempts++);
 
-    // Check if any shapes are placed
-    if (_v2PlacedParts.isEmpty) {
-      _roundWrong('Place some shapes first! $_v2ObjectEmoji\nDrag shapes onto the board.');
-      return;
-    }
-
-    // Check: Are ONLY correct shapes used (no distractors)?
-    final correctIds = _v2Parts.map((p) => p['id'] as int).toSet();
-    final placedIds = _v2PlacedParts.keys.toSet();
-    final wrongShapes = placedIds.difference(correctIds);
-    
-    if (wrongShapes.isNotEmpty) {
-      _roundWrong('Oops! You used some wrong shapes! $_v2ObjectEmoji\nOnly use shapes that fit the outline.');
-      return;
-    }
-
-    // Check: Are all correct shapes placed?
-    final missingShapes = correctIds.difference(placedIds);
-    if (missingShapes.isNotEmpty) {
-      _roundWrong('Almost there! $_v2ObjectEmoji\nYou need ${missingShapes.length} more shape(s).');
-      return;
-    }
-    
-    // Check: Does total area match target?
-    final placedArea = placedIds.fold<int>(0, (sum, id) {
-      final part = [..._v2Parts, ..._v2Distractors].firstWhere((p) => p['id'] == id);
-      return sum + (part['area'] as int);
-    });
-    
-    if (placedArea != _v2TotalArea) {
-      _roundWrong('Area mismatch! $_v2ObjectEmoji\nYou have $placedArea cm², but need $_v2TotalArea cm².');
-      return;
-    }
-
-    // Perfect build! Calculate stars
-    int stars = 3;
-    if (_roundAttempts > 3) {
-      stars = 1;
-    } else if (_roundAttempts > 1) {
-      stars = 2;
-    }
-    
-    if (stars == 3) _v2Streak++;
-    else _v2Streak = 0;
-    
-    final totalArea = _v2Parts.fold<int>(0, (sum, p) => sum + (p['area'] as int));
-    _roundCorrect('🎉 Perfect! You built the $_v2ObjectName!\nTotal Area = $totalArea cm²');
-  }
-
-  /// Called when a part is dropped on the building area - auto-snap to target
-  void _dropV2Part(int partId) {
-    final part = _v2Parts.firstWhere((p) => p['id'] == partId);
-    final targetPos = part['targetPos'] as Offset;
-    
-    setState(() {
-      // Auto-snap to the target position for that part
-      _v2PlacedParts[partId] = targetPos;
-      _v2DraggingPartId = null;
-    });
-  }
-  
-  /// Remove a placed part (tap to return to tray)
-  void _removeV2Part(int partId) {
-    setState(() {
-      _v2PlacedParts.remove(partId);
-    });
-  }
 
   void _submitV3() {
     if (_phase != _Phase.playing) return;
@@ -1028,9 +752,11 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
 
   void _submitV4(int choice) {
     if (_phase != _Phase.playing) return;
+    final shape = _v4Shape;
+    if (shape == null) return;
     setState(() => _roundAttempts++);
-    if (choice == _v4Shape.totalArea) {
-      _roundCorrect('✂️ Correct! ${_v4PartAreas.join(' + ')} = ${_v4Shape.totalArea} cm²!');
+    if (choice == shape.totalArea) {
+      _roundCorrect('✂️ Correct! ${_v4PartAreas.join(' + ')} = ${shape.totalArea} cm²!');
     } else {
       _roundWrong('Split the shape and add the areas! ✂️➕');
     }
@@ -1094,20 +820,6 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
       case 'A-V1':
         hint = 'Think: $_v1Width columns × $_v1Height rows = ?\n'
             'Place exactly that many tiles! 🧮';
-      case 'A-V2':
-        final totalParts = _v2Parts.length;
-        final placedParts = _v2PlacedParts.length;
-        final remaining = totalParts - placedParts;
-        hint = 'Build the $_v2ObjectName with $totalParts shapes!\n'
-            '${remaining > 0 ? "$remaining more needed" : "All placed! Check your build!"} $_v2ObjectEmoji';
-      case 'A-V3':
-        final remaining = _v3TargetArea - _v3FilledArea;
-        hint = 'Drag pieces to fill the $_v3ShapeName!\n'
-            '$remaining more squares needed. Target: $_v3TargetArea 🧩';
-      case 'A-V4':
-        final parts = _v4PartAreas.join(' and ');
-        hint = 'Split the L-shape into rectangles.\n'
-            'The parts have areas: $parts cm²';
       default:
         hint = 'Think carefully! You can do this! 💪';
     }
@@ -1384,8 +1096,6 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     switch (widget.variant) {
       case 'A-V1':
         return '🟩 Tile Rectangle';
-      case 'A-V2':
-        return '� Build a Mat';
       case 'A-V3':
         return '📐 Build to Target';
       case 'A-V4':
@@ -1401,14 +1111,8 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     switch (widget.variant) {
       case 'A-V1':
         return _buildV1();
-      case 'A-V2':
-        return _buildV2();
-      case 'A-V3':
-        return _buildV3();
-      case 'A-V4':
-        return _buildV4();
       default:
-        return const Center(child: Text('Unknown variant'));
+        return const Center(child: Text('This game mode is unavailable'));
     }
   }
 
@@ -1463,51 +1167,34 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
             ),
             child: Column(
               children: [
-                // Tile counter
+                // Target area question
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: _v1FilledCount == _v1Correct
-                        ? KidsColors.success.withOpacity(0.12)
-                        : _v1FilledCount > _v1Correct
-                            ? const Color(0xFFFF3B30).withOpacity(0.12)
-                            : const Color(0xFFF5F5F5),
+                    color: const Color(0xFFFFF8E1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: _v1FilledCount == _v1Correct
-                          ? KidsColors.success.withOpacity(0.4)
-                          : _v1FilledCount > _v1Correct
-                              ? const Color(0xFFFF3B30).withOpacity(0.4)
-                              : Colors.grey.shade300,
+                      color: const Color(0xFFFFD54F),
+                      width: 2,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Column(
                     children: [
-                      Icon(
-                        _v1FilledCount == _v1Correct
-                            ? Icons.check_circle_rounded
-                            : _v1FilledCount > _v1Correct
-                                ? Icons.warning_rounded
-                                : Icons.grid_on_rounded,
-                        size: 20,
-                        color: _v1FilledCount == _v1Correct
-                            ? KidsColors.success
-                            : _v1FilledCount > _v1Correct
-                                ? const Color(0xFFFF3B30)
-                                : KidsColors.textTertiary,
-                      ),
-                      const SizedBox(width: 8),
                       Text(
-                        'Tiles placed: $_v1FilledCount',
-                        style: TextStyle(
+                        'Target Area: $_v1Correct units²',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.brown.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Fill every square!',
+                        style: GoogleFonts.fredoka(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: _v1FilledCount == _v1Correct
-                              ? KidsColors.success
-                              : _v1FilledCount > _v1Correct
-                                  ? const Color(0xFFFF3B30)
-                                  : KidsColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.brown.shade600,
                         ),
                       ),
                     ],
@@ -1578,258 +1265,7 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     );
   }
 
-  // ═════════════════════════════════════════════════════════════════════════
-  //  V2: TINY BUILDERS (Die Roll + Drag Blocks to Cover Silhouette)
-  // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildV2() {
-    // Show die roll animation
-    if (_v2ShowDie) {
-      return _buildV2DieRoll();
-    }
-    
-    // Guard: parts not yet initialized
-    if (_v2Parts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    // Calculate total areas
-    final int totalArea = _v2Parts.fold(0, (sum, p) => sum + (p['area'] as int));
-    final int placedArea = _v2PlacedParts.length * totalArea ~/ _v2Parts.length;
-    final bool allPlaced = _v2PlacedParts.length == _v2Parts.length;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Object header with emoji and total area target
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6366F1).withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Build the $_v2ObjectName $_v2ObjectEmoji',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Total Area: $_v2TotalArea cm²',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: KidsShadows.soft,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '📦 ${_v2PlacedParts.length} / ${_v2Parts.length} shapes',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF6366F1),
-                  ),
-                ),
-                Text(
-                  allPlaced ? '✅ Complete!' : '🏗️ Building...',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: allPlaced ? KidsColors.success : Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Building area (420x490 container with stack - enlarged for visibility)
-          DragTarget<int>(
-            onAcceptWithDetails: (details) {
-              // Auto-snap the part to its target position
-              _dropV2Part(details.data);
-            },
-            builder: (context, candidateData, rejectedData) {
-              return Container(
-                width: 420,
-                height: 490,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: KidsShadows.soft,
-                  border: Border.all(
-                    color: _v2DraggingPartId != null ? const Color(0xFF6366F1) : Colors.grey.shade300,
-                    width: _v2DraggingPartId != null ? 3 : 1,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Stack(
-                    children: [
-                      // Ghosted target outlines
-                      ..._v2Parts.map((part) {
-                        final partId = part['id'] as int;
-                        final isPlaced = _v2PlacedParts.containsKey(partId);
-                        if (isPlaced) return const SizedBox.shrink();
-                        
-                        final targetPos = part['targetPos'] as Offset;
-                        return Positioned(
-                          left: targetPos.dx,
-                          top: targetPos.dy,
-                          child: Opacity(
-                            opacity: 0.3,
-                            child: _buildShapeWidget(part, showLabel: false),
-                          ),
-                        );
-                      }).toList(),
-                      
-                      // Placed shapes
-                      ..._v2PlacedParts.entries.map((entry) {
-                        final partId = entry.key;
-                        final placedPos = entry.value;
-                        final part = _v2Parts.firstWhere((p) => p['id'] == partId);
-                        
-                        return Positioned(
-                          left: placedPos.dx,
-                          top: placedPos.dy,
-                          child: GestureDetector(
-                            onTap: () => _removeV2Part(partId),
-                            child: _buildShapeWidget(part, showLabel: true),
-                          ),
-                        );
-                      }).toList(),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _v2PlacedParts.isNotEmpty ? 'Tap a shape to remove it' : 'Drag shapes from below onto the board!',
-            style: TextStyle(
-              fontSize: 11,
-              color: KidsColors.textTertiary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Shape tray
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3), width: 2),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text('🔷', style: TextStyle(fontSize: 22)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Shape Tray',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF6366F1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Drag shapes to build the $_v2ObjectName',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [..._v2Parts, ..._v2Distractors].where((part) => !_v2PlacedParts.containsKey(part['id'])).map((part) {
-                    final partId = part['id'] as int;
-                    
-                    return Draggable<int>(
-                      data: partId,
-                      onDragStarted: () {
-                        setState(() => _v2DraggingPartId = partId);
-                      },
-                      onDragEnd: (details) {
-                        setState(() => _v2DraggingPartId = null);
-                      },
-                      feedback: Material(
-                        color: Colors.transparent,
-                        child: Transform.scale(
-                          scale: 1.2,
-                          child: _buildShapeWidget(part, showLabel: true),
-                        ),
-                      ),
-                      childWhenDragging: Opacity(
-                        opacity: 0.3,
-                        child: _buildShapeWidget(part, showLabel: true),
-                      ),
-                      child: _buildShapeWidget(part, showLabel: true),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Check button
-          _bigPlayBtn(
-            allPlaced ? '✅ Check My Build!' : '🏗️ Keep building...',
-            allPlaced ? KidsColors.success : Colors.grey.shade400,
-            allPlaced ? _submitV2 : null,
-          ),
-        ],
-      ),
-    );
-  }
   
   /// Build a shape widget (rectangle, circle, or triangle)
   Widget _buildShapeWidget(Map<String, dynamic> part, {required bool showLabel}) {
@@ -1842,32 +1278,57 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     Widget shapeWidget;
     
     if (type == 'rect') {
-      // Rectangle
+      // Rectangle with rounded corners and border
       shapeWidget = Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.black, width: 2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.black87, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
       );
     } else if (type == 'circle') {
-      // Circle
+      // Circle with border
       shapeWidget = Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.black, width: 2),
+          border: Border.all(color: Colors.black87, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
       );
     } else if (type == 'triangle') {
-      // Triangle using CustomPaint
-      shapeWidget = CustomPaint(
-        size: Size(width, height),
-        painter: _TrianglePainter(color: color),
+      // Triangle with border using CustomPaint
+      shapeWidget = Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: CustomPaint(
+          size: Size(width, height),
+          painter: _TrianglePainter(color: color),
+        ),
       );
     } else {
       // Fallback
@@ -1885,18 +1346,19 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
             Positioned.fill(
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.black54),
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.black87, width: 1.5),
                   ),
                   child: Text(
                     label,
                     style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
                       color: Colors.black,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ),
@@ -1909,153 +1371,79 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
       return shapeWidget;
     }
   }
-  
-  /// Die roll animation widget
-  Widget _buildV2DieRoll() {
-    final canTap = _v2DieRoll == 0 && !_v2DieRolling;
-    final showResult = _v2DieRoll > 0 && !_v2DieRolling;
-    
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF9E6), Color(0xFFFFE9B3)],
+
+  Widget _buildGhostOutline(Map<String, dynamic> part, double width, double height, {double opacity = 0.65}) {
+    final outlineColor = Colors.grey.shade700.withOpacity(opacity);
+    final markerSize = max(8.0, min(width, height) * 0.12);
+    final type = part['type'] as String;
+
+    Widget outline;
+    if (type == 'rect') {
+      outline = Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: outlineColor, width: 2),
         ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Title
-            Text(
-              canTap 
-                  ? '🎲 Tap the dice to roll!'
-                  : _v2DieRolling
-                      ? '🎲 Rolling...'
-                      : '🎉 You rolled...',
-              style: TextStyle(
-                fontSize: canTap ? 28 : 24,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF424242),
-              ),
-            ),
-            const SizedBox(height: 50),
-            
-            // Dice
-            GestureDetector(
-              onTap: canTap ? _animateDieRoll : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
-                curve: Curves.easeInOut,
-                transform: Matrix4.identity()
-                  ..rotateZ(_v2DieRolling ? (_v2DieRoll * 0.3) : 0.0),
-                child: Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: canTap 
-                          ? const Color(0xFF4285F4) 
-                          : _v2DieRolling
-                              ? Colors.orange
-                              : const Color(0xFF2E7D32),
-                      width: 4,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: _v2DieRoll > 0
-                      ? _buildDiceFace(_v2DieRoll)
-                      : Center(
-                          child: Icon(
-                            Icons.touch_app,
-                            size: 60,
-                            color: const Color(0xFF4285F4).withOpacity(0.4),
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            
-            if (canTap) ...[
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      );
+    } else if (type == 'circle') {
+      outline = Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: outlineColor, width: 2),
+        ),
+      );
+    } else if (type == 'triangle') {
+      outline = CustomPaint(
+        size: Size(width, height),
+        painter: _TriangleOutlinePainter(color: outlineColor, strokeWidth: 2.2),
+      );
+    } else {
+      outline = Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: outlineColor, width: 2),
+        ),
+      );
+    }
+
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          outline,
+          Positioned.fill(
+            child: Center(
+              child: Container(
+                width: markerSize,
+                height: markerSize,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4285F4).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF4285F4).withOpacity(0.3)),
-                ),
-                child: const Text(
-                  '👆 Tap to start building!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF4285F4),
-                  ),
-                ),
-              ),
-            ],
-            
-            if (showResult) ...[
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                  ),
-                  borderRadius: BorderRadius.circular(24),
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: outlineColor, width: 1.4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
-                child: Text(
-                  _getV2ObjectNameForRoll(_v2DieRoll),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
   
-  /// Build dice face with dots
-  Widget _buildDiceFace(int number) {
-    return CustomPaint(
-      painter: _DicePainter(number),
-      size: const Size(140, 140),
-    );
-  }
-  
-  String _getV2ObjectNameForRoll(int roll) {
-    switch (roll) {
-      case 1: return 'Build a House! 🏠';
-      case 2: return 'Build a Bus! 🚌';
-      case 3: return 'Build a Tree! 🌳';
-      case 4: return 'Build a Robot! 🤖';
-      default: return 'Build a Boat! ⛵';
-    }
-  }
+
 
   // ═════════════════════════════════════════════════════════════════════════
   //  V3: FILL THE SHAPE (Drag & Drop)
@@ -2548,7 +1936,9 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  '${_v4Shape.rectangles[i].width.toInt()}×${_v4Shape.rectangles[i].height.toInt()}',
+                                  _v4Shape == null
+                                      ? '…'
+                                      : '${_v4Shape!.rectangles[i].width.toInt()}×${_v4Shape!.rectangles[i].height.toInt()}',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -2649,8 +2039,13 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
   }
 
   Widget _buildLShapeGrid() {
-    final gridH = _v4Shape.grid.length;
-    final gridW = _v4Shape.grid[0].length;
+    final shape = _v4Shape;
+    if (shape == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final gridH = shape.grid.length;
+    final gridW = shape.grid[0].length;
     final cellSize = min(240.0 / max(gridW, gridH), 44.0);
 
     return Center(
@@ -2659,12 +2054,12 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
         children: List.generate(gridH, (y) => Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(gridW, (x) {
-            final isFilled = _v4Shape.grid[y][x];
+            final isFilled = shape.grid[y][x];
             // Determine which rectangle this cell belongs to
             int partIdx = -1;
             if (isFilled) {
-              for (int i = 0; i < _v4Shape.rectangles.length; i++) {
-                final r = _v4Shape.rectangles[i];
+              for (int i = 0; i < shape.rectangles.length; i++) {
+                final r = shape.rectangles[i];
                 if (x >= r.left && x < r.right && y >= r.top && y < r.bottom) {
                   partIdx = i;
                   break;
@@ -3152,67 +2547,36 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DICE PAINTER - Custom painter for realistic dice dots
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DicePainter extends CustomPainter {
-  final int number;
-  
-  _DicePainter(this.number);
-  
-  @override
-  void paint(Canvas canvas, Size size) {
-    final dotPaint = Paint()
-      ..color = const Color(0xFF2E7D32)
-      ..style = PaintingStyle.fill;
-    
-    final dotRadius = size.width * 0.08;
-    final padding = size.width * 0.25;
-    final centerX = size.width / 2;
-    final centerY = size.height / 2;
-    
-    // Helper to draw dot
-    void drawDot(double x, double y) {
-      canvas.drawCircle(Offset(x, y), dotRadius, dotPaint);
-    }
-    
-    // Draw dots based on number
-    switch (number) {
-      case 1:
-        drawDot(centerX, centerY);
-        break;
-      case 2:
-        drawDot(padding, padding);
-        drawDot(size.width - padding, size.height - padding);
-        break;
-      case 3:
-        drawDot(padding, padding);
-        drawDot(centerX, centerY);
-        drawDot(size.width - padding, size.height - padding);
-        break;
-      case 4:
-        drawDot(padding, padding);
-        drawDot(size.width - padding, padding);
-        drawDot(padding, size.height - padding);
-        drawDot(size.width - padding, size.height - padding);
-        break;
-      case 5:
-        drawDot(padding, padding);
-        drawDot(size.width - padding, padding);
-        drawDot(centerX, centerY);
-        drawDot(padding, size.height - padding);
-        drawDot(size.width - padding, size.height - padding);
-        break;
-    }
-  }
-  
-  @override
-  bool shouldRepaint(_DicePainter oldDelegate) => oldDelegate.number != number;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // TRIANGLE PAINTER - Custom painter for triangle shapes
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _TriangleOutlinePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  _TriangleOutlinePainter({required this.color, this.strokeWidth = 2});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path()
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(0, size.height)
+      ..lineTo(size.width, size.height)
+      ..close();
+
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(_TriangleOutlinePainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+}
 
 class _TrianglePainter extends CustomPainter {
   final Color color;
@@ -3226,9 +2590,10 @@ class _TrianglePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     
     final borderPaint = Paint()
-      ..color = Colors.black
+      ..color = Colors.black87
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 3
+      ..strokeJoin = StrokeJoin.round;
     
     final path = Path();
     // Triangle pointing up: top vertex, bottom left, bottom right

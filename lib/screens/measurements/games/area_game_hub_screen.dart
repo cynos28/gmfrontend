@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'area_game_play_screen.dart';
+import 'area_architect_game_screen.dart';
 
 // ─── variant metadata ──────────────────────────────────────────────────────
 
@@ -43,13 +44,13 @@ const List<_VariantInfo> _variants = [
   ),
   _VariantInfo(
     code: 'A-V2',
-    title: 'Tiny Builders',
-    subtitle: 'Cover objects',
-    emoji: '🏠',
-    description: 'Roll the dice and build fun shapes! Drag blocks to cover exactly.',
+    title: 'Area Architect',
+    subtitle: 'Design custom carpets',
+    emoji: '🧶',
+    description: 'Stretch and cut rugs to fit wacky rooms. Discover area with length × width and smart splits.',
     stars: 2,
-    color: Color(0xFF5AC8FA),
-    lightColor: Color(0xFFE3F6FD),
+    color: Color(0xFFD2691E),
+    lightColor: Color(0xFFFFF8DC),
   ),
 ];
 
@@ -115,8 +116,10 @@ class _AreaGameHubScreenState extends State<AreaGameHubScreen>
       );
       return;
     }
+    final Widget screen =
+        info.code == 'A-V2' ? const AreaArchitectGameScreen() : AreaGamePlayScreen(variant: info.code);
     Get.to(
-      () => AreaGamePlayScreen(variant: info.code),
+      () => screen,
       transition: Transition.rightToLeft,
     )?.then((_) {
       // Refresh unlock state when returning from game
