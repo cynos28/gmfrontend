@@ -237,8 +237,8 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                         return GestureDetector(
                           onTap: () => _selectOption(i),
                           child: Container(
-                            margin: const EdgeInsets.only(top: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                            margin: const EdgeInsets.only(top: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             decoration: BoxDecoration(
                               color: bg,
                               borderRadius: BorderRadius.circular(20),
@@ -255,16 +255,26 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    emoji + option,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: (_showAnswer && (isCorrect || (isSelected && !isCorrect))) 
-                                          ? Colors.white 
-                                          : (isSelected ? Colors.white : const Color(0xFF2D4059)),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 1,
+                                        maxWidth: MediaQuery.of(context).size.width - 100,
+                                      ),
+                                      child: Text(
+                                        emoji + option,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: (_showAnswer && (isCorrect || (isSelected && !isCorrect))) 
+                                              ? Colors.white 
+                                              : (isSelected ? Colors.white : const Color(0xFF2D4059)),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],

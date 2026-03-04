@@ -102,26 +102,28 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
       print('Loaded build challenge progress: $highestChallenge challenges completed');
     } catch (e) {
       print('Error fetching build challenge progress: $e');
-      // On error, start with first challenge unlocked
+      // On error, start with only first challenge unlocked
       setState(() {
-        _highestUnlockedChallenge = 0;
+        _highestUnlockedChallenge = 0; // Index 0 = 1st challenge only
         _isLoading = false;
       });
     }
   }
 
   bool _isChallengeLocked(int challengeIndex) {
-    // Only challenges up to _highestUnlockedChallenge are unlocked
+    // Only first challenge (index 0) is unlocked by default
+    // Additional challenges unlock as you complete previous ones
     return challengeIndex > _highestUnlockedChallenge;
   }
 
   void _handleChallengeTap(int index) {
     if (_isChallengeLocked(index)) {
-      final nextLevelNeeded = index; // Which challenge needs to be completed (1-based for display)
+      // Tell user which challenge they need to complete to progress
+      final challengeToComplete = _highestUnlockedChallenge; // The current edge challenge
       
       Get.snackbar(
         '🔒 Challenge Locked',
-        'Complete "${challenges[index - 1]['name']}" challenge first to unlock this one!',
+        'Complete the "${challenges[challengeToComplete]['name']}" challenge first to unlock more challenges!',
         backgroundColor: const Color(0xFFFF6B6B),
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
@@ -140,12 +142,11 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
 
   /// Save challenge completion to database and unlock next challenge
   Future<void> _saveChallengeCompletionAndUnlock() async {
-    if (_selectedChallengeIndex >= _highestUnlockedChallenge && 
-        _selectedChallengeIndex < challenges.length - 1) {
-      
+    // Always save if completing an unlocked challenge (new or replay)
+    if (_selectedChallengeIndex <= _highestUnlockedChallenge) {
       try {
         // Build challenges are levels 7-13 (after 6 shape game levels)
-        final levelNum = _selectedChallengeIndex + 7; // level1=7, level2=8, etc.
+        final levelNum = _selectedChallengeIndex + 7; // level0=7, level1=8, etc.
         final gameId = 'level$levelNum';
         
         // Submit a "completed" answer to save progress
@@ -159,21 +160,27 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
         
         if (result.isPassed) {
           print('✅ Build challenge ${_selectedChallengeIndex + 1} saved to database');
-          // Unlock next challenge
-          setState(() {
-            _highestUnlockedChallenge = _selectedChallengeIndex + 1;
-          });
+          
+          // Unlock next challenge if this is at the current edge and not the last
+          if (_selectedChallengeIndex == _highestUnlockedChallenge && 
+              _selectedChallengeIndex < challenges.length - 1) {
+            setState(() {
+              _highestUnlockedChallenge = _selectedChallengeIndex + 1;
+              print('🔓 Unlocked challenge ${_highestUnlockedChallenge + 1}');
+            });
+          }
         }
       } catch (e) {
         print('⚠️ Error saving build challenge progress: $e');
-        // Still unlock locally even if save fails
-        setState(() {
-          _highestUnlockedChallenge = _selectedChallengeIndex + 1;
-        });
+        // Still unlock locally even if save fails (only if current edge)
+        if (_selectedChallengeIndex == _highestUnlockedChallenge && 
+            _selectedChallengeIndex < challenges.length - 1) {
+          setState(() {
+            _highestUnlockedChallenge = _selectedChallengeIndex + 1;
+            print('🔓 Unlocked challenge ${_highestUnlockedChallenge + 1} (local only)');
+          });
+        }
       }
-    } else if (_selectedChallengeIndex < _highestUnlockedChallenge) {
-      // Already completed, no need to save again
-      print('Build challenge ${_selectedChallengeIndex + 1} already completed');
     }
   }
 
@@ -583,6 +590,11 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
     final isCorrect = _validateBuild();
     final feedback = _getDetailedFeedback();
     
+    // Track if we'll unlock a new challenge before saving
+    final willUnlockNext = isCorrect && 
+                           _selectedChallengeIndex == _highestUnlockedChallenge && 
+                           _selectedChallengeIndex < challenges.length - 1;
+    
     // Save challenge completion to database and unlock next challenge
     if (isCorrect) {
       await _saveChallengeCompletionAndUnlock();
@@ -613,7 +625,7 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
-            if (isCorrect && _selectedChallengeIndex < challenges.length - 1) ...[
+            if (willUnlockNext) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

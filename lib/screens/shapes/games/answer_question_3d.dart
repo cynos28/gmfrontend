@@ -23,7 +23,7 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
     {
       'question': 'Which object is a Sphere?',
       'correctAnswer': 'Ball',
-      'options': ['Ball', 'Soda can', 'Dice', 'Book'],
+      'options': ['Ball', 'Soda can', 'Gift Box', 'Book'],
       'shape': 'sphere',
     },
     {
@@ -34,14 +34,14 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
     },
     {
       'question': 'Which object is a Cube?',
-      'correctAnswer': 'Dice',
-      'options': ['Ball', 'Dice', 'Ice cream cone', 'Soda can'],
+      'correctAnswer': 'Gift Box',
+      'options': ['Ball', 'Gift Box', 'Ice cream cone', 'Soda can'],
       'shape': 'cube',
     },
     {
       'question': 'Which object is a Cone?',
       'correctAnswer': 'Ice cream cone',
-      'options': ['Ball', 'Box', 'Ice cream cone', 'Dice'],
+      'options': ['Ball', 'Box', 'Ice cream cone', 'Gift Box'],
       'shape': 'cone',
     },
     {
@@ -427,15 +427,15 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
         Row(
           children: [
             Expanded(child: _buildOptionButton(options[0])),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(child: _buildOptionButton(options[1])),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _buildOptionButton(options[2])),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(child: _buildOptionButton(options[3])),
           ],
         ),
@@ -456,7 +456,7 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
     return GestureDetector(
       onTap: () => _selectAnswer(option),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
         decoration: ShapeDecoration(
           gradient: showAsCorrect 
               ? const LinearGradient(
@@ -500,15 +500,25 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
               ),
           ],
         ),
-        child: Text(
-          emoji + option,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: showAsCorrect || showAsWrong
-                ? Colors.white
-                : (isSelected ? Colors.white : const Color(0xFF2859C5)),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: 1,
+              maxWidth: MediaQuery.of(context).size.width / 2.5,
+            ),
+            child: Text(
+              emoji + option,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                color: showAsCorrect || showAsWrong
+                    ? Colors.white
+                    : (isSelected ? Colors.white : const Color(0xFF2859C5)),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),

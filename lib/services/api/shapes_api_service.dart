@@ -311,6 +311,7 @@ class ShapesApiService {
   ///     ...
   ///   ]
   /// }
+  /// Note: Only first challenge is unlocked by default
   Future<Map<String, dynamic>> getBuildMatchProgress() async {
     try {
       final headers = _getHeaders();
@@ -334,11 +335,12 @@ class ShapesApiService {
     } catch (e) {
       // Return default unlocked state instead of throwing
       // This allows the app to work in offline mode
+      // Only first challenge unlocked by default
       return {
         'highest_build_challenge': 0,
         'challenges': List.generate(7, (index) => {
           'challenge': index + 1,
-          'is_locked': index > 0,
+          'is_locked': index > 0,  // Only challenge 1 unlocked
           'is_passed': false,
           'status': index > 0 ? 'locked' : 'available',
           'attempts': 0,
