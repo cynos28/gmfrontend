@@ -87,8 +87,6 @@ flutter:
     - assets/images/patterns/2d_shapes/
     - assets/videos/
     - assets/animations/
-    - assets/numbers/
-    - assets/data/
     - assets/symbols/
     - assets/symbols/game/
     - assets/models/classroom.tflite
