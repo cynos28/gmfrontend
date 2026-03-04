@@ -20,6 +20,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  int _selectedGrade = 1;
 
   @override
   void dispose() {
@@ -40,6 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          grade: _selectedGrade,
         );
 
         setState(() {
@@ -291,6 +293,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return 'Password must be at least 6 characters';
                     }
                     return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Grade Dropdown
+                Text(
+                  'Select Grade',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(AppColors.textBlack),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  value: _selectedGrade,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.school_outlined,
+                      color: Color(AppColors.subText2),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F7),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  items: [1, 2, 3, 4].map((int grade) {
+                    return DropdownMenuItem<int>(
+                      value: grade,
+                      child: Text('Grade $grade', style: TextStyle(color: Color(AppColors.textBlack))),
+                    );
+                  }).toList(),
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedGrade = newValue;
+                      });
+                    }
                   },
                 ),
                 const SizedBox(height: 24),

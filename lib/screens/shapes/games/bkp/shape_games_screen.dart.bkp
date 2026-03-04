@@ -1,0 +1,252 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/widgets/measurements/measurement_widgets.dart';
+import 'package:ganithamithura/widgets/home/home_widgets.dart';
+
+import '../../../widgets/shapes/shape_widgets.dart';
+import 'answer_questions_2d.dart.bkp';
+import 'match_shapes_2d.dart.bkp';
+
+
+/// GameHomeScreen - Main screen for Measurement module
+class GameHomeScreen extends StatefulWidget {
+  const GameHomeScreen({super.key});
+
+  @override
+  State<GameHomeScreen> createState() => _GameHomeScreenState();
+}
+
+class _GameHomeScreenState extends State<GameHomeScreen> {
+  int _currentNavIndex = 0;
+
+  void _onNavTap(int index) {
+    if (index == 0) {
+      // Navigate to home
+      Get.back();
+      return;
+    }
+
+    if (index == _currentNavIndex) {
+      // Already on current tab
+      return;
+    }
+
+    // TODO: Navigate to other screens when ready
+    Get.snackbar(
+      'Coming Soon',
+      'This feature will be available soon',
+      backgroundColor: const Color(AppColors.infoColor),
+      colorText: Colors.white,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7FAFA),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Main content
+            Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          size: 24,
+                          color: Color(AppColors.textBlack),
+                        ),
+                        onPressed: () => Get.back(),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Games',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Color(AppColors.textBlack),
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF2D4059).withOpacity(0.64),
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(
+                      left: 15,
+                      right: 15,
+                      top: 24,
+                      bottom: 90, // Space for bottom nav
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // AR Challenges Grid
+                        _buildShapeMenuCardGrid(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Bottom Navigation Bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BottomNavBar(
+                currentIndex: _currentNavIndex,
+                onTap: _onNavTap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShapeMenuCardGrid() {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        // First row: Length and Capacity
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Match 2D Shapes',
+                level: 'Level 1',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  Get.to(() => const Match2DShapesScreen());
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Answer 2D Questions',
+                level: 'Level 2',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  Get.to(() => const Questions2DShapesScreen());
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Match 3D Shapes',
+                level: 'Level 3',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  // Navigate to AR measurement screen
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Answer 3D Questions',
+                level: 'Level 4',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Pattern Matching 1',
+                level: 'Level 5',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  // Navigate to AR measurement screen
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        Row(
+          children: [
+            Expanded(
+              child: ShapeGameCard(
+                title: 'Pattern Matching 2',
+                level: 'Level 6',
+                icon: 'assets/images/Vector.png',
+                backgroundColor: const Color(0xFF36D399),
+                borderColor: const Color(AppColors.numberBorder),
+                starCount: 3,
+                onTap: () {
+                  // Navigate to AR measurement screen
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}

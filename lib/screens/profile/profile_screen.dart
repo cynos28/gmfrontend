@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/user_service.dart';
+import 'package:ganithamithura/services/api/auth_service.dart';
+import 'package:ganithamithura/models/user.dart';
+import 'package:ganithamithura/screens/authentication/sign_in_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedGrade = 1;
   bool _loading = true;
+  User? _currentUser;
 
   // Grade-specific information
   final Map<int, Map<String, dynamic>> _gradeInfo = {
@@ -57,13 +61,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadGrade();
+    _loadData();
   }
 
-  Future<void> _loadGrade() async {
+  Future<void> _loadData() async {
+    final user = await AuthService.instance.getCurrentUser();
     final grade = await UserService.getGrade();
     setState(() {
-      _selectedGrade = grade;
+      _currentUser = user;
+      _selectedGrade = user?.grade ?? grade;
       _loading = false;
     });
   }
@@ -342,6 +348,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  
+                  // Logout Button
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      onPressed: () async {
+                        await AuthService.instance.signOut();
+                        Get.offAll(() => const SignInScreen());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(AppColors.errorColor),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      label: const Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],

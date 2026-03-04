@@ -135,14 +135,19 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               Row(
                 children: [
                   Container(
-                    width: KidsSpacing.minTapTarget,
-                    height: KidsSpacing.minTapTarget,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: KidsColors.primaryBackground,
-                      borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: KidsShadows.soft,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, size: 24),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        size: 24,
+                        color: KidsColors.textPrimary,
+                      ),
                       onPressed: () => Get.back(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -156,20 +161,46 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
                         const Text(
                           'Measurement Units',
                           style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
                             color: KidsColors.textPrimary,
                             height: 1.2,
                           ),
                         ),
-                        const SizedBox(height: KidsSpacing.xs),
-                        Text(
-                          'Grade $_currentGrade',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: KidsColors.textSecondary,
-                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    KidsColors.primaryAccent,
+                                    KidsColors.primaryAccent.withOpacity(0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: KidsColors.primaryAccent.withOpacity(0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'Grade $_currentGrade',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -187,13 +218,42 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               
               const SizedBox(height: KidsSpacing.xl),
               
-              const Text(
-                'Practice by Topic',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: KidsColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          KidsColors.secondaryAccent,
+                          KidsColors.secondaryAccent.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: KidsColors.secondaryAccent.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.category_rounded,
+                      size: 24,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Practice by Topic',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: KidsColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: KidsSpacing.cardMarginLarge),
               

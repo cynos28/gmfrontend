@@ -116,6 +116,12 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     if (result != null && result.trim().isNotEmpty) {
       setState(() {
         _valueController.text = result;
+        // Auto-select the appropriate unit based on measurement type
+        if (_measurementType == MeasurementType.length) {
+          _selectedUnit = MeasurementUnit.cm;
+        } else if (_measurementType == MeasurementType.area) {
+          _selectedUnit = MeasurementUnit.cm2;
+        }
       });
       final unit = _measurementType == MeasurementType.length ? 'cm' : 'cm²';
       _showSnackBar('Measurement captured: $result $unit', backgroundColor: Colors.green);

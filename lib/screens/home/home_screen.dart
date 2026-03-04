@@ -7,6 +7,8 @@ import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
+import '../shapes/welcome_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 
@@ -316,8 +318,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(AppColors.symbolColor),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
-                onTap: () => Get.snackbar('Coming Soon', 'Symbols module is under development'),
-                isEnabled: false,
+                onTap: () => Get.to(() => const SymbolHomeScreen()),
+                isEnabled: true,
               ),
             ),
           ],
@@ -347,8 +349,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(AppColors.shapeColor),
                 borderColor: const Color(AppColors.shapeBorder),
                 iconColor: const Color(AppColors.shapeIcon),
-                onTap: () => Get.snackbar('Coming Soon', 'Shapes module is under development'),
-                isEnabled: false,
+                onTap: () => Get.to(() => const WelcomeScreen()),
+                isEnabled: true
               ),
             ),
           ],

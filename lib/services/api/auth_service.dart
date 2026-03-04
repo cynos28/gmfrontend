@@ -14,7 +14,7 @@ class AuthService {
   
   static AuthService get instance {
     _instance ??= AuthService._(
-      baseUrl: dotenv.env['BACKEND_URL'] ?? AppConstants.baseUrl,
+      baseUrl: dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl,
     );
     return _instance!;
   }
@@ -40,6 +40,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
+    required int grade,
   }) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/signup');
@@ -50,6 +51,7 @@ class AuthService {
           'name': name,
           'email': email,
           'password': password,
+          'grade': grade,
         }),
       ).timeout(
         Duration(seconds: AppConstants.apiTimeout),
