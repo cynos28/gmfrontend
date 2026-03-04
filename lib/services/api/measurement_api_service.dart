@@ -5,14 +5,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
+import '../../config/backend_config.dart';
 
 class MeasurementApiService {
-  // WiFi IP - works without ADB, just need same WiFi network
-  static const List<String> _baseUrls = [
-    'http://10.169.0.71:8000/api/v1/measurements',    // WiFi - Mac IP (PRIMARY)
-    'http://localhost:8000/api/v1/measurements',      // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/measurements',       // Android Emulator fallback
-  ];
+  // Try URLs from centralized config - adapts to network changes
+  static List<String> get _baseUrls => BackendConfig.backendUrls
+      .map((url) => '$url/api/v1/measurements')
+      .toList();
   
   static Future<String> _getWorkingBaseUrl() async {
     for (final url in _baseUrls) {

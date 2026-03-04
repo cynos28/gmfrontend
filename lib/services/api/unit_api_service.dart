@@ -3,14 +3,16 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:ganithamithura/models/unit_models.dart';
+import 'package:ganithamithura/config/backend_config.dart';
 
 /// API Service for Unit-based Learning
-/// Base URL should be configured in production
+/// Automatically discovers working backend URL across network changes
 class UnitApiService {
-  // Using WiFi IP - works on any device without ADB setup
-  // Make sure phone and Mac are on same WiFi network
-  static const String baseUrl = 'http://10.169.0.71:8000/api';
-  static const String ragBaseUrl = 'http://10.169.0.71:8000'; // RAG Service
+  // Multiple URLs to try - adapts to network changes automatically
+  static List<String> get _possibleBaseUrls => BackendConfig.backendUrls;
+  
+  // Cached working URL
+  static String? _cachedWorkingUrl;
   
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();
@@ -26,12 +28,52 @@ class UnitApiService {
   
   String get studentId => _currentStudentId ?? 'student_default';
   
+  /// Discover which backend URL is currently working
+  /// Tries each URL with a quick health check
+  Future<String> _getWorkingBaseUrl() async {
+    // Return cached URL if available
+    if (_cachedWorkingUrl != null) {
+      try {
+        final response = await http.get(
+          Uri.parse('$_cachedWorkingUrl/health'),
+        ).timeout(const Duration(seconds: 2));
+        if (response.statusCode == 200) {
+          return _cachedWorkingUrl!;
+        }
+      } catch (e) {
+        // Cached URL failed, clear it
+        _cachedWorkingUrl = null;
+      }
+    }
+    
+    // Try each URL with health check
+    for (final url in _possibleBaseUrls) {
+      try {
+        final response = await http.get(
+          Uri.parse('$url/health'),
+        ).timeout(const Duration(seconds: 2));
+        if (response.statusCode == 200) {
+          debugPrint('✅ Connected to backend: $url');
+          _cachedWorkingUrl = url;
+          return url;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    
+    // No URL worked, use first as fallback and log warning
+    debugPrint('⚠️ Failed to load from backend: TimeoutException after 0:00:05.000000: Future not completed');
+    return _possibleBaseUrls.first;
+  }
+  
   /// GET /api/units?grade=3
   /// Fetch all units for a specific grade
   Future<List<Unit>> getUnits(int grade) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl/units?grade=$grade'),
+        Uri.parse('$baseUrl/api/units?grade=$grade'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
@@ -55,8 +97,9 @@ class UnitApiService {
     List<Map<String, dynamic>>? conversationHistory,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/chat'),
+        Uri.parse('$baseUrl/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'studentId': studentId,
@@ -83,8 +126,9 @@ class UnitApiService {
     required String unitId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
+        Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
@@ -108,8 +152,9 @@ class UnitApiService {
     required String unitId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       await http.delete(
-        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
+        Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
     } catch (e) {
@@ -128,9 +173,10 @@ class UnitApiService {
     String? teacherId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$ragBaseUrl/upload/document'),
+        Uri.parse('$baseUrl/upload/document'),
       );
       
       // Add file
@@ -168,8 +214,9 @@ class UnitApiService {
     List<int>? difficultyLevels,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/questions/generate/$documentId'),
+        Uri.parse('$baseUrl/questions/generate/$documentId'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'num_questions': numQuestions,
@@ -195,7 +242,8 @@ class UnitApiService {
     int? gradeLevel,
   }) async {
     try {
-      var uri = '$ragBaseUrl/documents';
+      final baseUrl = await _getWorkingBaseUrl();
+      var uri = '$baseUrl/documents';
       final queryParams = <String>[];
       if (topic != null) queryParams.add('topic=$topic');
       if (gradeLevel != null) queryParams.add('grade_level=$gradeLevel');
@@ -223,8 +271,9 @@ class UnitApiService {
   /// Get document details
   Future<DocumentInfo> getDocumentDetails(String documentId) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/documents/$documentId'),
+        Uri.parse('$baseUrl/documents/$documentId'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
@@ -256,8 +305,9 @@ class UnitApiService {
       if (gradeLevel != null) queryParams.add('grade_level=$gradeLevel');
       if (difficultyLevel != null) queryParams.add('difficulty_level=$difficultyLevel');
       
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/questions/?${queryParams.join('&')}'),
+        Uri.parse('$baseUrl/questions/?${queryParams.join('&')}'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
@@ -281,8 +331,9 @@ class UnitApiService {
     int? timeTaken,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/api/v1/adaptive/submit-answer'),
+        Uri.parse('$baseUrl/api/v1/adaptive/submit-answer'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'student_id': studentId,
@@ -322,8 +373,9 @@ class UnitApiService {
         queryParams.add('grade_level=$gradeLevel');
       }
       
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
+        Uri.parse('$baseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 10));
       
@@ -341,7 +393,8 @@ class UnitApiService {
   /// Get student analytics and ability metrics
   Future<StudentAnalytics> getStudentAnalytics({String? unitId}) async {
     try {
-      var uri = '$ragBaseUrl/api/v1/adaptive/analytics/$studentId';
+      final baseUrl = await _getWorkingBaseUrl();
+      var uri = '$baseUrl/api/v1/adaptive/analytics/$studentId';
       if (unitId != null) {
         uri += '?unit_id=$unitId';
       }

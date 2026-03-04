@@ -2,6 +2,7 @@
 /// 
 /// Shows contextual questions generated based on the student's actual measurement
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/models/ar_measurement.dart';
@@ -50,6 +51,9 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
   int _correctCount = 0;
   List<bool> _hintsRevealed = [];
   
+  // Captured image path from object detection
+  String? _capturedImagePath;
+  
   @override
   void initState() {
     super.initState();
@@ -67,6 +71,7 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
     _measurement = args['measurement'] as ARMeasurement;
     _measurementType = args['measurementType'] as MeasurementType;
     _measurementContext = _measurement.context!;
+    _capturedImagePath = args['capturedImagePath'] as String?;
     
     print('📝 Measurement Questions Mode: ${_useAdaptiveMode ? "Adaptive" : "Fixed"}');
     
@@ -1118,56 +1123,98 @@ class _ARQuestionsScreenState extends State<ARQuestionsScreen> with SingleTicker
           offset: Offset(0, _bounceAnimation.value),
           child: CuteCard(
             borderColor: _borderColor,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cute character
-                CuteCharacter(
-                  size: 70,
-                  color: _borderColor,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _measurementType.icon,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Your ${_measurement.objectName}',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Color(AppColors.textBlack),
+                // Show captured image if available
+                if (_capturedImagePath != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: double.infinity,
+                      height: 160,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _borderColor.withOpacity(0.3),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.file(
+                          File(_capturedImagePath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: _borderColor.withOpacity(0.1),
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_rounded,
+                                  color: _borderColor.withOpacity(0.5),
+                                  size: 40,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                Row(
+                  children: [
+                    // Cute character
+                    CuteCharacter(
+                      size: 70,
+                      color: _borderColor,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                _measurementType.icon,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'Your ${_measurement.objectName}',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(AppColors.textBlack),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _borderColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              _measurement.measurementString,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: _borderColor,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _borderColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _measurement.measurementString,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: _borderColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),

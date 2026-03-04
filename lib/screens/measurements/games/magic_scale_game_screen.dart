@@ -5,6 +5,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 
 // ─── Weight Definition ───────────────────────────────────────────────────────
@@ -32,7 +34,6 @@ const _allWeights = [
 ];
 
 enum GameMode { matchTarget, equalSides }
-enum _Difficulty { easy, medium, hard }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -47,14 +48,19 @@ class MagicScaleGameScreen extends StatefulWidget {
 class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     with TickerProviderStateMixin {
 
-  // ─── Adaptive state ────────────────────────────────────────────────────────
-  _Difficulty _difficulty = _Difficulty.easy;
-  int _consecutiveWins  = 0;
-  int _consecutiveFails = 0;
-  int _hintsUsed        = 0;
-  int _attempts         = 0;
-  int _questionNumber   = 1;
-  int _totalCorrect     = 0;
+  // ─── IRT State ─────────────────────────────────────────────────────────────
+  String _studentId        = 'default_student';
+  double _theta            = 0.0;
+  int _irtDifficultyLevel  = 1;
+  int _irtRoundsPlayed     = 0;
+  Map<String, dynamic> _irtParams = {};
+  bool _irtLoading         = true;
+
+  // ─── Game State ────────────────────────────────────────────────────────────
+  int _hintsUsed     = 0;
+  int _attempts      = 0;
+  int _questionNumber = 1;
+  int _totalCorrect  = 0;
   static const _maxQuestions = 5;
   bool _showFinishScreen = false;
 
@@ -103,7 +109,7 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     _celebrationController = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1200));
 
-    _generateQuestion();
+    _fetchIRTState();
   }
 
   @override
@@ -114,22 +120,133 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     super.dispose();
   }
 
-  // ─── Difficulty helpers ──────────────────────────────────────────────────────
+  // ─── IRT helpers ──────────────────────────────────────────────────────────
+
+  Future<void> _fetchIRTState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _studentId = prefs.getString('student_id') ?? 'default_student';
+    final variant = widget.mode == GameMode.matchTarget ? 'W-W1' : 'W-W2';
+
+    final state = await GamesApiService.getIRTState(
+      studentId: _studentId,
+      domain: 'weight',
+      variant: variant,
+    );
+
+    if (mounted) {
+      setState(() {
+        _theta             = (state['theta'] as num?)?.toDouble() ?? 0.0;
+        _irtDifficultyLevel = (state['difficulty_level'] as int?) ?? 1;
+        _irtRoundsPlayed   = (state['rounds_played'] as int?) ?? 0;
+        _irtParams         = (state['next_params'] as Map<String, dynamic>?) ?? {};
+        _irtLoading        = false;
+      });
+      _generateQuestion();
+    }
+  }
+
+  Future<void> _submitRoundToIRT() async {
+    final variant = widget.mode == GameMode.matchTarget ? 'W-W1' : 'W-W2';
+    final result = await GamesApiService.submitRoundResult(
+      studentId: _studentId,
+      domain: 'weight',
+      variant: variant,
+      correct: _isCorrect,
+      attempts: _attempts,
+      hintsUsed: _hintsUsed,
+      timeSeconds: 0,
+      starsEarned: _isCorrect ? 1 : 0,
+    );
+    if (mounted) {
+      setState(() {
+        _theta              = (result['theta'] as num?)?.toDouble() ?? _theta;
+        _irtDifficultyLevel = (result['difficulty_level'] as int?) ?? _irtDifficultyLevel;
+        _irtRoundsPlayed    = (result['rounds_played'] as int?) ?? _irtRoundsPlayed;
+        _irtParams          = (result['next_params'] as Map<String, dynamic>?) ?? _irtParams;
+      });
+    }
+  }
 
   List<_WeightItem> _weightsForDifficulty() {
-    switch (_difficulty) {
-      case _Difficulty.easy:   return _allWeights.take(2).toList(); // 10g, 50g
-      case _Difficulty.medium: return _allWeights.take(3).toList(); // +100g
-      case _Difficulty.hard:   return _allWeights;                  // all 5
+    final gramList = (_irtParams['available_weight_grams'] as List<dynamic>?)
+        ?.map((e) => (e as num).toInt()).toList()
+        ?? _defaultGramsForLevel(_irtDifficultyLevel);
+    return _allWeights.where((w) => gramList.contains(w.grams)).toList();
+  }
+
+  List<int> _defaultGramsForLevel(int level) {
+    switch (level) {
+      case 1:  return [10, 50];
+      case 2:  return [10, 50, 100];
+      case 3:  return [10, 50, 100, 200];
+      case 4:  return [10, 50, 100, 200, 500];
+      case 5:  return [10, 50, 100, 200, 500];
+      default: return [10, 50, 100];
     }
   }
 
   int _maxTarget() {
-    switch (_difficulty) {
-      case _Difficulty.easy:   return 100;
-      case _Difficulty.medium: return 350;
-      case _Difficulty.hard:   return 600;
+    return (_irtParams['max_target_grams'] as int?) ?? _defaultMaxTarget(_irtDifficultyLevel);
+  }
+
+  int _defaultMaxTarget(int level) {
+    switch (level) {
+      case 1:  return 100;
+      case 2:  return 200;
+      case 3:  return 350;
+      case 4:  return 500;
+      case 5:  return 700;
+      default: return 200;
     }
+  }
+
+  int _maxPieces() {
+    return (_irtParams['max_pieces'] as int?) ?? (2 + _irtDifficultyLevel.clamp(1, 5) - 1);
+  }
+
+  bool _hintsAllowed() {
+    final h = (_irtParams['hints'] as int?) ?? (3 - (_irtDifficultyLevel - 1).clamp(0, 2));
+    return h > 0;
+  }
+
+  // ─── IRT badge ────────────────────────────────────────────────────────────
+
+  Widget _buildIRTBadge() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFF9800),
+      Color(0xFFE91E63), Color(0xFF9C27B0),
+    ];
+    final idx = (_irtDifficultyLevel - 1).clamp(0, 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors[idx].withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors[idx].withOpacity(0.5), width: 1),
+      ),
+      child: Text(
+        labels[idx],
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: colors[idx],
+        ),
+      ),
+    );
+  }
+
+  Color _getIRTColor() {
+    const colors = [
+      Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFF9800),
+      Color(0xFFE91E63), Color(0xFF9C27B0),
+    ];
+    return colors[(_irtDifficultyLevel - 1).clamp(0, 4)];
+  }
+
+  String _getIRTLabel() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    return labels[(_irtDifficultyLevel - 1).clamp(0, 4)];
   }
 
   // ─── Question generation ─────────────────────────────────────────────────────
@@ -142,7 +259,7 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     // Build a reachable target by summing random weight picks
     int target = 0;
     final used = <int>[];
-    final maxPieces = _difficulty == _Difficulty.easy ? 3 : (_difficulty == _Difficulty.medium ? 4 : 5);
+    final maxPieces = _maxPieces();
     for (int i = 0; i < maxPieces; i++) {
       final w = weights[rng.nextInt(weights.length)].grams;
       if (target + w <= maxT) { target += w; used.add(w); }
@@ -238,19 +355,16 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     if (correct) {
       _attempts++;
       _totalCorrect++;
-      _consecutiveWins++;
-      _consecutiveFails = 0;
-      if (_consecutiveWins >= 2) {
-        _bumpDifficulty(up: true);
-        _consecutiveWins = 0;
-      }
       setState(() {
         _showFeedback = true;
         _isCorrect    = true;
         _owlMood      = '🎉';
       });
       _celebrationController.forward(from: 0);
-      Future.delayed(const Duration(milliseconds: 2200), _nextQuestion);
+      Future.delayed(const Duration(milliseconds: 2200), () async {
+        await _submitRoundToIRT();
+        _nextQuestion();
+      });
     }
   }
 
@@ -262,44 +376,24 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
         : _rightWeight == _targetGrams;
 
     if (!correct) {
-      _consecutiveFails++;
-      _consecutiveWins = 0;
-      if (_consecutiveFails >= 2) {
-        _bumpDifficulty(up: false);
-        _consecutiveFails = 0;
-      }
       setState(() {
         _showFeedback = true;
         _isCorrect    = false;
         _owlMood      = '😕';
       });
-      Future.delayed(const Duration(milliseconds: 1800), () {
+      Future.delayed(const Duration(milliseconds: 1800), () async {
+        await _submitRoundToIRT();
         if (mounted) setState(() { _showFeedback = false; _owlMood = '😊'; });
       });
     } else {
       _totalCorrect++;
-      _consecutiveWins++;
-      _consecutiveFails = 0;
-      if (_consecutiveWins >= 2) {
-        _bumpDifficulty(up: true);
-        _consecutiveWins = 0;
-      }
       setState(() { _showFeedback = true; _isCorrect = true; _owlMood = '🎉'; });
       _celebrationController.forward(from: 0);
-      Future.delayed(const Duration(milliseconds: 2200), _nextQuestion);
+      Future.delayed(const Duration(milliseconds: 2200), () async {
+        await _submitRoundToIRT();
+        _nextQuestion();
+      });
     }
-  }
-
-  void _bumpDifficulty({required bool up}) {
-    setState(() {
-      if (up) {
-        if (_difficulty == _Difficulty.easy)   _difficulty = _Difficulty.medium;
-        else if (_difficulty == _Difficulty.medium) _difficulty = _Difficulty.hard;
-      } else {
-        if (_difficulty == _Difficulty.hard)   _difficulty = _Difficulty.medium;
-        else if (_difficulty == _Difficulty.medium) _difficulty = _Difficulty.easy;
-      }
-    });
   }
 
   void _nextQuestion() {
@@ -322,6 +416,23 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
   @override
   Widget build(BuildContext context) {
     if (_showFinishScreen) return _buildFinishScreen();
+
+    if (_irtLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFFFF8E1),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('⚖️', style: TextStyle(fontSize: 64)),
+              const SizedBox(height: 16),
+              CircularProgressIndicator(color: KidsColors.weightColor),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8E1),
       appBar: _buildAppBar(),
@@ -368,9 +479,19 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
         icon: const Icon(Icons.arrow_back_rounded, color: KidsColors.textPrimary),
         onPressed: () => Get.back(),
       ),
-      title: Text(
-        widget.mode == GameMode.matchTarget ? 'Match the Target' : 'Equal Sides',
-        style: const TextStyle(color: KidsColors.textPrimary, fontWeight: FontWeight.w800),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              widget.mode == GameMode.matchTarget ? 'Match Target' : 'Equal Sides',
+              style: const TextStyle(color: KidsColors.textPrimary, fontWeight: FontWeight.w800),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 6),
+          _buildIRTBadge(),
+        ],
       ),
       actions: [
         // Owl guide
@@ -439,8 +560,8 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
             ),
           ),
 
-          // Hint button (easy/medium only)
-          if (_difficulty != _Difficulty.hard && !_showHint)
+          // Hint button (allowed by IRT level)
+          if (_hintsAllowed() && !_showHint)
             GestureDetector(
               onTap: _showHintTap,
               child: Container(
@@ -643,8 +764,9 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     bool isTarget = false,
   }) {
     final total = weights.fold(0, (a, b) => a + b);
+    // Make locked pan (Equal Sides reference) colorful and inviting
     final Color panColor = locked
-        ? Colors.grey[400]!
+        ? const Color(0xFFFFB74D) // Bright orange for locked/reference pan
         : (isTarget ? const Color(0xFF64B5F6) : KidsColors.weightColor.withOpacity(0.8));
 
     Widget panContent = DragTarget<int>(
@@ -660,6 +782,82 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Label for Equal Sides locked pan (reference side)
+            if (locked && weights.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(bottom: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB74D),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFB74D).withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      '👀 Match these! →',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Label for Equal Sides player pan (where to drag)
+            if (!locked && !isTarget && widget.mode == GameMode.equalSides)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(bottom: 4),
+                decoration: BoxDecoration(
+                  color: KidsColors.weightColor.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: KidsColors.weightColor.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      '← Drag here!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Chain
             Container(width: 3, height: 40, color: const Color(0xFF8B5E3C)),
             // Pan
@@ -668,17 +866,28 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
               width: 100,
               constraints: const BoxConstraints(minHeight: 60),
               decoration: BoxDecoration(
-                color: isHovered ? panColor.withOpacity(0.9) : panColor.withOpacity(0.7),
+                color: isHovered ? panColor.withOpacity(0.9) : panColor.withOpacity(locked ? 0.85 : 0.7),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(50),
                   bottomRight: Radius.circular(50),
                 ),
                 border: Border.all(
-                  color: isHovered ? Colors.white : Colors.black26,
-                  width: isHovered ? 3 : 2,
+                  color: locked ? Colors.white : (isHovered ? Colors.white : Colors.black26),
+                  width: locked ? 3 : (isHovered ? 3 : 2),
                 ),
                 boxShadow: [
-                  BoxShadow(color: panColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: panColor.withOpacity(locked ? 0.5 : 0.3),
+                    blurRadius: locked ? 12 : 8,
+                    offset: const Offset(0, 4),
+                  ),
+                  // Extra glow for locked pan
+                  if (locked)
+                    BoxShadow(
+                      color: const Color(0xFFFFB74D).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
                 ],
               ),
               child: Padding(
@@ -702,28 +911,75 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
                           }
                         },
                         child: Container(
-                          height: 26,
-                          margin: const EdgeInsets.only(top: 2),
+                          height: 28,
+                          margin: const EdgeInsets.only(top: 3),
                           decoration: BoxDecoration(
-                            color: w.color,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white, width: 2),
+                            gradient: locked
+                                ? LinearGradient(
+                                    colors: [w.color, w.color.withOpacity(0.8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: locked ? null : w.color,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: locked ? 2.5 : 2,
+                            ),
+                            boxShadow: locked
+                                ? [
+                                    BoxShadow(
+                                      color: w.color.withOpacity(0.5),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(w.emoji, style: const TextStyle(fontSize: 12)),
-                              const SizedBox(width: 2),
-                              Text(w.label,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 11)),
+                              Text(
+                                w.emoji,
+                                style: TextStyle(fontSize: locked ? 14 : 12),
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                w.label,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: locked ? 12 : 11,
+                                  shadows: locked
+                                      ? [
+                                          const Shadow(
+                                            color: Colors.black26,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       );
                     }),
+                    // Add "Tap to remove" hint for player's pan
+                    if (!locked && weights.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Tap to remove',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -905,11 +1161,11 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8E1),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Spacer(),
+              const SizedBox(height: 24),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 800),
@@ -926,7 +1182,33 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
                 '$_totalCorrect out of $_maxQuestions correct',
                 style: const TextStyle(fontSize: 18, color: KidsColors.textSecondary, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              // IRT skill level badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _getIRTColor().withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _getIRTColor().withOpacity(0.3), width: 2),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.psychology_rounded, color: _getIRTColor(), size: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Skill Level: ${_getIRTLabel()}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _getIRTColor(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               // Stars
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -939,7 +1221,7 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
                   ),
                 )),
               ),
-              const Spacer(),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -948,9 +1230,6 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
                         setState(() {
                           _questionNumber = 1;
                           _totalCorrect = 0;
-                          _consecutiveWins = 0;
-                          _consecutiveFails = 0;
-                          _difficulty = _Difficulty.easy;
                           _showFinishScreen = false;
                         });
                         _generateQuestion();

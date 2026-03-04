@@ -14,7 +14,7 @@ class UnitProgressService {
   
   // WiFi IP - works without ADB, just need same WiFi network
   final List<String> _baseUrls = [
-    'http://10.169.0.71:8000/api/v1/progress',        // WiFi - Mac IP (PRIMARY)
+    'http://172.21.246.68:8000/api/v1/progress',        // WiFi - Mac IP (PRIMARY)
     'http://localhost:8000/api/v1/progress',          // ADB reverse fallback
     'http://10.0.2.2:8000/api/v1/progress',           // Android Emulator fallback
   ];

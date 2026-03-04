@@ -3,6 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'magic_scale_game_screen.dart';
 
@@ -66,6 +68,7 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
     with SingleTickerProviderStateMixin {
   String _currentVariant = 'W-W1';
   bool _isLoading = true;
+  Map<String, int> _irtLevels = {'W-W1': 1, 'W-W2': 1};
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
 
@@ -89,8 +92,20 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
   }
 
   Future<void> _loadParams() async {
+    final prefs = await SharedPreferences.getInstance();
+    final studentId = prefs.getString('student_id') ?? 'default_student';
+
+    final results = await Future.wait([
+      GamesApiService.getIRTState(studentId: studentId, domain: 'weight', variant: 'W-W1'),
+      GamesApiService.getIRTState(studentId: studentId, domain: 'weight', variant: 'W-W2'),
+    ]);
+
     if (mounted) {
       setState(() {
+        _irtLevels = {
+          'W-W1': (results[0]['difficulty_level'] as int?) ?? 1,
+          'W-W2': (results[1]['difficulty_level'] as int?) ?? 1,
+        };
         _currentVariant = 'W-W1';
         _isLoading = false;
       });
@@ -306,6 +321,8 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
                               color: variant.color,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          _buildIRTLevelBadge(_irtLevels[variant.code] ?? 1),
                         ],
                       ),
                     ),
@@ -338,6 +355,38 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildIRTLevelBadge(int level) {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFF9800),
+      Color(0xFFE91E63), Color(0xFF9C27B0),
+    ];
+    final idx = (level - 1).clamp(0, 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colors[idx].withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors[idx].withOpacity(0.4), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.psychology_rounded, size: 12, color: colors[idx]),
+          const SizedBox(width: 4),
+          Text(
+            labels[idx],
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: colors[idx],
+            ),
+          ),
+        ],
       ),
     );
   }

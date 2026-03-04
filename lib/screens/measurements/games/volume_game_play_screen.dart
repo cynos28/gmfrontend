@@ -4,6 +4,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 
 class VolumeGamePlayScreen extends StatefulWidget {
@@ -33,7 +35,7 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
   bool _isOverflow = false;
   bool _isPouring = false;
   
-  // ─── Adaptive System ─────────────────────────────────────────────────────────
+  // ─── Adaptive System (IRT-based) ─────────────────────────────────────────────
   static const int _maxQuestions = 5;
   int _questionNumber = 1;
   int _totalCorrect = 0;
@@ -42,6 +44,15 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
   int _consecutiveFailures = 0;
   List<int> _recentCompletionTimes = [];
   bool _showFinishScreen = false;
+  
+  // ─── IRT State ──────────────────────────────────────────────────────────────
+  String _studentId = 'default_student';
+  double _theta = 0.0;
+  int _irtDifficultyLevel = 1;
+  int _irtRoundsPlayed = 0;
+  Map<String, dynamic> _irtParams = {};
+  bool _irtLoading = true;
+  int _hintsUsed = 0;
   
   DateTime? _startTime;
   late AnimationController _liquidController;
@@ -52,7 +63,6 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
   @override
   void initState() {
     super.initState();
-    _initializeGame();
     _liquidController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -69,47 +79,78 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
       parent: _successController,
       curve: Curves.elasticOut,
     );
-    _startTime = DateTime.now();
+    _fetchIRTState();
+  }
+
+  Future<void> _fetchIRTState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _studentId = prefs.getString('student_id') ?? 'default_student';
+    
+    final state = await GamesApiService.getIRTState(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V1',
+    );
+    
+    if (mounted) {
+      setState(() {
+        _theta = (state['theta'] as num?)?.toDouble() ?? 0.0;
+        _irtDifficultyLevel = (state['difficulty_level'] as int?) ?? 1;
+        _irtRoundsPlayed = (state['rounds_played'] as int?) ?? 0;
+        _irtParams = (state['next_params'] as Map<String, dynamic>?) ?? {};
+        _irtLoading = false;
+      });
+      _initializeGame();
+    }
   }
 
   void _initializeGame() {
     _generateAdaptiveQuestion();
+    _startTime = DateTime.now();
   }
   
   void _generateAdaptiveQuestion() {
-    // Base difficulty on performance
-    final successRate = _totalAttempts > 0 ? _totalCorrect / _totalAttempts : 0.0;
+    // Use IRT params if available, otherwise use defaults based on difficulty level
+    final targets = (_irtParams['target_ml_options'] as List<dynamic>?)
+        ?.map((e) => e as int).toList()
+        ?? _getDefaultTargets(_irtDifficultyLevel);
     
-    // Start easy, increase difficulty based on consecutive successes
-    if (_consecutiveSuccesses >= 3) {
-      // Advanced level - harder targets, smaller tolerance, varied amounts
-      _capacityMl = 1000;
-      _targetMl = [150, 350, 450, 650, 850].elementAt(_questionNumber % 5);
-      _toleranceMl = 5;
-      _normalPourStepMl = 100;
-      _fastPourStepMl = 25;
-      _fineTuneStepMl = 5;
-    } else if (_consecutiveSuccesses >= 2 || successRate > 0.7) {
-      // Intermediate level - medium difficulty
-      // Targets must be reachable with 100+50+10 combinations
-      _capacityMl = 500;
-      _targetMl = [160, 220, 280, 340, 410, 460].elementAt(_questionNumber % 6);
-      _toleranceMl = 10;
-      _normalPourStepMl = 100;
-      _fastPourStepMl = 50;
-      _fineTuneStepMl = 10;
-    } else {
-      // Beginner level - easy targets with larger tolerance
-      _capacityMl = 500;
-      _targetMl = [100, 200, 250, 300, 400].elementAt(_questionNumber % 5);
-      _toleranceMl = 15;
-      _normalPourStepMl = 100;
-      _fastPourStepMl = 50;
-      _fineTuneStepMl = 10;
-    }
+    _capacityMl = (_irtParams['capacity_ml'] as int?) ?? _getDefaultCapacity(_irtDifficultyLevel);
+    _toleranceMl = (_irtParams['tolerance_ml'] as int?) ?? _getDefaultTolerance(_irtDifficultyLevel);
+    _normalPourStepMl = (_irtParams['normal_pour_step'] as int?) ?? 100;
+    _fastPourStepMl = (_irtParams['fast_pour_step'] as int?) ?? 50;
+    _fineTuneStepMl = (_irtParams['fine_tune_step'] as int?) ?? 10;
+    
+    // Pick a target from the options
+    _targetMl = targets[_questionNumber % targets.length];
     
     _currentMl = 0;
     _fineTuneThresholdMl = 20;
+    _hintsUsed = 0;
+  }
+  
+  List<int> _getDefaultTargets(int level) {
+    switch (level) {
+      case 1: return [100, 150, 200, 250, 300];     // Easy - multiples of 50
+      case 2: return [110, 160, 210, 260, 310];     // Medium - requires 10ml steps
+      case 3: return [120, 170, 230, 290, 370];     // Hard - requires precision
+      case 4: return [125, 275, 425, 575, 725];     // Expert - requires 25ml/5ml
+      case 5: return [135, 285, 465, 615, 785, 935]; // Master - most precise
+      default: return [100, 150, 200, 250, 300];
+    }
+  }
+  
+  int _getDefaultCapacity(int level) => level >= 4 ? 1000 : 500;
+  int _getDefaultTolerance(int level) {
+    // Much tighter tolerance - require near-exact fill
+    switch (level) {
+      case 1: return 5;  // Very forgiving for beginners
+      case 2: return 3;
+      case 3: return 2;
+      case 4: return 1;
+      case 5: return 0;  // Exact only for masters
+      default: return 3;
+    }
   }
 
   @override
@@ -172,11 +213,34 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
       _isOverflow = false;
       _isPouring = false;
       _startTime = DateTime.now();
+      _hintsUsed = 0;
     });
     _successController.reset();
   }
   
-  void _nextQuestion() {
+  Future<void> _submitRoundToIRT(bool correct, int attempts, double timeSeconds) async {
+    final result = await GamesApiService.submitRoundResult(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V1',
+      correct: correct,
+      attempts: attempts,
+      hintsUsed: _hintsUsed,
+      timeSeconds: timeSeconds,
+      starsEarned: _calculateStars(),
+    );
+    
+    if (mounted) {
+      setState(() {
+        _theta = (result['theta'] as num?)?.toDouble() ?? _theta;
+        _irtDifficultyLevel = (result['difficulty_level'] as int?) ?? _irtDifficultyLevel;
+        _irtRoundsPlayed = (result['rounds_played'] as int?) ?? _irtRoundsPlayed;
+        _irtParams = (result['next_params'] as Map<String, dynamic>?) ?? _irtParams;
+      });
+    }
+  }
+  
+  void _nextQuestion() async {
     _totalAttempts++;
     
     if (_isSuccess) {
@@ -193,6 +257,10 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
       _consecutiveSuccesses = 0;
       _consecutiveFailures++;
     }
+    
+    // Submit round to IRT
+    final timeSeconds = DateTime.now().difference(_startTime!).inSeconds.toDouble();
+    await _submitRoundToIRT(_isSuccess, _overshootCount + 1, timeSeconds);
     
     // Check if finished all questions
     if (_questionNumber >= _maxQuestions) {
@@ -212,6 +280,7 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
       _isOverflow = false;
       _isPouring = false;
       _startTime = DateTime.now();
+      _hintsUsed = 0;
       _generateAdaptiveQuestion();
     });
     _successController.reset();
@@ -236,10 +305,70 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
     return math.min(stars, 4);
   }
 
+  Widget _buildIRTBadge() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0)
+    ];
+    final idx = (_irtDifficultyLevel - 1).clamp(0, 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors[idx].withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors[idx].withOpacity(0.5), width: 1),
+      ),
+      child: Text(
+        labels[idx],
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: colors[idx],
+        ),
+      ),
+    );
+  }
+
+  Color _getIRTColor() {
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0)
+    ];
+    return colors[(_irtDifficultyLevel - 1).clamp(0, 4)];
+  }
+
+  String _getIRTLabel() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    return labels[(_irtDifficultyLevel - 1).clamp(0, 4)];
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_showFinishScreen) {
       return _buildFinishScreen();
+    }
+    
+    if (_irtLoading) {
+      return Scaffold(
+        backgroundColor: KidsColors.backgroundLight,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: KidsColors.volumeColor),
+              const SizedBox(height: 16),
+              Text('Loading...', style: TextStyle(color: KidsColors.textSecondary)),
+            ],
+          ),
+        ),
+      );
     }
     
     return Scaffold(
@@ -330,14 +459,23 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Target: $_targetMl mL | Score: $_totalCorrect/$_totalAttempts',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: KidsColors.textSecondary,
-                    height: 1.2,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Target: $_targetMl mL',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: KidsColors.textSecondary,
+                          height: 1.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildIRTBadge(),
+                  ],
                 ),
               ],
             ),
@@ -648,11 +786,11 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
     return Scaffold(
       backgroundColor: KidsColors.backgroundLight,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Spacer(),
+              const SizedBox(height: 24),
               // Celebration animation
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -758,6 +896,35 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
                     const Divider(height: 1),
                     const SizedBox(height: 24),
                     
+                    // IRT Level indicator
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _getIRTColor().withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getIRTColor().withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.psychology_rounded, color: _getIRTColor(), size: 24),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Skill Level: ${_getIRTLabel()}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: _getIRTColor(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
                     // Performance metrics
                     Row(
                       children: [
@@ -810,7 +977,7 @@ class _VolumeGamePlayScreenState extends State<VolumeGamePlayScreen>
                 ),
               ),
               
-              const Spacer(),
+              const SizedBox(height: 32),
               
               // Action buttons
               Row(

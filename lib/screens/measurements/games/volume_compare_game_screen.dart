@@ -4,6 +4,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 
 class VolumeCompareGameScreen extends StatefulWidget {
@@ -23,13 +25,23 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
   int _consecutiveSuccesses = 0;
   List<int> _recentCompletionTimes = [];
   bool _showFinishScreen = false;
-  
+
+  // ─── IRT State ──────────────────────────────────────────────────────────────
+  String _studentId = 'default_student';
+  double _theta = 0.0;
+  int _irtDifficultyLevel = 1;
+  int _irtRoundsPlayed = 0;
+  Map<String, dynamic> _irtParams = {};
+  bool _irtLoading = true;
+  int _hintsUsed = 0;
+
   late _Question _currentQuestion;
   int? _selectedAnswer;
+  List<int> _selectedAnswers = [];
   bool _showFeedback = false;
   bool _isCorrect = false;
   DateTime? _startTime;
-  
+
   late AnimationController _feedbackController;
   late Animation<double> _feedbackAnimation;
 
@@ -44,8 +56,30 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
       parent: _feedbackController,
       curve: Curves.elasticOut,
     );
-    _generateQuestion();
-    _startTime = DateTime.now();
+    _fetchIRTState();
+  }
+
+  Future<void> _fetchIRTState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _studentId = prefs.getString('student_id') ?? 'default_student';
+
+    final state = await GamesApiService.getIRTState(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V2',
+    );
+
+    if (mounted) {
+      setState(() {
+        _theta = (state['theta'] as num?)?.toDouble() ?? 0.0;
+        _irtDifficultyLevel = (state['difficulty_level'] as int?) ?? 1;
+        _irtRoundsPlayed = (state['rounds_played'] as int?) ?? 0;
+        _irtParams = (state['next_params'] as Map<String, dynamic>?) ?? {};
+        _irtLoading = false;
+      });
+      _generateQuestion();
+      _startTime = DateTime.now();
+    }
   }
 
   @override
@@ -56,64 +90,161 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
 
   void _generateQuestion() {
     final random = math.Random();
-    final questionTypes = ['most', 'least', 'same'];
-    final containerTypes = ['cup1', 'glass1', 'jug1', 'jug2', 'jug3'];
-    
-    // Select question type based on difficulty
-    String questionType;
-    if (_consecutiveSuccesses >= 3) {
-      questionType = questionTypes[random.nextInt(questionTypes.length)];
-    } else if (_consecutiveSuccesses >= 2) {
-      questionType = random.nextBool() ? 'most' : 'least';
-    } else {
-      questionType = 'most'; // Start with easiest
-    }
-    
+
+    final questionTypes = (_irtParams['question_types'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        _getDefaultQuestionTypes(_irtDifficultyLevel);
+    final containerTypes = (_irtParams['container_types'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        ['cup1', 'glass1', 'jug1'];
+    final sizeDifferences =
+        (_irtParams['size_differences'] as List<dynamic>?)
+                ?.map((e) => (e as num).toDouble())
+                .toList() ??
+            _getDefaultSizes(_irtDifficultyLevel);
+
+    final questionType = questionTypes[random.nextInt(questionTypes.length)];
     final containerType = containerTypes[random.nextInt(containerTypes.length)];
-    
+
     setState(() {
-      _currentQuestion = _Question.generate(questionType, containerType);
+      _currentQuestion =
+          _Question.generate(questionType, containerType, sizeDifferences);
       _selectedAnswer = null;
+      _selectedAnswers = [];
       _showFeedback = false;
       _isCorrect = false;
+      _hintsUsed = 0;
     });
+  }
+
+  List<double> _getDefaultSizes(int level) {
+    // All levels use same visually distinct sizes: 0.4, 0.65, 0.95
+    // These multiply against base height 140px → 56px, 91px, 133px
+    return [0.4, 0.65, 0.95];
+  }
+
+  List<String> _getDefaultQuestionTypes(int level) {
+    switch (level) {
+      case 1:
+        return ['most'];
+      case 2:
+        return ['most', 'least'];
+      case 3:
+        return ['most', 'least', 'same'];
+      case 4:
+        return ['most', 'least', 'same'];
+      case 5:
+        return ['least', 'same'];
+      default:
+        return ['most', 'least', 'same'];
+    }
   }
 
   void _checkAnswer(int selectedIndex) {
     if (_showFeedback) return;
-    
+
+    final isSameQuestion = _currentQuestion.questionType == 'same';
+
+    if (isSameQuestion) {
+      setState(() {
+        if (_selectedAnswers.contains(selectedIndex)) {
+          _selectedAnswers.remove(selectedIndex);
+        } else {
+          _selectedAnswers.add(selectedIndex);
+        }
+      });
+
+      if (_selectedAnswers.length == 2) {
+        final selected1 = _currentQuestion.options[_selectedAnswers[0]];
+        final selected2 = _currentQuestion.options[_selectedAnswers[1]];
+        final bothCorrect = selected1.logicalSize == selected2.logicalSize;
+
+        setState(() {
+          _isCorrect = bothCorrect;
+          _showFeedback = true;
+          _totalAttempts++;
+          if (_isCorrect) {
+            _totalCorrect++;
+            _consecutiveSuccesses++;
+            if (_startTime != null) {
+              _recentCompletionTimes
+                  .add(DateTime.now().difference(_startTime!).inSeconds);
+            }
+          } else {
+            _consecutiveSuccesses = 0;
+          }
+        });
+
+        _feedbackController.forward(from: 0.0);
+        Future.delayed(const Duration(milliseconds: 2000), () async {
+          if (mounted && _showFeedback) {
+            await _submitRoundToIRT();
+            _nextQuestion();
+          }
+        });
+      }
+      return;
+    }
+
+    // Single-select for 'most' / 'least'
     setState(() {
       _selectedAnswer = selectedIndex;
       _isCorrect = selectedIndex == _currentQuestion.correctAnswer;
       _showFeedback = true;
       _totalAttempts++;
-      
       if (_isCorrect) {
         _totalCorrect++;
         _consecutiveSuccesses++;
         if (_startTime != null) {
-          _recentCompletionTimes.add(DateTime.now().difference(_startTime!).inSeconds);
+          _recentCompletionTimes
+              .add(DateTime.now().difference(_startTime!).inSeconds);
         }
       } else {
         _consecutiveSuccesses = 0;
       }
     });
-    
+
     _feedbackController.forward(from: 0.0);
-    
-    // Auto advance after delay
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Future.delayed(const Duration(milliseconds: 2000), () async {
       if (mounted && _showFeedback) {
+        await _submitRoundToIRT();
         _nextQuestion();
       }
     });
   }
 
+  Future<void> _submitRoundToIRT() async {
+    final timeSeconds =
+        DateTime.now().difference(_startTime!).inSeconds.toDouble();
+    final result = await GamesApiService.submitRoundResult(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V2',
+      correct: _isCorrect,
+      attempts: 1,
+      hintsUsed: _hintsUsed,
+      timeSeconds: timeSeconds,
+      starsEarned: _isCorrect ? 1 : 0,
+    );
+
+    if (mounted) {
+      setState(() {
+        _theta = (result['theta'] as num?)?.toDouble() ?? _theta;
+        _irtDifficultyLevel =
+            (result['difficulty_level'] as int?) ?? _irtDifficultyLevel;
+        _irtRoundsPlayed =
+            (result['rounds_played'] as int?) ?? _irtRoundsPlayed;
+        _irtParams =
+            (result['next_params'] as Map<String, dynamic>?) ?? _irtParams;
+      });
+    }
+  }
+
   void _nextQuestion() {
     if (_questionNumber >= _maxQuestions) {
-      setState(() {
-        _showFinishScreen = true;
-      });
+      setState(() => _showFinishScreen = true);
     } else {
       setState(() {
         _questionNumber++;
@@ -123,32 +254,61 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
     }
   }
 
+  // ─── Build ───────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    if (_showFinishScreen) {
-      return _buildFinishScreen();
+    if (_showFinishScreen) return _buildFinishScreen();
+
+    if (_irtLoading) {
+      return Scaffold(
+        backgroundColor: KidsColors.backgroundLight,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: KidsColors.volumeColor),
+              const SizedBox(height: 16),
+              Text('Loading...',
+                  style: TextStyle(color: KidsColors.textSecondary)),
+            ],
+          ),
+        ),
+      );
     }
-    
+
     return Scaffold(
       backgroundColor: KidsColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: KidsColors.textPrimary),
+          icon:
+              const Icon(Icons.arrow_back_rounded, color: KidsColors.textPrimary),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          'Volume Compare',
-          style: const TextStyle(
-            color: KidsColors.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                'Compare',
+                style: const TextStyle(
+                  color: KidsColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            _buildIRTBadge(),
+          ],
         ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: KidsColors.volumeColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
@@ -165,30 +325,78 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              // Progress bar
               _buildProgressBar(),
               const SizedBox(height: 24),
-              
-              // Question text
               _buildQuestionText(),
-              const SizedBox(height: 32),
-              
-              // Options
-              Expanded(
-                child: _buildOptions(),
-              ),
-              
-              // Feedback
+              if (_currentQuestion.questionType == 'same' && !_showFeedback)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Select 2 containers with the same volume',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: KidsColors.volumeColor,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              _buildOptions(),
               if (_showFeedback) _buildFeedback(),
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildIRTBadge() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0),
+    ];
+    final idx = (_irtDifficultyLevel - 1).clamp(0, 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors[idx].withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors[idx].withOpacity(0.5), width: 1),
+      ),
+      child: Text(
+        labels[idx],
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: colors[idx],
+        ),
+      ),
+    );
+  }
+
+  Color _getIRTColor() {
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0),
+    ];
+    return colors[(_irtDifficultyLevel - 1).clamp(0, 4)];
+  }
+
+  String _getIRTLabel() {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    return labels[(_irtDifficultyLevel - 1).clamp(0, 4)];
   }
 
   Widget _buildProgressBar() {
@@ -235,28 +443,37 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
   }
 
   Widget _buildOptions() {
+    final count = _currentQuestion.options.length;
     return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: _currentQuestion.options.length == 3 ? 3 : 2,
+        crossAxisCount: count == 4 ? 2 : 3,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
+        // Extra height so even the largest container fits comfortably
+        childAspectRatio: 0.65,
       ),
-      itemCount: _currentQuestion.options.length,
-      itemBuilder: (context, index) {
-        return _buildOptionCard(index);
-      },
+      itemCount: count,
+      itemBuilder: (context, index) => _buildOptionCard(index),
     );
   }
 
   Widget _buildOptionCard(int index) {
     final option = _currentQuestion.options[index];
-    final isSelected = _selectedAnswer == index;
-    final isCorrectAnswer = index == _currentQuestion.correctAnswer;
-    
+    final isSameQuestion = _currentQuestion.questionType == 'same';
+
+    final isSelected = isSameQuestion
+        ? _selectedAnswers.contains(index)
+        : _selectedAnswer == index;
+
+    final isCorrectAnswer = isSameQuestion
+        ? _currentQuestion.correctIndices.contains(index)
+        : index == _currentQuestion.correctAnswer;
+
     Color borderColor;
     Color bgColor;
-    
+
     if (_showFeedback) {
       if (isCorrectAnswer) {
         borderColor = const Color(0xFF4CAF50);
@@ -269,14 +486,13 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         bgColor = Colors.white;
       }
     } else {
-      borderColor = isSelected
-          ? KidsColors.volumeColor
-          : Colors.grey[300]!;
+      borderColor =
+          isSelected ? KidsColors.volumeColor : Colors.grey[300]!;
       bgColor = isSelected
           ? KidsColors.volumeColor.withOpacity(0.1)
           : Colors.white;
     }
-    
+
     return GestureDetector(
       onTap: () => _checkAnswer(index),
       child: AnimatedContainer(
@@ -284,10 +500,7 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: borderColor,
-            width: 3,
-          ),
+          border: Border.all(color: borderColor, width: 3),
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -299,43 +512,52 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
               : KidsShadows.soft,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Expanded(
-              child: Center(
-                child: Image.asset(
-                  _getImagePath(option.type),
-                  height: 100 * option.size,
-                  fit: BoxFit.contain,
+              child: Align(
+                // Align to bottom so containers "sit" on the same baseline,
+                // making size differences immediately obvious to children.
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Image.asset(
+                    'assets/images/volume/${option.type}.png',
+                    // displaySize is ALWAYS one of 3 fixed pixel heights:
+                    //   small  → 56 px
+                    //   medium → 96 px
+                    //   large  → 140 px
+                    height: option.displaySize,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             if (_showFeedback && isCorrectAnswer)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Icon(
+                child: const Icon(
                   Icons.check_circle_rounded,
-                  color: const Color(0xFF4CAF50),
+                  color: Color(0xFF4CAF50),
                   size: 32,
                 ),
-              ),
-            if (_showFeedback && isSelected && !_isCorrect)
+              )
+            else if (_showFeedback && isSelected && !_isCorrect)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Icon(
+                child: const Icon(
                   Icons.cancel_rounded,
-                  color: const Color(0xFFFF5252),
+                  color: Color(0xFFFF5252),
                   size: 32,
                 ),
-              ),
+              )
+            else
+              const SizedBox(height: 12),
           ],
         ),
       ),
     );
-  }
-
-  String _getImagePath(String type) {
-    return 'assets/images/volume/$type.png';
   }
 
   Widget _buildFeedback() {
@@ -345,9 +567,8 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         margin: const EdgeInsets.only(top: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _isCorrect
-              ? const Color(0xFF4CAF50)
-              : const Color(0xFFFF5252),
+          color:
+              _isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFFF5252),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -363,7 +584,9 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         child: Row(
           children: [
             Icon(
-              _isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+              _isCorrect
+                  ? Icons.check_circle_rounded
+                  : Icons.cancel_rounded,
               color: Colors.white,
               size: 32,
             ),
@@ -386,26 +609,20 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
 
   Widget _buildFinishScreen() {
     final successRate = (_totalCorrect / _totalAttempts * 100).toInt();
-    
+
     return Scaffold(
       backgroundColor: KidsColors.backgroundLight,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Spacer(),
-              
-              // Trophy
+              const SizedBox(height: 24),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 800),
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: child,
-                  );
-                },
+                builder: (context, value, child) =>
+                    Transform.scale(scale: value, child: child),
                 child: Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
@@ -426,15 +643,11 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.emoji_events_rounded,
-                    size: 80,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.emoji_events_rounded,
+                      size: 80, color: Colors.white),
                 ),
               ),
               const SizedBox(height: 32),
-              
               const Text(
                 '🎉 Great Job! 🎉',
                 style: TextStyle(
@@ -453,8 +666,34 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                 ),
               ),
               const SizedBox(height: 32),
-              
-              // Stats
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _getIRTColor().withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: _getIRTColor().withOpacity(0.3), width: 2),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.psychology_rounded,
+                        color: _getIRTColor(), size: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Skill Level: ${_getIRTLabel()}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _getIRTColor(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
@@ -476,10 +715,7 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                   ),
                 ],
               ),
-              
-              const Spacer(),
-              
-              // Buttons
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -503,12 +739,9 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
+                            borderRadius: BorderRadius.circular(18)),
                         textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
+                            fontSize: 18, fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -525,14 +758,11 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                           side: BorderSide(
-                            color: KidsColors.volumeColor.withOpacity(0.3),
-                            width: 2,
-                          ),
+                              color: KidsColors.volumeColor.withOpacity(0.3),
+                              width: 2),
                         ),
                         textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
+                            fontSize: 18, fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -556,32 +786,23 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 2,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: color)),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: KidsColors.textSecondary,
-            ),
-          ),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: KidsColors.textSecondary)),
         ],
       ),
     );
@@ -594,65 +815,102 @@ class _Question {
   final String questionText;
   final List<_ContainerOption> options;
   final int correctAnswer;
+  final List<int> correctIndices;
+  final String questionType;
 
   _Question({
     required this.questionText,
     required this.options,
     required this.correctAnswer,
+    this.correctIndices = const [],
+    required this.questionType,
   });
 
-  factory _Question.generate(String questionType, String containerType) {
+  factory _Question.generate(
+    String questionType,
+    String containerType,
+    List<double> availableSizes,
+  ) {
     final random = math.Random();
-    
+
+    // Pick 3 distinct sizes: smallest, middle, largest for maximum visual distinction
+    final sorted = List<double>.from(availableSizes)..sort();
+    final baseSizes = sorted.length >= 3
+        ? [sorted.first, sorted[sorted.length ~/ 2], sorted.last]
+        : [0.4, 0.65, 0.95];
+    final smallSize = baseSizes.first;
+    final largeSize = baseSizes.last;
+    final midSize = baseSizes.length > 1 ? baseSizes[1] : (smallSize + largeSize) / 2;
+
+    // Base height for container images (multiplier)
+    const double baseHeight = 140.0;
+
     if (questionType == 'most') {
-      // Which holds the most?
-      final sizes = [0.5, 0.7, 1.0]..shuffle();
-      final correctIndex = sizes.indexOf(1.0);
-      
+      // Three options, shuffled; one large, one medium, one small.
+      final sizes = [smallSize, midSize, largeSize]..shuffle(random);
+      final correctIdx = sizes.indexOf(largeSize);
+
       return _Question(
         questionText: 'Which ${_pluralName(containerType)} holds the most?',
         options: sizes
-            .map((size) => _ContainerOption(type: containerType, size: size))
+            .map((s) => _ContainerOption(
+                  type: containerType,
+                  logicalSize: s,
+                  displaySize: s * baseHeight,
+                ))
             .toList(),
-        correctAnswer: correctIndex,
+        correctAnswer: correctIdx,
+        questionType: 'most',
       );
     } else if (questionType == 'least') {
-      // Which holds the least?
-      final sizes = [0.5, 0.7, 1.0]..shuffle();
-      final correctIndex = sizes.indexOf(0.5);
-      
+      // Three options, shuffled; correct answer is the smallest.
+      final sizes = [smallSize, midSize, largeSize]..shuffle(random);
+      final correctIdx = sizes.indexOf(smallSize);
+
       return _Question(
         questionText: 'Which ${_pluralName(containerType)} holds the least?',
         options: sizes
-            .map((size) => _ContainerOption(type: containerType, size: size))
+            .map((s) => _ContainerOption(
+                  type: containerType,
+                  logicalSize: s,
+                  displaySize: s * baseHeight,
+                ))
             .toList(),
-        correctAnswer: correctIndex,
+        correctAnswer: correctIdx,
+        questionType: 'least',
       );
     } else {
-      // Which two hold the same?
-      final sameSize = [0.6, 0.8, 1.0][random.nextInt(3)];
-      final options = [
-        _ContainerOption(type: containerType, size: sameSize),
-        _ContainerOption(type: containerType, size: sameSize),
-        _ContainerOption(type: containerType, size: sameSize == 0.6 ? 1.0 : 0.6),
-        _ContainerOption(type: containerType, size: sameSize == 0.8 ? 1.0 : 0.8),
-      ]..shuffle();
-      
-      // Find first pair that matches
-      int correctIndex = 0;
-      for (int i = 0; i < options.length; i++) {
-        for (int j = i + 1; j < options.length; j++) {
-          if (options[i].size == options[j].size) {
-            correctIndex = i; // Return first of the pair
-            break;
-          }
-        }
-      }
-      
+      // "Same" question: TWO identical + TWO different distractors
+      final tierChoices = [smallSize, midSize, largeSize];
+      final sameSize = tierChoices[random.nextInt(tierChoices.length)];
+      final distractors = tierChoices.where((s) => s != sameSize).toList();
+
+      final sizes = [
+        sameSize,
+        sameSize,
+        distractors[0],
+        distractors.length > 1 ? distractors[1] : (sameSize > 0.6 ? smallSize : largeSize),
+      ]..shuffle(random);
+
+      final List<int> correctIndices = [
+        for (int i = 0; i < sizes.length; i++)
+          if (sizes[i] == sameSize) i,
+      ];
+
       return _Question(
-        questionText: 'Which two ${_pluralName(containerType)} hold the same?',
-        options: options,
-        correctAnswer: correctIndex,
+        questionText:
+            'Which two ${_pluralName(containerType)} hold the same?',
+        options: sizes
+            .map((s) => _ContainerOption(
+                  type: containerType,
+                  logicalSize: s,
+                  displaySize: s * baseHeight,
+                ))
+            .toList(),
+        correctAnswer:
+            correctIndices.isNotEmpty ? correctIndices[0] : 0,
+        correctIndices: correctIndices,
+        questionType: 'same',
       );
     }
   }
@@ -673,9 +931,21 @@ class _Question {
   }
 }
 
-class _ContainerOption {
-  final String type;
-  final double size;
+// ─── Container Option ────────────────────────────────────────────────────────
 
-  _ContainerOption({required this.type, required this.size});
+class _ContainerOption {
+  /// Logical size — used only for equality comparison (correctness check).
+  final double logicalSize;
+
+  /// Display size in pixels — always one of 56 / 96 / 140 px so containers
+  /// are unmistakably different in size for children.
+  final double displaySize;
+
+  final String type;
+
+  _ContainerOption({
+    required this.type,
+    required this.logicalSize,
+    required this.displaySize,
+  });
 }

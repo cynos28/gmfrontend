@@ -3,7 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'area_game_play_screen.dart';
 import 'area_architect_game_screen.dart';
 
@@ -70,6 +72,10 @@ class _AreaGameHubScreenState extends State<AreaGameHubScreen>
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
 
+  // IRT state per variant
+  final Map<String, int> _irtLevels = {};
+  final Map<String, double> _irtThetas = {};
+
   @override
   void initState() {
     super.initState();
@@ -90,7 +96,27 @@ class _AreaGameHubScreenState extends State<AreaGameHubScreen>
   }
 
   Future<void> _loadParams() async {
-    // Only one variant (A-V1), always unlocked
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final userId = prefs.getString('student_id') ?? 'student_001';
+
+    // Fetch IRT state for each variant
+    for (final v in _variants) {
+      try {
+        final irt = await GamesApiService.getIRTState(
+          studentId: userId,
+          domain: 'area',
+          variant: v.code,
+        );
+        if (!mounted) return;
+        _irtLevels[v.code] = (irt['difficulty_level'] as num?)?.toInt() ?? 1;
+        _irtThetas[v.code] = (irt['theta'] as num?)?.toDouble() ?? 0.0;
+      } catch (_) {
+        _irtLevels[v.code] = 1;
+        _irtThetas[v.code] = 0.0;
+      }
+    }
+
     if (mounted) {
       setState(() {
         _currentVariant = 'A-V1';
@@ -337,6 +363,9 @@ class _AreaGameHubScreenState extends State<AreaGameHubScreen>
                           height: 1.4,
                         ),
                       ),
+                      if (unlocked && _irtLevels.containsKey(info.code)) ...[                        const SizedBox(height: 8),
+                        _buildIRTLevelBadge(info.code),
+                      ],
                     ],
                   ),
                 ),
@@ -362,6 +391,49 @@ class _AreaGameHubScreenState extends State<AreaGameHubScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIRTLevelBadge(String variantCode) {
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0)
+    ];
+    final level = (_irtLevels[variantCode] ?? 1).clamp(1, 5);
+    final idx = level - 1;
+    final theta = _irtThetas[variantCode] ?? 0.0;
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: colors[idx].withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colors[idx].withOpacity(0.4), width: 1),
+          ),
+          child: Text(
+            'Level $level \u2022 ${labels[idx]}',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: colors[idx],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '\u03b8 ${theta.toStringAsFixed(1)}',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: KidsColors.textTertiary,
+          ),
+        ),
+      ],
     );
   }
 

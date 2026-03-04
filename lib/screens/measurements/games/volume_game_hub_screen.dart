@@ -3,6 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'volume_game_play_screen.dart';
 import 'volume_compare_game_screen.dart';
@@ -69,6 +71,11 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
   bool _isLoading = true;
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
+  
+  // IRT state per variant
+  Map<String, int> _irtLevels = {'V-V1': 1, 'V-V2': 1};
+  Map<String, double> _irtThetas = {'V-V1': 0.0, 'V-V2': 0.0};
+  String _studentId = 'default_student';
 
   @override
   void initState() {
@@ -90,9 +97,27 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
   }
 
   Future<void> _loadParams() async {
-    // V-V1 always unlocked
+    final prefs = await SharedPreferences.getInstance();
+    _studentId = prefs.getString('student_id') ?? 'default_student';
+    
+    // Fetch IRT state for both variants
+    final vv1State = await GamesApiService.getIRTState(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V1',
+    );
+    final vv2State = await GamesApiService.getIRTState(
+      studentId: _studentId,
+      domain: 'volume',
+      variant: 'V-V2',
+    );
+    
     if (mounted) {
       setState(() {
+        _irtLevels['V-V1'] = (vv1State['difficulty_level'] as int?) ?? 1;
+        _irtThetas['V-V1'] = (vv1State['theta'] as num?)?.toDouble() ?? 0.0;
+        _irtLevels['V-V2'] = (vv2State['difficulty_level'] as int?) ?? 1;
+        _irtThetas['V-V2'] = (vv2State['theta'] as num?)?.toDouble() ?? 0.0;
         _currentVariant = 'V-V1';
         _isLoading = false;
       });
@@ -297,14 +322,22 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          variant.title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: KidsColors.textPrimary,
-                            height: 1.2,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                variant.title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: KidsColors.textPrimary,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildIRTLevelBadge(variant.code),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -391,6 +424,42 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildIRTLevelBadge(String variantCode) {
+    final level = _irtLevels[variantCode] ?? 1;
+    const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
+    const colors = [
+      Color(0xFF4CAF50),
+      Color(0xFF2196F3),
+      Color(0xFFFF9800),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0)
+    ];
+    final idx = (level - 1).clamp(0, 4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors[idx].withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors[idx].withOpacity(0.4), width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.psychology_rounded, color: colors[idx], size: 14),
+          const SizedBox(width: 4),
+          Text(
+            labels[idx],
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: colors[idx],
+            ),
+          ),
+        ],
       ),
     );
   }
