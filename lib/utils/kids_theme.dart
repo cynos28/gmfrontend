@@ -63,6 +63,8 @@ class KidsColors {
   static const Color volumeBackground = Color(0xFFE0F7FA);
   static const Color weightColor = Color(0xFFFF9500);
   static const Color weightBackground = Color(0xFFFFF3E0);
+  static const Color capacityColor = Color(0xFF9C27B0);
+  static const Color capacityBackground = Color(0xFFF3E5F5);
   
   // Borders (colorful)
   static const Color borderLight = Color(0xFFE0E0E0);
