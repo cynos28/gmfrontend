@@ -10,6 +10,10 @@ class AppConstants {
   static const String numBaseUrl =
       'https://macular-patrimonially-olinda.ngrok-free.dev';
 
+  // Auth and Symbol service URLs (fallback to main baseUrl)
+  static const String authBaseUrl = baseUrl;
+  static const String symbolBaseUrl = baseUrl;
+
   // Activity Types
   static const String activityTypeTrace = 'trace';
   static const String activityTypeRead = 'read';
