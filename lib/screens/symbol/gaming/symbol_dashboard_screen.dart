@@ -5,8 +5,6 @@ import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
-import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
-import 'package:ganithamithura/screens/symbol/gaming/character_selection_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/game_welcome_screen.dart';
 
 class SymbolDashboardScreen extends StatefulWidget {
@@ -21,6 +19,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
   bool _isLoadingUser = true;
   String? _characterName;
   int _totalScore = 0;
+  int _selectedTabIndex = 0;
 
   @override
   void initState() {
@@ -88,212 +87,337 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
         : 'assets/symbols/game/character1.png';
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const GamingParallaxBackground(
-            backgroundImage: 'assets/symbols/gaminBack.png',
-            parallaxIntensity: 0.015,
-            driftDuration: Duration(seconds: 15),
-          ),
-          SafeArea(
-            child: Column(
+      backgroundColor: const Color(0xFFC0DAC6), // Light Background Green
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
               children: [
-                // Top Header with Back outline
+                // Top Action Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-                          ],
+                      // Back Button
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Container(
+                          width: 45,
+                          height: 45,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF9E714F), // Brownish
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
-                          onPressed: () => Get.back(),
+                      ),
+                      // Home Button
+                      GestureDetector(
+                        onTap: () => Get.offAllNamed('/home'), // Or wherever home is
+                        child: Container(
+                          width: 55,
+                          height: 55,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF9E714F), // Brownish
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.home_outlined, color: Colors.black, size: 36),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 10),
 
-                // Dashboard Card
-                if (_isLoadingUser)
-                   const Center(child: CircularProgressIndicator())
-                else
-                   Container(
-                     margin: const EdgeInsets.symmetric(horizontal: 24),
-                     padding: const EdgeInsets.all(24),
-                     decoration: BoxDecoration(
-                       color: Colors.white.withOpacity(0.9),
-                       borderRadius: BorderRadius.circular(30),
-                       boxShadow: [
-                         BoxShadow(
-                           color: Colors.black.withOpacity(0.1),
-                           blurRadius: 10,
-                           offset: const Offset(0, 5),
-                         )
-                       ],
-                       border: Border.all(color: const Color(0xFFC79860), width: 4),
-                     ),
-                     child: Column(
-                       mainAxisSize: MainAxisSize.min,
-                       children: [
-                         // Avatar
-                         Container(
-                           width: 120,
-                           height: 120,
-                           decoration: BoxDecoration(
-                             shape: BoxShape.circle,
-                             color: Colors.white,
-                             border: Border.all(color: const Color(0xFFC79860), width: 4),
-                             image: DecorationImage(
-                               image: AssetImage(avatarPath),
-                               fit: BoxFit.cover,
-                             ),
-                           ),
-                         ),
-                         const SizedBox(height: 20),
-                         Text(
-                           'Hi, $firstName!',
-                           style: GoogleFonts.luckiestGuy(
-                             fontSize: 36,
-                             color: const Color(0xFF0D251A),
-                           ),
-                         ),
-                         const SizedBox(height: 20),
-                         // Stats Row
-                         Row(
-                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                           children: [
-                             // Level
-                             Column(
-                               children: [
-                                 Text(
-                                   'Level',
-                                   style: GoogleFonts.poppins(
-                                     fontSize: 18,
-                                     fontWeight: FontWeight.bold,
-                                     color: Colors.grey[700],
-                                   ),
-                                 ),
-                                 Text(
-                                   '${LevelConfig.getUnlockedLevel(_totalScore)}',
-                                   style: GoogleFonts.luckiestGuy(
-                                     fontSize: 28,
-                                     color: const Color(0xFF4CAF50),
-                                   ),
-                                 ),
-                               ],
-                             ),
-                             // Points
-                             Column(
-                               children: [
-                                 Text(
-                                   'Points',
-                                   style: GoogleFonts.poppins(
-                                     fontSize: 18,
-                                     fontWeight: FontWeight.bold,
-                                     color: Colors.grey[700],
-                                   ),
-                                 ),
-                                 Row(
-                                   children: [
-                                     const Icon(Icons.star, color: Colors.orange, size: 28),
-                                     const SizedBox(width: 4),
-                                     Text(
-                                       '$_totalScore',
-                                       style: GoogleFonts.luckiestGuy(
-                                         fontSize: 28,
-                                         color: const Color(0xFFDAA520),
-                                       ),
-                                     ),
-                                   ],
-                                 ),
-                               ],
-                             ),
-                           ],
-                         ),
-                       ],
-                     ),
-                   ),
+                // Main Content Card
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF86A383), // Darker Sage Green Base Card
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 25),
+                        // Tabs Row Container
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9EBA9D), // Light green container
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildTabItem("MY LEAGUE", 0),
+                                const SizedBox(width: 8),
+                                _buildTabItem("CHAMP LEVELS", 1),
+                                const SizedBox(width: 8),
+                                _buildTabItem("CHAMPIONS", 2),
+                              ],
+                            ),
+                          ),
+                        ),
 
-                   const Spacer(),
+                        const SizedBox(height: 80),
 
-                   // Play Button
-                   Padding(
-                     padding: const EdgeInsets.only(bottom: 60),
-                     child: ElevatedButton(
-                       onPressed: () {
-                         Get.to(() => const GameWelcomeScreen());
-                       },
-                       style: ElevatedButton.styleFrom(
-                         backgroundColor: const Color(0xFF4CAF50),
-                         padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
-                         shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(30),
-                         ),
-                         elevation: 5,
-                       ),
-                       child: Text(
-                         'PLAY GAME',
-                         style: GoogleFonts.luckiestGuy(
-                           fontSize: 28,
-                           color: Colors.white,
-                         ),
-                       ),
-                     ),
-                   ),
+                        // Character Stats Card Section
+                        Expanded(
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.topCenter,
+                            children: [
+                              // Inner Grey Card
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.symmetric(horizontal: 0),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFB1B1B1), // Light Grey Card
+                                  borderRadius: BorderRadius.circular(40),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, -2),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 80, bottom: 20),
+                                  child: Column(
+                                    children: [
+                                      // Name Pill Label
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF7E977A), // Pill Olive Green
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          'Hi  $firstName',
+                                          style: GoogleFonts.alfaSlabOne(
+                                            fontSize: 32,
+                                            color: const Color(0xFF0F3124),
+                                            letterSpacing: 2.0,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 35),
+                                      // Score & Level Stat Indicators
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          // Level Column
+                                          Column(
+                                            children: [
+                                              Container(
+                                                width: 80,
+                                                height: 80,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF3C5E3D), // Deep green circle
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.2),
+                                                      blurRadius: 5,
+                                                      offset: const Offset(0, 3),
+                                                    )
+                                                  ],
+                                                ),
+                                                child: const Icon(
+                                                  Icons.settings,
+                                                  color: Color(0xFFD49C76), // Bronze-ish gear color
+                                                  size: 50,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 15),
+                                              Text(
+                                                'Level',
+                                                style: GoogleFonts.alfaSlabOne(
+                                                  fontSize: 22,
+                                                  color: const Color(0xFF0F3124),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${LevelConfig.getUnlockedLevel(_totalScore)}',
+                                                style: GoogleFonts.alfaSlabOne(
+                                                  fontSize: 20,
+                                                  color: const Color(0xFF0F3124),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          
+                                          // Points Column
+                                          Column(
+                                            children: [
+                                              Container(
+                                                width: 80,
+                                                height: 80,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF3C5E3D), // Deep green circle
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.2),
+                                                      blurRadius: 5,
+                                                      offset: const Offset(0, 3),
+                                                    )
+                                                  ],
+                                                ),
+                                                child: const Icon(
+                                                  Icons.monetization_on, // Placeholder for clover coin
+                                                  color: Color(0xFFFFD700), // Gold
+                                                  size: 50,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 15),
+                                              Text(
+                                                'Points',
+                                                style: GoogleFonts.alfaSlabOne(
+                                                  fontSize: 22,
+                                                  color: const Color(0xFF0F3124),
+                                                ),
+                                              ),
+                                              Text(
+                                                '$_totalScore',
+                                                style: GoogleFonts.alfaSlabOne(
+                                                  fontSize: 20,
+                                                  color: const Color(0xFF0F3124),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              
+                              // Floating Avatar Over the Grey Card
+                              Positioned(
+                                top: -65,
+                                child: Container(
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: AssetImage(avatarPath),
+                                      fit: BoxFit.cover,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Bottom Play Button Area
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 30),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFBDD69), Color(0xFFB48332)], // Yellow to gold/brown
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.to(() => const GameWelcomeScreen());
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: Text(
+                                'Play Game',
+                                style: GoogleFonts.alfaSlabOne(
+                                  fontSize: 24,
+                                  color: Colors.black,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-
-          // Left side icons (migrated from Gaming Screen)
-          Positioned(
-            left: 16,
-            top: MediaQuery.of(context).padding.top + 100,
-            child: Column(
-              children: [
-                _buildSideIcon(Icons.volume_up),
-                const SizedBox(height: 18),
-                _buildSideIcon(Icons.pause),
-                const SizedBox(height: 18),
-                _buildSideIcon(Icons.settings),
-              ],
-            ),
-          ),
-
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSideIcon(IconData icon, {VoidCallback? onTap}) {
+  Widget _buildTabItem(String text, int index) {
+    bool isSelected = _selectedTabIndex == index;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
       child: Container(
-        width: 45,
-        height: 45,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          shape: BoxShape.circle,
-          boxShadow: [
+          color: isSelected ? Colors.white : const Color(0xFF7A9876), // White if selected, darker green otherwise
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected ? [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ],
+          ] : null,
         ),
-        child: Icon(icon, color: Colors.black87, size: 24),
+        child: Text(
+          text,
+          style: GoogleFonts.alfaSlabOne(
+            fontSize: 12,
+            color: Colors.black, // Uniform black font for all tabs
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
     );
   }
