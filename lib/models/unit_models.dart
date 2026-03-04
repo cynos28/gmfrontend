@@ -3,7 +3,7 @@
 class Unit {
   final String id;
   final String name;
-  final String topic; // Length, Area, Capacity, Weight
+  final String topic; // Length, Area, Volume, Weight
   final int grade;
   final String? description;
   final String? iconName;
@@ -83,6 +83,7 @@ class Question {
   final int? correctIndex;
   final String difficulty; // easy, medium, hard
   final String explanation;
+  final String? imageUrl; // URL to question image
 
   Question({
     required this.questionId,
@@ -91,6 +92,7 @@ class Question {
     this.correctIndex,
     required this.difficulty,
     required this.explanation,
+    this.imageUrl,
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
@@ -101,6 +103,7 @@ class Question {
       correctIndex: json['correctIndex'],
       difficulty: json['difficulty'] ?? 'easy',
       explanation: json['explanation'] ?? json['explanation_en'] ?? '',
+      imageUrl: json['imageUrl'] ?? json['image_url'],
     );
   }
 
@@ -112,6 +115,7 @@ class Question {
       'correctIndex': correctIndex,
       'difficulty': difficulty,
       'explanation': explanation,
+      'imageUrl': imageUrl,
     };
   }
 }
@@ -282,6 +286,7 @@ class RAGQuestion {
   final List<String> concepts;
   final String? explanation;
   final List<String> hints;
+  final String? imageUrl; // URL to question image
 
   RAGQuestion({
     required this.id,
@@ -296,22 +301,24 @@ class RAGQuestion {
     required this.concepts,
     this.explanation,
     required this.hints,
+    this.imageUrl,
   });
 
   factory RAGQuestion.fromJson(Map<String, dynamic> json) {
     return RAGQuestion(
-      id: json['id'] ?? '',
+      id: json['id'] ?? json['question_id'] ?? '',
       documentId: json['document_id'],
       questionText: json['question_text'] ?? '',
       questionType: json['question_type'] ?? 'mcq',
       correctAnswer: json['correct_answer'] ?? '',
       options: json['options'] != null ? List<String>.from(json['options']) : null,
       gradeLevel: json['grade_level'] ?? 0,
-      difficultyLevel: json['difficulty_level'] ?? 1,
+      difficultyLevel: json['difficulty_level'] ?? json['difficulty'] ?? 1,
       bloomLevel: json['bloom_level'],
       concepts: List<String>.from(json['concepts'] ?? []),
       explanation: json['explanation'],
       hints: List<String>.from(json['hints'] ?? []),
+      imageUrl: json['image_url'],
     );
   }
   
@@ -343,6 +350,7 @@ class RAGQuestion {
       correctIndex: questionOptions.indexOf(correctAnswer),
       difficulty: difficultyLevel <= 2 ? 'easy' : difficultyLevel <= 4 ? 'medium' : 'hard',
       explanation: explanation ?? '',
+      imageUrl: imageUrl,
     );
   }
 }

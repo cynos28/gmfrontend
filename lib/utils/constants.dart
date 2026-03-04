@@ -2,11 +2,9 @@
 library;
 
 class AppConstants {
-  // API Configuration - Set fallback to Android Emulator default.
-  // Physical devices should use their Mac's IP in the ignored .env file!
-  static const String baseUrl = 'http://10.0.2.2:8001';
-  static const String authBaseUrl = 'http://10.0.2.2:8001';
-  static const String symbolBaseUrl = 'http://10.0.2.2:8000';
+  // API Configuration - Using WiFi IP (no ADB needed)
+  // Ensure phone and Mac are on same WiFi network
+  static const String baseUrl = 'http://172.21.246.68:8000';
   
   
   static const String numBaseUrl =

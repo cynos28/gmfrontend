@@ -103,9 +103,9 @@ class _UnitHomeScreenState extends State<UnitHomeScreen> {
       case 'length':
         return Icons.straighten_rounded;
       case 'area':
-        return Icons.grid_on_rounded;
-      case 'capacity':
-        return Icons.local_drink_rounded;
+        return Icons.crop_square;
+      case 'volume':
+        return Icons.local_drink;
       case 'weight':
         return Icons.scale_rounded;
       default:

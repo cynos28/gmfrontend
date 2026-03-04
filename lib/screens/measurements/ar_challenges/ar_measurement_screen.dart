@@ -34,6 +34,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   MeasurementUnit? _selectedUnit;
   bool _isProcessing = false;
   String? _sessionId;
+  String? _capturedImagePath; // Store the captured image path from object detection
   
   // Unit options per measurement type
   Map<MeasurementType, List<MeasurementUnit>> unitOptions = {
@@ -43,7 +44,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       MeasurementUnit.m,
       MeasurementUnit.km,
     ],
-    MeasurementType.capacity: [
+    MeasurementType.volume: [
       MeasurementUnit.ml,
       MeasurementUnit.l,
     ],
@@ -130,32 +131,40 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   /// Opens the object detection screen using camera
   /// The detected object name will be auto-filled in the text field
  Future<void> _openObjectDetection() async {
-  final result = await Get.to<String?>(
+  final result = await Get.to<Map<String, dynamic>?>(
     () => const ObjectCaptureYoloScreen(),
   );
 
-  if (result != null && result.trim().isNotEmpty) {
-    final formattedName = result
-        .replaceAll('-', ' ')
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
-        .join(' ');
+  if (result != null) {
+    final label = result['label'] as String?;
+    final imagePath = result['imagePath'] as String?;
+    
+    if (label != null && label.trim().isNotEmpty) {
+      final formattedName = label
+          .replaceAll('-', ' ')
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+          .join(' ');
 
-    setState(() => _objectController.text = formattedName);
+      setState(() {
+        _objectController.text = formattedName;
+        _capturedImagePath = imagePath;
+      });
 
-    _showSnackBar(
-      'Object detected: $formattedName',
-      backgroundColor: Colors.green,
-    );
+      _showSnackBar(
+        'Object detected: $formattedName',
+        backgroundColor: Colors.green,
+      );
+    }
   }
 }
   MeasurementType _parseMeasurementType(String type) {
     switch (type.toLowerCase()) {
       case 'length':
         return MeasurementType.length;
-      case 'capacity':
-        return MeasurementType.capacity;
+      case 'volume':
+        return MeasurementType.volume;
       case 'weight':
         return MeasurementType.weight;
       case 'area':
@@ -169,8 +178,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthColor;
-      case MeasurementType.capacity:
-        return KidsColors.capacityColor;
+      case MeasurementType.volume:
+        return KidsColors.volumeColor;
       case MeasurementType.weight:
         return KidsColors.weightColor;
       case MeasurementType.area:
@@ -182,8 +191,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthColor;
-      case MeasurementType.capacity:
-        return KidsColors.capacityColor;
+      case MeasurementType.volume:
+        return KidsColors.volumeColor;
       case MeasurementType.weight:
         return KidsColors.weightColor;
       case MeasurementType.area:
@@ -242,6 +251,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       Get.to(() => const ARQuestionsScreen(), arguments: {
         'measurement': measurement,
         'measurementType': _measurementType,
+        'capturedImagePath': _capturedImagePath,
       });
       
     } catch (e) {
@@ -303,8 +313,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return KidsColors.lengthBackground;
-      case MeasurementType.capacity:
-        return KidsColors.capacityBackground;
+      case MeasurementType.volume:
+        return KidsColors.volumeBackground;
       case MeasurementType.weight:
         return KidsColors.weightBackground;
       case MeasurementType.area:
@@ -396,7 +406,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       switch (_measurementType) {
         case MeasurementType.length:
           return Icons.straighten_rounded;
-        case MeasurementType.capacity:
+        case MeasurementType.volume:
           return Icons.local_drink_rounded;
         case MeasurementType.weight:
           return Icons.scale_rounded;

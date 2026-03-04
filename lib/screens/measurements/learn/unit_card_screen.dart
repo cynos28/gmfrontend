@@ -22,7 +22,7 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
   
   Map<String, dynamic> _lengthProgress = {};
   Map<String, dynamic> _areaProgress = {};
-  Map<String, dynamic> _capacityProgress = {};
+  Map<String, dynamic> _volumeProgress = {};
   Map<String, dynamic> _weightProgress = {};
   bool _isLoadingProgress = true;
   int _currentGrade = 1;
@@ -36,7 +36,7 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
   /// Get available topics based on grade level
   /// Grade 1: Length only
   /// Grade 2: Length, Area
-  /// Grade 3: Length, Area, Weight, Capacity
+  /// Grade 3: Length, Area, Weight, Volume
   /// Grade 4: All topics
   List<String> _getAvailableTopics(int grade) {
     switch (grade) {
@@ -45,9 +45,9 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       case 2:
         return ['Length', 'Area'];
       case 3:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
+        return ['Length', 'Area', 'Weight', 'Volume'];
       case 4:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
+        return ['Length', 'Area', 'Weight', 'Volume'];
       default:
         return ['Length'];
     }
@@ -84,13 +84,13 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       
       final lengthProgress = await _progressService.getTopicProgress('Length');
       final areaProgress = await _progressService.getTopicProgress('Area');
-      final capacityProgress = await _progressService.getTopicProgress('Capacity');
+      final volumeProgress = await _progressService.getTopicProgress('Volume');
       final weightProgress = await _progressService.getTopicProgress('Weight');
       
       setState(() {
         _lengthProgress = lengthProgress;
         _areaProgress = areaProgress;
-        _capacityProgress = capacityProgress;
+        _volumeProgress = volumeProgress;
         _weightProgress = weightProgress;
         _isLoadingProgress = false;
       });
@@ -328,23 +328,23 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       ));
     }
     
-    if (availableTopics.contains('Capacity')) {
+    if (availableTopics.contains('Volume')) {
       cards.add(_buildUnitCard(
-        title: 'Capacity',
+        title: 'Volume',
         subtitle: 'ml, l',
         icon: Icons.local_drink,
         color: const Color(AppColors.measurementColor),
         borderColor: const Color(AppColors.measurementBorder),
         iconColor: const Color(AppColors.measurementIcon),
-        progress: _capacityProgress,
+        progress: _volumeProgress,
         onTap: () {
           Get.to(() => UnitHomeScreen(
             unit: Unit(
-              id: 'unit_capacity_$_currentGrade',
-              name: 'Capacity – ml and l',
-              topic: 'Capacity',
+              id: 'unit_volume_$_currentGrade',
+              name: 'Volume – ml and l',
+              topic: 'Volume',
               grade: _currentGrade,
-              description: 'Learn about volume and capacity measurements',
+              description: 'Learn about volume and liquid measurements',
               iconName: 'local_drink',
             ),
           ))?.then((_) => _loadGradeAndProgress());
@@ -392,12 +392,12 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
 
     final totalQuestions = (_lengthProgress['questionsAnswered'] ?? 0) +
         (_areaProgress['questionsAnswered'] ?? 0) +
-        (_capacityProgress['questionsAnswered'] ?? 0) +
+        (_volumeProgress['questionsAnswered'] ?? 0) +
         (_weightProgress['questionsAnswered'] ?? 0);
 
     final totalCorrect = (_lengthProgress['correctAnswers'] ?? 0) +
         (_areaProgress['correctAnswers'] ?? 0) +
-        (_capacityProgress['correctAnswers'] ?? 0) +
+        (_volumeProgress['correctAnswers'] ?? 0) +
         (_weightProgress['correctAnswers'] ?? 0);
 
     if (totalQuestions == 0) {

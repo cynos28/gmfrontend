@@ -116,7 +116,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       // Always use adaptive questions from RAG service
       debugPrint('🎯 Loading adaptive question from RAG service for ${widget.unit.name} (${widget.unit.id}) - Grade $grade...');
       
-      final ragQuestion = await _apiService.getAdaptiveQuestion(
+      var ragQuestion = await _apiService.getAdaptiveQuestion(
         unitId: widget.unit.id, // Use full unit_id like "unit_length_1", "unit_area_1", etc.
         gradeLevel: grade,
       );
@@ -135,6 +135,25 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
         return _loadNextQuestion();
       }
       
+      // For true_false questions, auto-generate options if missing
+      if (ragQuestion.questionType == 'true_false' && 
+          (ragQuestion.options == null || ragQuestion.options!.isEmpty)) {
+        debugPrint('🔧 Auto-generating True/False options for true_false question');
+        ragQuestion = RAGQuestion(
+          id: ragQuestion.id,
+          questionText: ragQuestion.questionText,
+          questionType: ragQuestion.questionType,
+          options: ['True', 'False'],
+          correctAnswer: ragQuestion.correctAnswer,
+          explanation: ragQuestion.explanation,
+          hints: ragQuestion.hints,
+          gradeLevel: ragQuestion.gradeLevel,
+          difficultyLevel: ragQuestion.difficultyLevel,
+          concepts: ragQuestion.concepts,
+          imageUrl: ragQuestion.imageUrl,
+        );
+      }
+      
       if (ragQuestion.options == null || ragQuestion.options!.isEmpty) {
         debugPrint('⚠️ Question has no options, requesting another question...');
         // Recursively try to get another question
@@ -147,6 +166,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       debugPrint('✅ Converted to Question:');
       debugPrint('   Options: ${question.options}');
       debugPrint('   Options count: ${question.options.length}');
+      debugPrint('   Image URL: ${question.imageUrl ?? "No image"}');
       
       // Validate question matches the unit topic
       if (!_isQuestionRelevantToUnit(question.questionText, widget.unit.id)) {
@@ -267,7 +287,11 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   }
 
   void _goToNextQuestion() {
+    debugPrint('🔄 _goToNextQuestion called');
+    debugPrint('   Current index: $_currentQuestionIndex, History length: ${_questionHistory.length}');
+    
     if (_currentQuestionIndex < _questionHistory.length - 1) {
+      debugPrint('   Moving to question from history');
       setState(() {
         _currentQuestionIndex++;
         _currentQuestion = _questionHistory[_currentQuestionIndex];
@@ -276,6 +300,13 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
         _showingFeedback = false;
       });
     } else {
+      debugPrint('   Loading new question from API');
+      // Reset feedback state before loading
+      setState(() {
+        _showingFeedback = false;
+        _answerFeedback = null;
+        _selectedAnswer = null;
+      });
       _loadNextQuestion();
     }
   }
@@ -345,13 +376,13 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       return false;
     }
     
-    // Check if it's a capacity/volume unit
-    if (unitId.contains('capacity') || unitId.contains('volume')) {
-      // Capacity keywords
+    // Check if it's a volume unit
+    if (unitId.contains('volume')) {
+      // Volume keywords
       if (lowerQuestion.contains('hold') || 
           lowerQuestion.contains('contain') || 
           lowerQuestion.contains('fill') ||
-          lowerQuestion.contains('capacity') ||
+          lowerQuestion.contains('volume') ||
           lowerQuestion.contains('volume') ||
           lowerQuestion.contains('liter') ||
           lowerQuestion.contains('ml') ||
@@ -527,6 +558,65 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Question image (if available)
+          if (_currentQuestion!.imageUrl != null && _currentQuestion!.imageUrl!.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: KidsSpacing.lg),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  _currentQuestion!.imageUrl!,
+                  fit: BoxFit.contain,
+                  height: 200,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 200,
+                      color: Colors.grey[100],
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint('❌ Image load error: $error');
+                    debugPrint('   URL: ${_currentQuestion!.imageUrl}');
+                    return Container(
+                      height: 200,
+                      color: Colors.grey[100],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Image expired',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          
           // Question text
           Container(
             padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),

@@ -30,6 +30,7 @@ dependencies:
   flutter_svg: ^2.0.9
   google_fonts: ^6.1.0
   shimmer: ^3.0.0
+  flutter_animate: ^4.2.0
 
   # Media
   video_player: ^2.8.2
@@ -65,6 +66,10 @@ dependencies:
   uuid: ^4.0.0
   json_annotation: ^4.8.1
   cupertino_icons: ^1.0.8
+  animated_text_kit: ^4.3.0
+  audioplayers: ^6.6.0
+  confetti: ^0.8.0
+  flutter_unit_ruler: ^1.0.1
   sensors_plus: ^7.0.0
 
 dev_dependencies:
@@ -81,6 +86,12 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/volume/
+    - assets/videos/
+    - assets/animations/
+    - assets/numbers/
+    - assets/data/
+    - assets/vectors/
     - assets/images/2d_shapes/
     - assets/images/3d_shapes/
     - assets/images/patterns/
