@@ -7,11 +7,10 @@ import 'package:ganithamithura/screens/number/number_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/measurement_home_screen.dart';
 import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
-import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/models/user.dart';
-import 'dart:math' as math;
+import 'package:ganithamithura/services/api/auth_service.dart';
 
-/// HomeScreen - Kindergarten-friendly main dashboard
+/// HomeScreen - Main entry point with personalized dashboard
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,9 +18,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
-  late AnimationController _scaleController;
+  Key _tipCardKey = UniqueKey();
   User? _currentUser;
   bool _isLoadingUser = true;
 
@@ -29,18 +28,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _loadCurrentUser();
-    
-    // Scale animation for cards
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadCurrentUser() async {
@@ -51,43 +38,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _isLoadingUser = false;
       });
     } catch (e) {
-      setState(() => _isLoadingUser = false);
+      setState(() {
+        _isLoadingUser = false;
+      });
     }
   }
 
   void _onNavTap(int index) {
     if (index == 0) {
+      // Already on home, refresh tip card
+      setState(() {
+        _tipCardKey = UniqueKey();
+      });
       return;
     }
-    
+
     setState(() {
       _currentNavIndex = index;
     });
-    
+
     if (index == 1) {
+      // Navigate to Learn screen
       Get.to(() => const LearnScreen())?.then((_) {
+        // Reset nav index when coming back
         setState(() {
           _currentNavIndex = 0;
+          _tipCardKey = UniqueKey(); // Refresh tip when returning
         });
       });
       return;
     }
     if (index == 3) {
+      // Navigate to Profile/Settings
       Get.to(() => const ProfileScreen())?.then((_) {
         setState(() {
           _currentNavIndex = 0;
+          _tipCardKey = UniqueKey();
         });
       });
       return;
     }
-    
+
+    // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',
       backgroundColor: const Color(AppColors.infoColor),
       colorText: Colors.white,
     );
-    
+
+    // Reset index since navigation didn't happen
     setState(() {
       _currentNavIndex = 0;
     });
@@ -95,54 +95,101 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    
-    // Calculate responsive padding and spacing
-    final horizontalPadding = screenWidth * 0.05;
-    final cardSpacing = screenWidth * 0.04;
-    
     return Scaffold(
       backgroundColor: const Color(AppColors.backgroundColor),
       body: SafeArea(
         child: Stack(
           children: [
-            // Main content
-            Column(
-              children: [
-                // Greeting section with Jerry
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: 16,
+            // Main content with scroll
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: KidsSpacing.screenPadding,
+                right: KidsSpacing.screenPadding,
+                top: KidsSpacing.xxxl,
+                bottom: 90, // Space for bottom nav
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Greeting section
+                  _buildGreeting(),
+                  const SizedBox(height: KidsSpacing.xl),
+
+                  // Today's Activity Card
+                  const TodayActivityCard(
+                    activityTitle: "Today's Activity",
+                    activitySubtitle: 'Trace, read & say',
+                    timeToday: '25 min',
+                    completedTasks: '8 tasks',
+                    progressBadge: 'Great progress!',
                   ),
-                  child: _buildGreetingSection(),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Simple header
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: _buildHeader(),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Expanded grid area
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: _buildLearningGrid(cardSpacing),
+                  const SizedBox(height: KidsSpacing.xxl),
+
+                  // Resources Section
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: KidsColors.primaryBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '📚',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Let\'s Learn!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: KidsColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                
-                // Space for bottom nav
-                const SizedBox(height: 80),
-              ],
+                  const SizedBox(height: KidsSpacing.cardMarginLarge),
+
+                  // Resource Cards Grid
+                  _buildResourceGrid(),
+                  const SizedBox(height: KidsSpacing.xxxl),
+
+                  // Learning Tips Section
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: KidsColors.starBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '💡',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Today\'s Tip',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: KidsColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: KidsSpacing.cardMarginLarge),
+
+                  // Daily Tip Card
+                  _buildDailyTipCard(),
+                ],
+              ),
             ),
 
-            // Bottom Navigation - Fixed at bottom
+            // Bottom Navigation
             Positioned(
               left: 0,
               right: 0,
@@ -158,357 +205,219 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildGreetingSection() {
+  Widget _buildGreeting() {
     final userName = _currentUser?.name ?? 'Friend';
     final firstName = userName.split(' ').first;
     
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFF5F5F5),
-              const Color(0xFFE8E8E8),
+    return Container(
+      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            KidsColors.primaryAccent.withOpacity(0.1),
+            KidsColors.secondaryAccent.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _isLoadingUser
+              ? const Text(
+                  '👋 Hi!',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: KidsColors.textPrimary,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                )
+              : Text(
+                  '👋 Hi, $firstName!',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: KidsColors.textPrimary,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: KidsColors.highlightBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: KidsColors.highlightAccent,
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 20,
+                      color: KidsColors.highlightAccent,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      '5 days!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: KidsColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResourceGrid() {
+    return Column(
+      children: [
+        // First row: Numbers and Symbols
+        Row(
           children: [
-            // Text content
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _isLoadingUser
-                      ? const Text(
-                          'Hello!',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
-                            height: 1.1,
-                          ),
-                        )
-                      : Text(
-                          'Hello, $firstName!',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
-                            height: 1.1,
-                          ),
-                        ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Nice to see you again!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF666666),
-                      height: 1.2,
-                    ),
-                  ),
-                ],
+              child: ResourceCard(
+                title: 'Numbers',
+                subtitle: 'Trace, read & say',
+                icon: Icons.looks_one_rounded,
+                backgroundColor: const Color(AppColors.numberColor),
+                borderColor: const Color(AppColors.numberBorder),
+                iconColor: const Color(AppColors.numberIcon),
+                onTap: () => Get.to(() => const NumberHomeScreen()),
+                isEnabled: true,
               ),
             ),
-            const SizedBox(width: 16),
-            // Jerry character with bounce animation
-            AnimatedBuilder(
-              animation: _scaleController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, -8 * _scaleController.value),
-                  child: child,
-                );
-              },
-              child: Image.asset(
-                'assets/vectors/jerry.png',
-                width: 100,
-                height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
-                  );
-                },
+            const SizedBox(width: KidsSpacing.cardMarginLarge),
+            Expanded(
+              child: ResourceCard(
+                title: 'Symbols',
+                subtitle: '+ − × ÷',
+                icon: Icons.calculate_rounded,
+                backgroundColor: const Color(AppColors.symbolColor),
+                borderColor: const Color(AppColors.symbolBorder),
+                iconColor: const Color(AppColors.symbolIcon),
+                onTap: () => Get.snackbar('Coming Soon', 'Symbols module is under development'),
+                isEnabled: false,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: const Text(
-        'What do you want to learn?',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          color: KidsColors.textPrimary,
-          height: 1.2,
-        ),
-        textAlign: TextAlign.left,
-      ),
-    );
-  }
-
-  Widget _buildLearningGrid(double spacing) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Calculate card size based on available space
-        final availableWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
-        
-        // Card width: half of available width minus spacing
-        final cardWidth = (availableWidth - spacing) / 2;
-        
-        // Card height: make it responsive but maintain good proportions
-        final cardHeight = math.min(
-          (availableHeight - spacing) / 2,
-          cardWidth * 1.2, // Maintain aspect ratio
-        );
-        
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        const SizedBox(height: KidsSpacing.cardMarginLarge),
+        // Second row: Measurements and Shapes
+        Row(
           children: [
-            // First row: Numbers and Symbols
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: cardHeight,
-                    child: _buildModuleCard(
-                      title: 'Numbers',
-                      imagePath: 'assets/vectors/stitch1.png',
-                      color: const Color(0xFFE8B86D),
-                      enabled: true,
-                      onTap: () => Get.to(() => const NumberHomeScreen()),
-                      delay: 0,
-                    ),
-                  ),
-                ),
-                SizedBox(width: spacing),
-                Expanded(
-                  child: SizedBox(
-                    height: cardHeight,
-                    child: _buildModuleCard(
-                      title: 'Symbols',
-                      imagePath: 'assets/vectors/stitch2.png',
-                      color: const Color(0xFFE07B5F),
-                      enabled: false,
-                      onTap: () {
-                        Get.snackbar(
-                          'Coming Soon',
-                          'Symbols will be available soon',
-                          backgroundColor: const Color(AppColors.infoColor),
-                          colorText: Colors.white,
-                        );
-                      },
-                      delay: 150,
-                    ),
-                  ),
-                ),
-              ],
+            Expanded(
+              child: ResourceCard(
+                title: 'Measurement',
+                subtitle: 'Length, area & more',
+                icon: Icons.straighten_rounded,
+                backgroundColor: const Color(AppColors.measurementColor),
+                borderColor: const Color(AppColors.measurementBorder),
+                iconColor: const Color(AppColors.measurementIcon),
+                onTap: () => Get.to(() => const MeasurementHomeScreen()),
+                isEnabled: true,
+              ),
             ),
-            SizedBox(height: spacing),
-            // Second row: Measurement and Shapes
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: cardHeight,
-                    child: _buildModuleCard(
-                      title: 'Measurement',
-                      imagePath: 'assets/vectors/stitch3.png',
-                      color: const Color(0xFF7FA99B),
-                      enabled: true,
-                      onTap: () => Get.to(() => const MeasurementHomeScreen()),
-                      delay: 300,
-                    ),
-                  ),
-                ),
-                SizedBox(width: spacing),
-                Expanded(
-                  child: SizedBox(
-                    height: cardHeight,
-                    child: _buildModuleCard(
-                      title: 'Shapes',
-                      imagePath: 'assets/vectors/stitch4.png',
-                      color: const Color(0xFFB88B9D),
-                      enabled: false,
-                      onTap: () {
-                        Get.snackbar(
-                          'Coming Soon',
-                          'Shapes will be available soon',
-                          backgroundColor: const Color(AppColors.infoColor),
-                          colorText: Colors.white,
-                        );
-                      },
-                      delay: 450,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(width: KidsSpacing.cardMarginLarge),
+            Expanded(
+              child: ResourceCard(
+                title: 'Shapes',
+                subtitle: 'Hunt & build 2D/3D',
+                icon: Icons.category_rounded,
+                backgroundColor: const Color(AppColors.shapeColor),
+                borderColor: const Color(AppColors.shapeBorder),
+                iconColor: const Color(AppColors.shapeIcon),
+                onTap: () => Get.snackbar('Coming Soon', 'Shapes module is under development'),
+                isEnabled: false,
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 
-  Widget _buildModuleCard({
-    required String title,
-    required String imagePath,
-    required Color color,
-    required bool enabled,
-    required VoidCallback onTap,
-    required int delay,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 600 + delay),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.8 + (0.2 * value),
-          child: Opacity(
-            opacity: value.clamp(0.0, 1.0),
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTap: onTap,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Responsive font sizes based on card width
-            final cardWidth = constraints.maxWidth;
-            final baseFontSize = (cardWidth * 0.12).clamp(20.0, 32.0);
-            // Reduce font size by 2px for Measurement
-            final titleFontSize = title == 'Measurement' ? baseFontSize - 2 : baseFontSize;
-            final imageHeight = constraints.maxHeight * 0.65;
-            
-            return Container(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Title at top
-                  Positioned(
-                    top: 16,
-                    left: 8,
-                    right: 8,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        height: 1.1,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  // Character image at bottom
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: AnimatedBuilder(
-                      animation: _scaleController,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(0, -5 * _scaleController.value),
-                          child: child,
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(28),
-                          bottomRight: Radius.circular(28),
-                        ),
-                        child: Image.asset(
-                          imagePath,
-                          height: imageHeight,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: imageHeight,
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.image_not_supported,
-                                size: cardWidth * 0.2,
-                                color: Colors.white54,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+  Widget _buildDailyTipCard() {
+    return Container(
+      key: _tipCardKey,
+      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            KidsColors.success.withOpacity(0.1),
+            KidsColors.primaryAccent.withOpacity(0.1),
+          ],
         ),
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+        border: Border.all(
+          color: KidsColors.success.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: KidsColors.success.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+            ),
+            child: const Icon(
+              Icons.lightbulb_rounded,
+              size: 32,
+              color: KidsColors.success,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '💡 Daily Tip',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.success,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Practice counting for 10 minutes every day!',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.textPrimary,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
