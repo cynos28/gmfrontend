@@ -51,6 +51,11 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
   Timer? _feedbackTimer;
 
   late AnimationController _progressAnimController;
+  late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -59,12 +64,50 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
+    
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _loadUnlockState();
+    _fadeController.forward();
   }
 
   @override
   void dispose() {
     _progressAnimController.dispose();
+    _fadeController.dispose();
+    _pulseController.dispose();
     _feedbackTimer?.cancel();
     super.dispose();
   }
@@ -346,188 +389,237 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
 
   Widget _buildHub() {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
+      backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        title: const Text('Progress Test'),
-        backgroundColor: const Color(0xFF6B7FFF),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFE8E8F0),
         elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              const Icon(Icons.psychology, size: 64, color: Color(0xFF6B7FFF)),
-              const SizedBox(height: 12),
-              const Text(
-                'Test Your Knowledge',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Get.back(),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Activity Hub',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
-              const SizedBox(height: 6),
-              Text(
-                _placementDone
-                    ? 'Current level: ${_currentLevel.capitalize}'
-                    : 'Take the placement quiz to find your starting level',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+            ),
+            Text(
+              "Let's Test Your Knowledge Together !",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.normal,
               ),
-              const SizedBox(height: 28),
-
-              // Placement Quiz Card
-              _buildTestCard(
-                title: _placementDone ? 'Retake Placement Quiz' : 'Placement Quiz',
-                subtitle: '5 quick questions to determine your starting level',
-                icon: Icons.quiz,
-                gradientColors: _placementDone
-                    ? [const Color(0xFF4CAF50), const Color(0xFF45A049)]
-                    : [const Color(0xFF6B7FFF), const Color(0xFF5567E8)],
-                badge: _placementDone ? 'Completed' : 'Start Here',
-                badgeColor: _placementDone ? Colors.green : const Color(0xFF6B7FFF),
-                onTap: () => _startTest('placement'),
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.white,
+              child: Image.asset(
+                'assets/images/number/teacher_avatar.png',
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.person,
+                    color: Color(0xFF7C6FDD),
+                    size: 28,
+                  );
+                },
               ),
-
-              const SizedBox(height: 24),
-
-              // Difficulty Tests Section
-              const Text(
-                'Difficulty Tests',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Pass each test to unlock the next level',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-              ),
-              const SizedBox(height: 14),
-
-              // Beginner
-              _buildDifficultyCard(
-                title: 'Beginner Test',
-                subtitle: '8 easy questions • Numbers 1-10 basics',
-                icon: Icons.looks_one,
-                color: Colors.green,
-                isUnlocked: _beginnerUnlocked,
-                passingInfo: 'Pass 5/8 to unlock Intermediate',
-                onTap: () => _startTest('beginner'),
-              ),
-              const SizedBox(height: 12),
-
-              // Intermediate
-              _buildDifficultyCard(
-                title: 'Intermediate Test',
-                subtitle: '10 medium questions • Matching, patterns, counting',
-                icon: Icons.looks_two,
-                color: Colors.orange,
-                isUnlocked: _intermediateUnlocked,
-                passingInfo: 'Pass 6/10 to unlock Advanced',
-                onTap: () => _startTest('intermediate'),
-              ),
-              const SizedBox(height: 12),
-
-              // Advanced
-              _buildDifficultyCard(
-                title: 'Advanced Test',
-                subtitle: '10 hard questions • Word problems, estimation',
-                icon: Icons.looks_3,
-                color: Colors.red,
-                isUnlocked: _advancedUnlocked,
-                passingInfo: 'Score 7/10 to master all levels',
-                onTap: () => _startTest('advanced'),
-              ),
-            ],
+            ),
           ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header section
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8E8F0),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: const SizedBox.shrink(),
+            ),
+
+            // Quiz Card with pulse animation
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: _buildQuizCard(),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 32),
+
+            // Difficulty Level Cards with staggered animation
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _AnimatedTestCard(
+                        delay: 100,
+                        child: _buildDifficultyLevelCard(
+                          title: 'Beginner',
+                          subtitle: 'Number basics',
+                          backgroundColor: const Color(0xFFB9E6D3),
+                          isUnlocked: _beginnerUnlocked,
+                          progress: '1/3',
+                          onTap: () => _startTest('beginner'),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _AnimatedTestCard(
+                        delay: 200,
+                        child: _buildDifficultyLevelCard(
+                          title: 'Intermediate',
+                          subtitle: 'Matching, patterns, counting',
+                          backgroundColor: const Color(0xFFFFCC80),
+                          isUnlocked: _intermediateUnlocked,
+                          progress: '2/3',
+                          onTap: () => _startTest('intermediate'),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _AnimatedTestCard(
+                        delay: 300,
+                        child: _buildDifficultyLevelCard(
+                          title: 'Advanced',
+                          subtitle: 'Word problems, estimation',
+                          backgroundColor: const Color(0xFFEF9A9A),
+                          isUnlocked: _advancedUnlocked,
+                          progress: '3/3',
+                          onTap: () => _startTest('advanced'),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTestCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required List<Color> gradientColors,
-    required String badge,
-    required Color badgeColor,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildQuizCard() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: gradientColors),
-        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7C6FDD), Color(0xFF5F52C0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withOpacity(0.3),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            color: const Color(0xFF7C6FDD).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          onTap: () => _startTest('placement'),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.all(24),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, color: Colors.white, size: 28),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        badge,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.school,
                     color: Colors.white,
+                    size: 40,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.85),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _placementDone ? 'Retake Placement Quiz' : 'Placement Quiz',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '5 Quick questions to determine\nyour starting level',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.9),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
               ],
@@ -538,115 +630,130 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     );
   }
 
-  Widget _buildDifficultyCard({
+  Widget _buildDifficultyLevelCard({
     required String title,
     required String subtitle,
-    required IconData icon,
-    required Color color,
+    required Color backgroundColor,
     required bool isUnlocked,
-    required String passingInfo,
+    required String progress,
     required VoidCallback onTap,
   }) {
-    return Opacity(
-      opacity: isUnlocked ? 1.0 : 0.5,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isUnlocked ? color.withOpacity(0.4) : Colors.grey.shade300,
-            width: 1.5,
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: isUnlocked
-                ? onTap
-                : () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                            'Pass the previous test to unlock this level!'),
-                        backgroundColor: Color(AppColors.warningColor),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: isUnlocked ? onTap : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isUnlocked
+                              ? const Color(0xFF81C784)
+                              : const Color(0xFF9E9E9E),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          isUnlocked ? 'Start' : 'Unlock',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Image.asset(
+                  'assets/images/number/difficulty_illustration.png',
+                  width: 140,
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 140,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.school,
+                        color: Colors.white.withOpacity(0.8),
+                        size: 50,
                       ),
                     );
                   },
-            borderRadius: BorderRadius.circular(14),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color:
-                          (isUnlocked ? color : Colors.grey).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: isUnlocked ? color : Colors.grey,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isUnlocked ? Colors.black87 : Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isUnlocked
-                                ? Colors.grey[600]
-                                : Colors.grey[400],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          passingInfo,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isUnlocked
-                                ? color.withOpacity(0.8)
-                                : Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    isUnlocked ? Icons.arrow_forward_ios : Icons.lock,
-                    color: isUnlocked ? color : Colors.grey[400],
-                    size: 18,
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C3E50),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                progress,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+
+
 
   // ==================== LOADING VIEW ====================
 
@@ -1177,7 +1284,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
               color: isUnlocked ? Colors.black87 : Colors.grey[400],
             ),
@@ -1340,3 +1447,62 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
   }
 }
 
+/// Animated wrapper for test cards with scale and tap effects
+class _AnimatedTestCard extends StatefulWidget {
+  final Widget child;
+  final int delay;
+
+  const _AnimatedTestCard({
+    required this.child,
+    this.delay = 0,
+  });
+
+  @override
+  State<_AnimatedTestCard> createState() => _AnimatedTestCardState();
+}
+
+class _AnimatedTestCardState extends State<_AnimatedTestCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _scaleController.forward(),
+      onTapUp: (_) => _scaleController.reverse(),
+      onTapCancel: () => _scaleController.reverse(),
+      child: AnimatedBuilder(
+        animation: _scaleController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: widget.child,
+          );
+        },
+      ),
+    );
+  }
+}
