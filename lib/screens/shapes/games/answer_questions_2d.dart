@@ -75,21 +75,38 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
     } else {
       // Show results
       final correct = List.generate(_questions.length, (i) => _answers[i] == _questions[i].correctIndex).where((v) => v).length;
+      final isPerfect = correct == _questions.length;
+      final isGood = correct >= _questions.length * 0.7;
+      
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Results'),
-          content: Text('You answered $correct of ${_questions.length} correctly.'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text(
+            isPerfect ? '🌟 Perfect Score! 🌟' : (isGood ? '😊 Great Job! 😊' : '💪 Keep Practicing! 💪'),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'You got $correct out of ${_questions.length} correct!',
+            style: const TextStyle(fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
             TextButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('Done'),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF36D399),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Done', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
+          actionsAlignment: MainAxisAlignment.center,
         ),
       );
     }
@@ -110,8 +127,8 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'Answer 2D Questions',
-          style: TextStyle(color: Color(0xFF2D4059), fontWeight: FontWeight.w700),
+          '🌟 Fun 2D Shape Quiz! 🌟',
+          style: TextStyle(color: Color(0xFF2D4059), fontWeight: FontWeight.w700, fontSize: 22),
         ),
       ),
       body: SafeArea(
@@ -126,43 +143,72 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                   Expanded(
                     child: LinearProgressIndicator(
                       value: (_current + 1) / _questions.length,
-                      minHeight: 8,
+                      minHeight: 12,
                       color: const Color(0xFF36D399),
                       backgroundColor: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text('${_current + 1}/${_questions.length}', style: const TextStyle(color: Color(0xFF2D4059))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF36D399),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_current + 1}/${_questions.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
                 ],
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
 
               // Question card
               Container(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFF9F0), Color(0xFFFFFFFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFF36D399), width: 3),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 6)),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (q.image != null) ...[
-                      SizedBox(
-                        height: 120,
+                      Container(
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         child: Center(child: Image.asset(q.image!, fit: BoxFit.contain)),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                     ],
                     Text(
-                      q.question,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2D4059)),
+                      '❓ ' + q.question,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D4059),
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     Column(
                       children: List.generate(q.options.length, (i) {
                         final option = q.options[i];
@@ -170,44 +216,57 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                         final isCorrect = q.correctIndex == i;
 
                         Color bg = Colors.white;
-                        Color border = Colors.grey.shade300;
+                        Color border = const Color(0xFF9E9E9E);
+                        String emoji = '';
 
                         if (_showAnswer) {
                           if (isCorrect) {
-                            bg = const Color(0xFFE8FFEF);
+                            bg = const Color(0xFF36D399);
                             border = const Color(0xFF36D399);
+                            emoji = '✅ ';
                           } else if (isSelected && !isCorrect) {
-                            bg = const Color(0xFFFFE8E8);
-                            border = const Color(0xFFE57A7A);
+                            bg = const Color(0xFFFF6B6B);
+                            border = const Color(0xFFFF6B6B);
+                            emoji = '❌ ';
                           }
                         } else if (isSelected) {
-                          bg = const Color(0xFFF0F8FF);
-                          border = const Color(0xFF36D399);
+                          bg = const Color(0xFF8A38F5);
+                          border = const Color(0xFF8A38F5);
                         }
 
                         return GestureDetector(
                           onTap: () => _selectOption(i),
                           child: Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                             decoration: BoxDecoration(
                               color: bg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: border, width: 1.4),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: border, width: 3),
+                              boxShadow: [
+                                if (!_showAnswer || (isCorrect && _showAnswer))
+                                  BoxShadow(
+                                    color: border.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                              ],
                             ),
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(option, style: const TextStyle(fontSize: 16, color: Color(0xFF2D4059))),
+                                  child: Text(
+                                    emoji + option,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: (_showAnswer && (isCorrect || (isSelected && !isCorrect))) 
+                                          ? Colors.white 
+                                          : (isSelected ? Colors.white : const Color(0xFF2D4059)),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                if (_showAnswer && isCorrect)
-                                  const Icon(Icons.check_circle, color: Color(0xFF36D399))
-                                else if (_showAnswer && isSelected && !isCorrect)
-                                  const Icon(Icons.cancel, color: Color(0xFFE57A7A))
-                                else if (!_showAnswer && isSelected)
-                                  const Icon(Icons.radio_button_checked, color: Color(0xFF36D399))
-                                else
-                                  const Icon(Icons.radio_button_off, color: Colors.grey),
                               ],
                             ),
                           ),
@@ -227,13 +286,19 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                     child: ElevatedButton(
                       onPressed: _showAnswer ? _nextQuestion : _checkAnswer,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF36D399),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: const Color(0xFFF1AD7F),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 8,
+                        shadowColor: const Color(0xFFF1AD7F).withOpacity(0.4),
                       ),
                       child: Text(
-                        _showAnswer ? (_current < _questions.length - 1 ? 'Next' : 'Finish') : 'Check',
-                        style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w600),
+                        _showAnswer ? (_current < _questions.length - 1 ? '➡️ Next Question' : '🎉 Finish') : '✨ Check Answer',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

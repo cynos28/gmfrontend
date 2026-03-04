@@ -5,6 +5,7 @@ import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/services/api/shapes_api_service.dart';
 import 'package:ganithamithura/models/shape_model.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:math';
 
 /// LearnShapesScreen - Interactive shape learning with real-world examples
 class LearnShapesScreen extends StatefulWidget {
@@ -27,7 +28,8 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
   bool _isLoading = true;
   String? _error;
   final FlutterTts _flutterTts = FlutterTts();
-  bool _showAllExamples = false;
+  List<RealWorldExample> _selectedExamples = [];
+  final Random _random = Random();
   
   @override
   void initState() {
@@ -75,6 +77,9 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
         if (currentShapeIndex >= shapes.length) {
           currentShapeIndex = 0;
         }
+        
+        // Select random examples for the current shape
+        _selectRandomExamples();
       });
     } catch (e) {
       setState(() {
@@ -86,11 +91,32 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
 
   int _currentNavIndex = 0;
 
+  void _selectRandomExamples() {
+    if (_shapes.isEmpty || currentShapeIndex >= _shapes.length) {
+      _selectedExamples = [];
+      return;
+    }
+
+    final currentShape = _shapes[currentShapeIndex];
+    final allExamples = currentShape.realWorldExamples;
+
+    // If we have 4 or fewer examples, use all of them
+    if (allExamples.length <= 4) {
+      _selectedExamples = List.from(allExamples);
+      return;
+    }
+
+    // Randomly select 4 unique examples from the available examples
+    final indices = List.generate(allExamples.length, (i) => i);
+    indices.shuffle(_random);
+    _selectedExamples = indices.take(4).map((i) => allExamples[i]).toList();
+  }
+
   void _nextShape() {
     if (currentShapeIndex < _shapes.length - 1) {
       setState(() {
         currentShapeIndex++;
-        _showAllExamples = false;
+        _selectRandomExamples();
       });
     }
   }
@@ -99,7 +125,7 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
     if (currentShapeIndex > 0) {
       setState(() {
         currentShapeIndex--;
-        _showAllExamples = false;
+        _selectRandomExamples();
       });
     }
   }
@@ -341,41 +367,51 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
 
                     const SizedBox(height: 33),
 
-                    // Examples grid
+                    // Examples grid - Display 4 random examples in 2x2 grid
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 50),
                       child: Column(
                         children: [
-                          if (currentShape.realWorldExamples.length >= 2)
+                          if (_selectedExamples.length >= 2)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
-                                  child: _buildExampleCard(
-                                      currentShape.realWorldExamples[0]),
+                                  child: _buildExampleCard(_selectedExamples[0]),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _buildExampleCard(
-                                      currentShape.realWorldExamples[1]),
+                                  child: _buildExampleCard(_selectedExamples[1]),
                                 ),
                               ],
                             ),
-                          if (_showAllExamples && currentShape.realWorldExamples.length >= 4)
+                          if (_selectedExamples.length >= 4)
                             const SizedBox(height: 30),
-                          if (_showAllExamples && currentShape.realWorldExamples.length >= 4)
+                          if (_selectedExamples.length >= 4)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
-                                  child: _buildExampleCard(
-                                      currentShape.realWorldExamples[2]),
+                                  child: _buildExampleCard(_selectedExamples[2]),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _buildExampleCard(
-                                      currentShape.realWorldExamples[3]),
+                                  child: _buildExampleCard(_selectedExamples[3]),
                                 ),
+                              ],
+                            ),
+                          // Display remaining examples if less than 4
+                          if (_selectedExamples.length == 3)
+                            const SizedBox(height: 30),
+                          if (_selectedExamples.length == 3)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: _buildExampleCard(_selectedExamples[2]),
+                                ),
+                                const SizedBox(width: 16),
+                                const Expanded(child: SizedBox()),
                               ],
                             ),
                         ],
@@ -383,44 +419,6 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
                     ),
 
                     const SizedBox(height: 33),
-
-                    // More examples button
-                    if (currentShape.realWorldExamples.length > 2)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _showAllExamples = !_showAllExamples;
-                          });
-                        },
-                        child: Container(
-                          width: 219,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1AD7F),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _showAllExamples ? Icons.expand_less : Icons.expand_more,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                _showAllExamples ? 'Show less' : 'More examples',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  fontFamily: 'Be Vietnam Pro',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
