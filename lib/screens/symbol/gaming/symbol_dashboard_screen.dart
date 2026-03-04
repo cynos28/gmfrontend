@@ -22,6 +22,9 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
   int _selectedTabIndex = 0;
   List<dynamic> _leaderboard = [];
 
+  bool _soundEffectsEnabled = true;
+  double _audioVolume = 0.7;
+
   @override
   void initState() {
     super.initState();
@@ -439,8 +442,12 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                             ),
                           ),
                           Switch(
-                            value: true,
-                            onChanged: (val) {},
+                            value: _soundEffectsEnabled,
+                            onChanged: (val) {
+                              setState(() {
+                                _soundEffectsEnabled = val;
+                              });
+                            },
                             activeColor: Colors.white,
                             activeTrackColor: const Color(0xFFB1B1B1),
                           ),
@@ -458,8 +465,12 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                           overlayShape: const RoundSliderOverlayShape(overlayRadius: 24.0),
                         ),
                         child: Slider(
-                          value: 0.7,
-                          onChanged: (val) {},
+                          value: _audioVolume,
+                          onChanged: (val) {
+                            setState(() {
+                              _audioVolume = val;
+                            });
+                          },
                         ),
                       ),
                     ],
