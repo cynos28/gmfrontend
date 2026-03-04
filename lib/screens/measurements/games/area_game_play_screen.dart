@@ -748,14 +748,17 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
                         )),
                     Row(
                       children: [
-                        Text(
-                          'Round $_round of $_totalRounds',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white.withOpacity(0.8)),
+                        Flexible(
+                          child: Text(
+                            'Round $_round of $_totalRounds',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.8)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         _buildIRTBadge(),
                       ],
                     ),

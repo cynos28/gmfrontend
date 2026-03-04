@@ -42,28 +42,46 @@ class UnitApiService {
         }
       } catch (e) {
         // Cached URL failed, clear it
+        debugPrint('⚠️ Cached backend URL failed, searching for new connection...');
         _cachedWorkingUrl = null;
       }
     }
     
     // Try each URL with health check
+    debugPrint('🔍 Searching for backend server...');
     for (final url in _possibleBaseUrls) {
       try {
+        debugPrint('   Trying: $url');
         final response = await http.get(
           Uri.parse('$url/health'),
         ).timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
-          debugPrint('✅ Connected to backend: $url');
+          debugPrint('');
+          debugPrint('╔════════════════════════════════════════════════════════╗');
+          debugPrint('║  ✅ BACKEND CONNECTION ESTABLISHED                    ║');
+          debugPrint('╠════════════════════════════════════════════════════════╣');
+          debugPrint('║  📡 URL: $url'.padRight(58) + '║');
+          debugPrint('║  🔗 Status: Connected & Healthy                       ║');
+          debugPrint('╚════════════════════════════════════════════════════════╝');
+          debugPrint('');
           _cachedWorkingUrl = url;
           return url;
         }
       } catch (e) {
+        debugPrint('   ❌ Failed: ${e.toString().split(':')[0]}');
         continue;
       }
     }
     
     // No URL worked, use first as fallback and log warning
-    debugPrint('⚠️ Failed to load from backend: TimeoutException after 0:00:05.000000: Future not completed');
+    debugPrint('');
+    debugPrint('╔════════════════════════════════════════════════════════╗');
+    debugPrint('║  ⚠️  BACKEND CONNECTION FAILED                        ║');
+    debugPrint('╠════════════════════════════════════════════════════════╣');
+    debugPrint('║  All backend URLs unreachable                          ║');
+    debugPrint('║  Using fallback (app may not work correctly)           ║');
+    debugPrint('╚════════════════════════════════════════════════════════╝');
+    debugPrint('');
     return _possibleBaseUrls.first;
   }
   
