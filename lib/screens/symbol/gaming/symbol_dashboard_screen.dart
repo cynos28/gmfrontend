@@ -110,11 +110,15 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                       child: Container(
                         width: 45,
                         height: 45,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF9E714F), // Brownish
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8), // White matching welcome screen
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 2.0), // Optical centering
+                          child: Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 24),
+                        ),
                       ),
                     ),
                     
