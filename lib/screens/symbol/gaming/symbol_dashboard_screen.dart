@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/models/user.dart';
@@ -8,6 +9,7 @@ import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
 import 'package:ganithamithura/screens/symbol/gaming/game_welcome_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:confetti/confetti.dart';
 
 class SymbolDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -33,6 +35,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
   bool _soundEffectsEnabled = true;
   double _audioVolume = 0.7;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final ConfettiController _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
   @override
   void initState() {
@@ -40,6 +43,9 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
     _selectedTabIndex = widget.initialTabIndex;
     _loadAudioSettings();
     _loadData();
+    if (widget.initialTabIndex == 2 && widget.playCongratsSound) {
+       _confettiController.play();
+    }
   }
 
   Future<void> _loadAudioSettings() async {
@@ -71,6 +77,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -757,12 +764,14 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
        );
     }
 
-    return Column(
+    return Stack(
       children: [
-        // Top 3 Players Podium
-        SizedBox(
-          height: 160,
-          child: Stack(
+        Column(
+          children: [
+            // Top 3 Players Podium
+            SizedBox(
+              height: 160,
+              child: Stack(
             alignment: Alignment.center,
             children: [
               // #2
@@ -853,11 +862,90 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
             ),
           ),
         ),
+        
+        // Bottom Play Again Button
+        Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFBDD69), Color(0xFFB48332)], 
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: () {
+                Get.to(() => const GameWelcomeScreen());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'Play Again',
+                style: GoogleFonts.alfaSlabOne(
+                  fontSize: 18,
+                  color: Colors.black,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
-    );
+    ),
+    
+    // Confetti layer
+    Align(
+      alignment: Alignment.topCenter,
+      child: ConfettiWidget(
+        confettiController: _confettiController,
+        blastDirectionality: BlastDirectionality.explosive,
+        shouldLoop: false,
+        colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+        createParticlePath: drawStar,
+      ),
+    ),
+  ],
+);
+}
+
+  Path drawStar(Size size) {
+    // Method to convert degree to radians
+    double degToRad(double deg) => deg * (math.pi / 180.0);
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(halfWidth + externalRadius * math.cos(step),
+          halfWidth + externalRadius * math.sin(step));
+      path.lineTo(halfWidth + internalRadius * math.cos(step + halfDegreesPerStep),
+          halfWidth + internalRadius * math.sin(step + halfDegreesPerStep));
+    }
+    path.close();
+    return path;
   }
 
-  Widget _buildTabItem(String text, int index) {
+Widget _buildTabItem(String text, int index) {
     bool isSelected = _selectedTabIndex == index;
     return GestureDetector(
       onTap: () {
