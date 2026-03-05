@@ -9,6 +9,7 @@ import 'games/area_game_hub_screen.dart';
 import 'games/volume_game_hub_screen.dart';
 import 'games/weight_game_hub_screen.dart';
 import 'dart:math' as math;
+import 'package:ganithamithura/screens/progress/progress_screen.dart';
 
 /// MeasurementHomeScreen - Kindergarten-friendly measurement module
 class MeasurementHomeScreen extends StatefulWidget {
@@ -79,6 +80,12 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     
     if (index == _currentNavIndex) return;
     
+    if (index == 2) {
+      // Navigate to Progress screen
+      Get.to(() => const ProgressScreen());
+      return;
+    }
+
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',

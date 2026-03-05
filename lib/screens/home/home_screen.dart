@@ -9,6 +9,7 @@ import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
 import '../shapes/welcome_screen.dart';
 import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
+import 'package:ganithamithura/screens/progress/progress_screen.dart';
 import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 
@@ -81,13 +82,16 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // TODO: Navigate to other screens when ready
-    Get.snackbar(
-      'Coming Soon',
-      'This feature will be available soon',
-      backgroundColor: const Color(AppColors.infoColor),
-      colorText: Colors.white,
-    );
+    if (index == 2) {
+      // Navigate to Progress screen
+      Get.to(() => const ProgressScreen())?.then((_) {
+        setState(() {
+          _currentNavIndex = 0;
+          _tipCardKey = UniqueKey();
+        });
+      });
+      return;
+    }
 
     // Reset index since navigation didn't happen
     setState(() {
