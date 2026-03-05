@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/symbol/quiz/symbol_quiz_intro_screen.dart';
 import 'package:ganithamithura/screens/symbol/widgets/floating_symbols_background.dart';
+import 'package:ganithamithura/screens/symbol/symbol_performance_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/gaming_intro_screen.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/models/user.dart';
@@ -248,11 +249,10 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
 
   Widget _buildCategories() {
     final categories = [
-      {'name': 'Lessons', 'icon': Icons.menu_book_rounded, 'color': 0xFF9575CD},
+      {'name': 'Performance', 'icon': Icons.bar_chart_rounded, 'color': 0xFF9575CD},
       {'name': 'Games', 'icon': Icons.sports_esports_rounded, 'color': 0xFF64B5F6},
       {'name': 'Stories', 'icon': Icons.auto_stories_rounded, 'color': 0xFFE57373},
       {'name': 'Activities', 'icon': Icons.brush_rounded, 'color': 0xFFFFB74D},
-      {'name': 'Discover', 'icon': Icons.public_rounded, 'color': 0xFF4DB6AC},
     ];
 
     return SingleChildScrollView(
@@ -263,16 +263,36 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
             padding: const EdgeInsets.only(right: 20.0),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(cat['color'] as int).withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    color: Color(cat['color'] as int),
-                    size: 28,
+                GestureDetector(
+                  onTap: () {
+                    final name = cat['name'] as String;
+                    if (name == 'Performance') {
+                      Get.to(() => const SymbolPerformanceScreen());
+                    } else if (name == 'Games') {
+                      Get.to(() => const GamingIntroScreen());
+                    } else {
+                      Get.snackbar(
+                        'Coming Soon',
+                        '$name goes live in our next update!',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.black87,
+                        colorText: Colors.white,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(cat['color'] as int).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      cat['icon'] as IconData,
+                      color: Color(cat['color'] as int),
+                      size: 28,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
