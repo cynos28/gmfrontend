@@ -6,6 +6,8 @@ import 'package:ganithamithura/screens/symbol/gaming/character_selection_screen.
 import 'package:ganithamithura/screens/symbol/gaming/level_selection_screen.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GameWelcomeScreen extends StatefulWidget {
   const GameWelcomeScreen({super.key});
@@ -19,10 +21,12 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    _playWelcomeSound();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -45,9 +49,20 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
     _controller.forward();
   }
 
+  Future<void> _playWelcomeSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool('audio_enabled') ?? true;
+    final volume = prefs.getDouble('audio_volume') ?? 0.7;
+    if (isEnabled && mounted) {
+      _audioPlayer.setVolume(volume);
+      _audioPlayer.play(AssetSource('symbols/sounds/game-bonus-144751.mp3.mpeg'));
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 

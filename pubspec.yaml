@@ -66,6 +66,7 @@ dependencies:
   json_annotation: ^4.8.1
   cupertino_icons: ^1.0.8
   sensors_plus: ^7.0.0
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +92,7 @@ flutter:
     - assets/data/
     - assets/symbols/
     - assets/symbols/game/
+    - assets/symbols/sounds/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - assets/models/cone.glb

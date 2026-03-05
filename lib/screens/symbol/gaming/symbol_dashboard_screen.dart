@@ -6,9 +6,18 @@ import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/screens/symbol/gaming/config/level_config.dart';
 import 'package:ganithamithura/screens/symbol/gaming/game_welcome_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SymbolDashboardScreen extends StatefulWidget {
-  const SymbolDashboardScreen({super.key});
+  final int initialTabIndex;
+  final bool playCongratsSound;
+
+  const SymbolDashboardScreen({
+    super.key, 
+    this.initialTabIndex = 0,
+    this.playCongratsSound = false,
+  });
 
   @override
   State<SymbolDashboardScreen> createState() => _SymbolDashboardScreenState();
@@ -21,14 +30,48 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
   int _totalScore = 0;
   int _selectedTabIndex = 0;
   List<dynamic> _leaderboard = [];
-
   bool _soundEffectsEnabled = true;
   double _audioVolume = 0.7;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    _selectedTabIndex = widget.initialTabIndex;
+    _loadAudioSettings();
     _loadData();
+  }
+
+  Future<void> _loadAudioSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _soundEffectsEnabled = prefs.getBool('audio_enabled') ?? true;
+        _audioVolume = prefs.getDouble('audio_volume') ?? 0.7;
+      });
+      if (widget.playCongratsSound && _soundEffectsEnabled) {
+        _audioPlayer.setVolume(_audioVolume);
+        _audioPlayer.play(AssetSource('symbols/sounds/congratulations.mp3.mpeg'));
+      }
+    }
+  }
+
+  Future<void> _saveAudioEnabled(bool val) async {
+    setState(() => _soundEffectsEnabled = val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('audio_enabled', val);
+  }
+
+  Future<void> _saveAudioVolume(double val) async {
+    setState(() => _audioVolume = val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('audio_volume', val);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -447,11 +490,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                           ),
                           Switch(
                             value: _soundEffectsEnabled,
-                            onChanged: (val) {
-                              setState(() {
-                                _soundEffectsEnabled = val;
-                              });
-                            },
+                            onChanged: _saveAudioEnabled,
                             activeColor: Colors.white,
                             activeTrackColor: const Color(0xFFB1B1B1),
                           ),
@@ -470,11 +509,7 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                         ),
                         child: Slider(
                           value: _audioVolume,
-                          onChanged: (val) {
-                            setState(() {
-                              _audioVolume = val;
-                            });
-                          },
+                          onChanged: _saveAudioVolume,
                         ),
                       ),
                     ],
