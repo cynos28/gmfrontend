@@ -101,6 +101,7 @@ flutter:
     - assets/animations/
     - assets/symbols/
     - assets/symbols/game/
+    - assets/sounds/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - assets/models/cone.glb

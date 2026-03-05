@@ -15,6 +15,30 @@ import 'package:ganithamithura/services/api/games_api_service.dart';
 // Level type enum
 enum _AreaLevelType { fillRectangle, formulaRectangle, mysterySide, lShapeDemo }
 
+/// Unit types for area measurements
+enum _AreaUnit { 
+  mm2, // millimeters squared
+  cm2, // centimeters squared (default)
+  m2,  // meters squared
+}
+
+extension _AreaUnitExt on _AreaUnit {
+  String get display {
+    switch (this) {
+      case _AreaUnit.mm2: return 'mm²';
+      case _AreaUnit.cm2: return 'cm²';
+      case _AreaUnit.m2: return 'm²';
+    }
+  }
+  String get lengthUnit {
+    switch (this) {
+      case _AreaUnit.mm2: return 'mm';
+      case _AreaUnit.cm2: return 'cm';
+      case _AreaUnit.m2: return 'm';
+    }
+  }
+}
+
 // Dynamic level configuration
 class _AreaLevelConfig {
   final String name;
@@ -24,6 +48,7 @@ class _AreaLevelConfig {
   final int targetWidth;
   final int targetHeight;
   final _AreaLevelType type;
+  final _AreaUnit unit;
 
   const _AreaLevelConfig({
     required this.name,
@@ -33,6 +58,7 @@ class _AreaLevelConfig {
     required this.targetWidth,
     required this.targetHeight,
     required this.type,
+    required this.unit,
   });
 
   int get targetArea => targetWidth * targetHeight;
@@ -86,6 +112,9 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
   int _irtRoundsPlayed = 0;
   String _userId = 'student_001';
   Map<String, dynamic> _params = {};
+  
+  // Track used questions to avoid repetition
+  final Set<String> _usedQuestions = {};
 
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceAnim;
@@ -149,8 +178,6 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
   void _generateLevels() {
     final rowRange = _params['room_rows_range'] as List<dynamic>? ?? [4, 6];
     final colRange = _params['room_cols_range'] as List<dynamic>? ?? [5, 8];
-    final wRange = _params['target_width_range'] as List<dynamic>? ?? [3, 6];
-    final hRange = _params['target_height_range'] as List<dynamic>? ?? [3, 5];
     final typeNames =
         (_params['level_types'] as List<dynamic>?)?.cast<String>() ??
             ['formulaRectangle', 'mysterySide'];
@@ -159,29 +186,137 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
     final maxRow = (rowRange[1] as num).toInt();
     final minCol = (colRange[0] as num).toInt();
     final maxCol = (colRange[1] as num).toInt();
-    final minW = (wRange[0] as num).toInt();
-    final maxW = (wRange[1] as num).toInt();
-    final minH = (hRange[0] as num).toInt();
-    final maxH = (hRange[1] as num).toInt();
+    
+    // Clear used questions at start of new session
+    _usedQuestions.clear();
+
+    // Use IRT difficulty level to determine base ranges
+    final diffLevel = _irtDifficultyLevel;
 
     final levels = <_AreaLevelConfig>[];
     for (int i = 0; i < _totalLevels; i++) {
       final typeName = typeNames[i % typeNames.length];
       final type = _parseType(typeName);
-
-      final tw = minW + _rng.nextInt(max(1, maxW - minW + 1));
-      final th = minH + _rng.nextInt(max(1, maxH - minH + 1));
+      
+      // Select unit type and ranges based on difficulty
+      _AreaUnit selectedUnit;
+      int minW, maxW, minH, maxH;
+      
+      if (diffLevel <= 1) {
+        // Level 1 (Easy): Only cm², small numbers
+        selectedUnit = _AreaUnit.cm2;
+        minW = 2;
+        maxW = 4;
+        minH = 2;
+        maxH = 4;  // Areas: 4-16 cm²
+      } else if (diffLevel == 2) {
+        // Level 2 (Medium): Mostly cm², slightly larger
+        selectedUnit = _rng.nextDouble() < 0.8 ? _AreaUnit.cm2 : _AreaUnit.m2;
+        if (selectedUnit == _AreaUnit.cm2) {
+          minW = 3;
+          maxW = 6;
+          minH = 3;
+          maxH = 5;  // Areas: 9-30 cm²
+        } else {
+          minW = 2;
+          maxW = 4;
+          minH = 2;
+          maxH = 4;  // Areas: 4-16 m²
+        }
+      } else if (diffLevel == 3) {
+        // Level 3 (Hard): Mix of units, moderate ranges
+        final unitTypes = [_AreaUnit.cm2, _AreaUnit.m2];
+        selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+        if (selectedUnit == _AreaUnit.cm2) {
+          minW = 4;
+          maxW = 8;
+          minH = 4;
+          maxH = 7;  // Areas: 16-56 cm²
+        } else {
+          minW = 3;
+          maxW = 6;
+          minH = 3;
+          maxH = 5;  // Areas: 9-30 m²
+        }
+      } else if (diffLevel == 4) {
+        // Level 4 (Expert): All units, larger ranges
+        final unitTypes = _AreaUnit.values;
+        selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+        switch (selectedUnit) {
+          case _AreaUnit.mm2:
+            minW = 10;
+            maxW = 18;
+            minH = 10;
+            maxH = 15;  // Areas: 100-270 mm²
+            break;
+          case _AreaUnit.cm2:
+            minW = 5;
+            maxW = 10;
+            minH = 5;
+            maxH = 9;   // Areas: 25-90 cm²
+            break;
+          case _AreaUnit.m2:
+            minW = 4;
+            maxW = 7;
+            minH = 4;
+            maxH = 6;   // Areas: 16-42 m²
+            break;
+        }
+      } else {
+        // Level 5 (Master): All units, challenging ranges
+        final unitTypes = _AreaUnit.values;
+        selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+        switch (selectedUnit) {
+          case _AreaUnit.mm2:
+            minW = 15;
+            maxW = 22;
+            minH = 12;
+            maxH = 18;  // Areas: 180-396 mm²
+            break;
+          case _AreaUnit.cm2:
+            minW = 8;
+            maxW = 12;
+            minH = 7;
+            maxH = 10;  // Areas: 56-120 cm²
+            break;
+          case _AreaUnit.m2:
+            minW = 5;
+            maxW = 8;
+            minH = 5;
+            maxH = 7;   // Areas: 25-56 m²
+            break;
+        }
+      }
+      
+      // Generate unique question (avoid repetition)
+      int tw, th;
+      String questionKey;
+      int attempts = 0;
+      do {
+        tw = minW + _rng.nextInt(max(1, maxW - minW + 1));
+        th = minH + _rng.nextInt(max(1, maxH - minH + 1));
+        questionKey = '${selectedUnit.name}_${tw}_${th}_${typeName}';
+        attempts++;
+        if (attempts > 20) {
+          // If we've tried 20 times, allow duplicates
+          break;
+        }
+      } while (_usedQuestions.contains(questionKey));
+      
+      _usedQuestions.add(questionKey);
+      
       final rows = max(th + 1, minRow + _rng.nextInt(max(1, maxRow - minRow + 1)));
       final cols = max(tw + 1, minCol + _rng.nextInt(max(1, maxCol - minCol + 1)));
 
       levels.add(_AreaLevelConfig(
         name: 'Room ${i + 1}',
-        clientRequest: _requestForType(type, tw, th),
+        clientRequest: _requestForType(type, tw, th, selectedUnit),
         roomRows: rows,
         roomCols: cols,
         targetWidth: tw,
         targetHeight: th,
         type: type,
+        unit: selectedUnit,
       ));
     }
     setState(() => _levels = levels);
@@ -202,14 +337,16 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
     }
   }
 
-  String _requestForType(_AreaLevelType type, int w, int h) {
+  String _requestForType(_AreaLevelType type, int w, int h, _AreaUnit unit) {
+    final unitStr = unit.lengthUnit;
+    final areaStr = unit.display;
     switch (type) {
       case _AreaLevelType.fillRectangle:
         return 'Fill every square!';
       case _AreaLevelType.formulaRectangle:
-        return 'Make a rug $w \u00d7 $h units';
+        return 'Make a rug $w $unitStr \u00d7 $h $unitStr';
       case _AreaLevelType.mysterySide:
-        return 'Area = ${w * h}, one side = $w\nFind the other side!';
+        return 'Area = ${w * h} $areaStr, one side = $w $unitStr\nFind the other side!';
       case _AreaLevelType.lShapeDemo:
         return 'L-shaped room! Use Split button.';
     }
@@ -226,6 +363,7 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
     targetWidth: 3,
     targetHeight: 3,
     type: _AreaLevelType.fillRectangle,
+    unit: _AreaUnit.cm2,
   );
 
   void _resetForLevel() {
@@ -384,10 +522,10 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
             'Drag the rug to cover all ${level.targetArea} squares!\nRows \u00d7 Columns = Area';
       case _AreaLevelType.formulaRectangle:
         hint =
-            'Make the rug ${level.targetWidth} wide and ${level.targetHeight} tall.\n${level.targetWidth} \u00d7 ${level.targetHeight} = ${level.targetArea}';
+            'Make the rug ${level.targetWidth} ${level.unit.lengthUnit} wide and ${level.targetHeight} ${level.unit.lengthUnit} tall.\n${level.targetWidth} \u00d7 ${level.targetHeight} = ${level.targetArea} ${level.unit.display}';
       case _AreaLevelType.mysterySide:
         hint =
-            'Area = ${level.targetArea}, one side = ${level.targetWidth}\n${level.targetArea} \u00f7 ${level.targetWidth} = ${level.targetHeight}';
+            'Area = ${level.targetArea} ${level.unit.display}, one side = ${level.targetWidth} ${level.unit.lengthUnit}\n${level.targetArea} \u00f7 ${level.targetWidth} = ${level.targetHeight} ${level.unit.lengthUnit}';
       case _AreaLevelType.lShapeDemo:
         hint =
             'Try splitting the L-shape into rectangles.\nAdd their areas together!';
@@ -897,6 +1035,7 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
 
   Widget _buildAreaPanel() {
     final targetArea = _level.targetArea;
+    final unit = _level.unit;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
@@ -906,22 +1045,30 @@ class _AreaArchitectGameScreenState extends State<AreaArchitectGameScreen>
       ),
       child: Column(
         children: [
-          Text('Target Area: $targetArea sq units',
-              style: GoogleFonts.fredoka(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.brown.shade800)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('Target Area: $targetArea ${unit.display}',
+                style: GoogleFonts.fredoka(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.brown.shade800)),
+          ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildFormulaBadge(
-                  '$_rugWidth \u00d7 $_rugHeight = $_currentArea',
-                  _isCorrectArea
-                      ? const Color(0xFF2E7D32)
-                      : _currentArea > targetArea
-                          ? const Color(0xFFD32F2F)
-                          : const Color(0xFF1565C0)),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: _buildFormulaBadge(
+                      '$_rugWidth \u00d7 $_rugHeight = $_currentArea ${unit.display}',
+                      _isCorrectArea
+                          ? const Color(0xFF2E7D32)
+                          : _currentArea > targetArea
+                              ? const Color(0xFFD32F2F)
+                              : const Color(0xFF1565C0)),
+                ),
+              ),
             ],
           ),
         ],

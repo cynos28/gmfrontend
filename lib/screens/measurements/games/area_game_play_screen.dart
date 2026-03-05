@@ -17,6 +17,30 @@ import 'package:ganithamithura/services/api/games_api_service.dart';
 
 enum _Phase { playing, wrongAnswer, showResult, complete }
 
+/// Unit types for area measurements
+enum _AreaUnit { 
+  mm2, // millimeters squared
+  cm2, // centimeters squared (default)
+  m2,  // meters squared
+}
+
+extension _AreaUnitExt on _AreaUnit {
+  String get display {
+    switch (this) {
+      case _AreaUnit.mm2: return 'mm²';
+      case _AreaUnit.cm2: return 'cm²';
+      case _AreaUnit.m2: return 'm²';
+    }
+  }
+  String get lengthUnit {
+    switch (this) {
+      case _AreaUnit.mm2: return 'mm';
+      case _AreaUnit.cm2: return 'cm';
+      case _AreaUnit.m2: return 'm';
+    }
+  }
+}
+
 /// Per-variant target times (seconds per round)
 const Map<String, int> _targetSeconds = {
   'A-V1': 60,
@@ -73,6 +97,10 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
   List<List<bool>> _v1Grid = [];
   bool _v1ShowGrid = true;
   int _v1FilledCount = 0;
+  _AreaUnit _v1Unit = _AreaUnit.cm2; // Current unit for this round
+  
+  // Track used questions to avoid repetition
+  final Set<String> _usedQuestions = {};
 
   // ─── IRT adaptive state ────────────────────────────────────────────────
   double _irtTheta = 0.0;
@@ -188,11 +216,103 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
 
   void _genV1() {
     final gridVisible = (_params['grid_visible'] as bool?) ?? true;
-    final maxSize = (_params['max_rect_size'] as num?)?.toInt() ?? 6;
-    final minSize = (_params['min_rect_size'] as num?)?.toInt() ?? 2;
-
-    final w = minSize + _rng.nextInt(maxSize - minSize + 1);
-    final h = minSize + _rng.nextInt(maxSize - minSize + 1);
+    
+    // Use IRT difficulty level to determine appropriate ranges
+    final diffLevel = _irtDifficultyLevel;
+    
+    // Select unit type based on difficulty
+    _AreaUnit selectedUnit;
+    int minSize, maxSize;
+    
+    if (diffLevel <= 1) {
+      // Level 1 (Easy): Only cm², very small numbers, simple areas
+      selectedUnit = _AreaUnit.cm2;
+      minSize = 2;
+      maxSize = 4;  // Areas: 4-16 cm²
+    } else if (diffLevel == 2) {
+      // Level 2 (Medium): Mostly cm², slightly larger
+      selectedUnit = _rng.nextDouble() < 0.8 ? _AreaUnit.cm2 : _AreaUnit.m2;
+      minSize = selectedUnit == _AreaUnit.cm2 ? 3 : 2;
+      maxSize = selectedUnit == _AreaUnit.cm2 ? 6 : 4;  // Areas: 9-36 cm² or 4-16 m²
+    } else if (diffLevel == 3) {
+      // Level 3 (Hard): Mix of units, moderate ranges
+      final unitTypes = [_AreaUnit.cm2, _AreaUnit.m2];
+      selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+      switch (selectedUnit) {
+        case _AreaUnit.cm2:
+          minSize = 4;
+          maxSize = 8;  // Areas: 16-64 cm²
+          break;
+        case _AreaUnit.m2:
+          minSize = 3;
+          maxSize = 6;  // Areas: 9-36 m²
+          break;
+        case _AreaUnit.mm2:
+          minSize = 10;
+          maxSize = 15;
+          break;
+      }
+    } else if (diffLevel == 4) {
+      // Level 4 (Expert): All units, larger ranges
+      final unitTypes = _AreaUnit.values;
+      selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+      switch (selectedUnit) {
+        case _AreaUnit.mm2:
+          minSize = 10;
+          maxSize = 20;  // Areas: 100-400 mm²
+          break;
+        case _AreaUnit.cm2:
+          minSize = 5;
+          maxSize = 10;  // Areas: 25-100 cm²
+          break;
+        case _AreaUnit.m2:
+          minSize = 4;
+          maxSize = 7;   // Areas: 16-49 m²
+          break;
+      }
+    } else {
+      // Level 5 (Master): All units, largest ranges
+      final unitTypes = _AreaUnit.values;
+      selectedUnit = unitTypes[_rng.nextInt(unitTypes.length)];
+      switch (selectedUnit) {
+        case _AreaUnit.mm2:
+          minSize = 15;
+          maxSize = 25;  // Areas: 225-625 mm²
+          break;
+        case _AreaUnit.cm2:
+          minSize = 8;
+          maxSize = 12;  // Areas: 64-144 cm²
+          break;
+        case _AreaUnit.m2:
+          minSize = 5;
+          maxSize = 8;   // Areas: 25-64 m²
+          break;
+      }
+    }
+    
+    // Override with params if provided (but respect difficulty scaling)
+    final paramMax = (_params['max_rect_size'] as num?)?.toInt();
+    final paramMin = (_params['min_rect_size'] as num?)?.toInt();
+    if (paramMax != null && paramMax < maxSize) maxSize = paramMax;
+    if (paramMin != null && paramMin > minSize) minSize = paramMin;
+    
+    // Generate unique question (avoid repetition)
+    int w, h;
+    String questionKey;
+    int attempts = 0;
+    do {
+      w = minSize + _rng.nextInt(max(1, maxSize - minSize + 1));
+      h = minSize + _rng.nextInt(max(1, maxSize - minSize + 1));
+      questionKey = '${selectedUnit.name}_${w}_$h';
+      attempts++;
+      if (attempts > 20) {
+        // If we've tried 20 times, clear some history to allow new questions
+        _usedQuestions.clear();
+        break;
+      }
+    } while (_usedQuestions.contains(questionKey));
+    
+    _usedQuestions.add(questionKey);
     final correct = w * h;
 
     // Make the grid BIGGER than the rectangle so there are more tiles
@@ -206,6 +326,7 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
       _v1Width = w;
       _v1Height = h;
       _v1Correct = correct;
+      _v1Unit = selectedUnit;
       _v1ShowGrid = gridVisible;
       _v1GridW = gw;
       _v1GridH = gh;
@@ -422,7 +543,7 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
     if (_phase != _Phase.playing) return;
     setState(() => _roundAttempts++);
     if (_v1FilledCount == _v1Correct) {
-      _roundCorrect('🟩 Correct! ${_v1Width} × ${_v1Height} = $_v1Correct cm²!');
+      _roundCorrect('🟩 Correct! ${_v1Width} × ${_v1Height} = $_v1Correct ${_v1Unit.display}!');
     } else if (_v1FilledCount < _v1Correct) {
       _roundWrong('Not enough tiles! ${_v1Width} × ${_v1Height} = ? 🔢');
     } else {
@@ -906,19 +1027,19 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _dimensionBadge('${_v1Width} cm', const Color(0xFF4285F4)),
+                _dimensionBadge('${_v1Width} ${_v1Unit.lengthUnit}', const Color(0xFF4285F4)),
                 const Text(' × ',
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF424242))),
-                _dimensionBadge('${_v1Height} cm', const Color(0xFF34C759)),
+                _dimensionBadge('${_v1Height} ${_v1Unit.lengthUnit}', const Color(0xFF34C759)),
                 const Text(' = ',
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF424242))),
-                _dimensionBadge('? cm²', const Color(0xFFFF9500)),
+                _dimensionBadge('? ${_v1Unit.display}', const Color(0xFFFF9500)),
               ],
             ),
           ),
@@ -947,21 +1068,27 @@ class _AreaGamePlayScreenState extends State<AreaGamePlayScreen>
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        'Target Area: $_v1Correct units²',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.brown.shade800,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Target Area: $_v1Correct ${_v1Unit.display}',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.brown.shade800,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Fill every square!',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.brown.shade600,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Fill ${_v1Width} × ${_v1Height} ${_v1Unit.lengthUnit} rectangle!',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.brown.shade600,
+                          ),
                         ),
                       ),
                     ],
