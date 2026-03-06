@@ -9,6 +9,7 @@ class AppConstants {
   static String authBaseUrl = 'http://localhost:8001';
   static String symbolBaseUrl = 'http://localhost:8000';
   static String measurementBaseUrl = 'http://localhost:8002'; // New API
+  static String shapeBaseUrl = 'http://localhost:8003';
   
   static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
   

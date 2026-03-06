@@ -14,7 +14,7 @@ class ShapesApiService {
   ShapesApiService._({required this.baseUrl});
   
   static ShapesApiService get instance {
-    _instance ??= ShapesApiService._(baseUrl: '${AppConstants.baseUrl}/shapes-patterns');
+    _instance ??= ShapesApiService._(baseUrl: AppConstants.shapeBaseUrl);
     return _instance!;
   }
   
