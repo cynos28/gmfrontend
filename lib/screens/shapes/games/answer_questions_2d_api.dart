@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/models/shape_models.dart';
@@ -50,8 +51,24 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
         throw Exception('Invalid game type. Expected question round game.');
       }
 
+      // Randomly select 5 questions from the available questions
+      final random = Random();
+      final allQuestions = game.questions;
+      final shuffledQuestions = List<ShapeQuestion>.from(allQuestions)..shuffle(random);
+      final selectedQuestions = shuffledQuestions.take(5).toList();
+      
+      // Create a new game with only the selected questions
+      final limitedGame = QuestionRoundGame(
+        gameId: game.gameId,
+        level: game.level,
+        title: game.title,
+        questions: selectedQuestions,
+        answerPool: game.answerPool,
+        correctAnswers: game.correctAnswers,
+      );
+
       setState(() {
-        _gameData = game;
+        _gameData = limitedGame;
         _isLoading = false;
       });
     } catch (e) {
@@ -133,6 +150,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
   ShapeQuestion get _currentQuestion => _gameData!.questions[_currentQuestionIndex];
   bool get _hasAnswered => _userAnswers.containsKey(_currentQuestion.id);
   bool get _isLastQuestion => _currentQuestionIndex == _gameData!.questions.length - 1;
+  bool get _is3DQuiz => widget.gameId == 'level4'; // Level 4 is 3D shapes quiz
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +285,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Fun 2D Shape Quiz! 🌟',
+                        _is3DQuiz ? 'Fun 3D Shape Quiz! 🌟' : 'Fun 2D Shape Quiz! 🌟',
                         style: TextStyle(
                           color: Colors.black.withOpacity(0.6),
                           fontSize: 16,
