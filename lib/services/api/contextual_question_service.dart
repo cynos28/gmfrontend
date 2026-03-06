@@ -6,13 +6,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
 
+import '../../utils/constants.dart';
+
 class ContextualQuestionService {
-  // WiFi IP - works without ADB, just need same WiFi network
-  static const List<String> _baseUrls = [
-    'http://172.21.246.68:8000/api/v1/contextual',      // WiFi - Mac IP (PRIMARY)
-    'http://192.168.1.18:8000/api/v1/contextual',     // WiFi IP (PRIMARY)
-    'http://localhost:8000/api/v1/contextual',        // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/contextual',         // Android Emulator fallback
+  // Use statically loaded configurations from AppConstants
+  static List<String> get _baseUrls => [
+    '${AppConstants.measurementBaseUrl}/api/v1/contextual'
   ];
   
   static Future<String> _getWorkingBaseUrl() async {
@@ -224,8 +223,10 @@ class ContextualQuestionService {
   /// Check if RAG service is available
   Future<bool> checkHealth() async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
+      final healthUrl = baseUrl.replaceAll('/api/v1/contextual', '/health');
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/health'),
+        Uri.parse(healthUrl),
       ).timeout(const Duration(seconds: 3));
       
       return response.statusCode == 200;

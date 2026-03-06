@@ -51,7 +51,6 @@ dependencies:
 
   # AR (ONLY ONE PLUGIN)
   ar_flutter_plugin_updated: ^0.0.1
-  vector_math: ^2.1.4
 
   # 3D Model Rendering
   model_viewer_plus: ^1.9.3
@@ -71,6 +70,7 @@ dependencies:
   confetti: ^0.8.0
   flutter_unit_ruler: ^1.0.1
   sensors_plus: ^7.0.0
+  fl_chart: ^0.68.0
 
 dev_dependencies:
   flutter_test:
