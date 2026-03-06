@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/models/models.dart';
 import 'package:ganithamithura/widgets/common/buttons_and_cards.dart';
-import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
-import 'package:ganithamithura/screens/number/trace/trace_activity_screen.dart';
+import 'package:ganithamithura/services/learning_flow_manager.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 /// VideoLessonScreen - Display video lesson with Continue button
 class VideoLessonScreen extends StatefulWidget {
@@ -27,18 +28,96 @@ class VideoLessonScreen extends StatefulWidget {
 
 class _VideoLessonScreenState extends State<VideoLessonScreen> {
   bool _videoCompleted = false;
+  VideoPlayerController? _videoController;
+  ChewieController? _chewieController;
   
   @override
   void initState() {
     super.initState();
-    // Simulate video completion after 5 seconds (placeholder)
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
+    _initVideo();
+  }
+  
+  @override
+  void dispose() {
+    _chewieController?.dispose();
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initVideo() async {
+    // Determine URL from activity metadata
+    String? url;
+    try {
+      final meta = widget.activity.metadata;
+      if (meta != null) {
+        if (meta.containsKey('url')) {
+          url = meta['url'] as String?;
+        } else if (meta.containsKey('video') && meta['video'] is Map) {
+          url = (meta['video'] as Map)['url'] as String?;
+        } else if (meta.containsKey('source')) {
+          url = meta['source'] as String?;
+        }
+      }
+    } catch (_) {
+      url = null;
+    }
+
+    // Fallback: if activity title looks like a URL, use it
+    url ??= (widget.activity.title.contains('http') ? widget.activity.title : null);
+
+    debugPrint('🎬 Initializing video for number ${widget.currentNumber}');
+    debugPrint('   URL/Path: $url');
+
+    try {
+      if (url != null && url.startsWith('http')) {
+        debugPrint('   Loading network video...');
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
+      } else if (url != null && url.isNotEmpty) {
+        // treat as asset
+        debugPrint('   Loading asset video...');
+        _videoController = VideoPlayerController.asset(url);
+      }
+
+      if (_videoController != null) {
+        debugPrint('   Initializing video controller...');
+        await _videoController!.initialize();
+        debugPrint('   ✅ Video initialized successfully');
+        
+        _chewieController = ChewieController(
+          videoPlayerController: _videoController!,
+          autoPlay: true,
+          looping: false,
+          showControls: true,
+        );
+
+        // listen for end of playback
+        _videoController!.addListener(() {
+          if (!_videoController!.value.isPlaying &&
+              _videoController!.value.position >= _videoController!.value.duration &&
+              !_videoCompleted) {
+            debugPrint('   ✅ Video playback completed');
+            setState(() {
+              _videoCompleted = true;
+            });
+          }
+        });
+
+        if (mounted) setState(() {});
+      } else {
+        // No URL found - mark completed so user can continue
+        debugPrint('   ⚠️ No video URL found, marking as completed');
         setState(() {
           _videoCompleted = true;
         });
       }
-    });
+    } catch (e) {
+      debugPrint('   ❌ Error initializing video: $e');
+      debugPrint('   Stack trace: ${StackTrace.current}');
+      // mark as completed so user won't be blocked
+      setState(() {
+        _videoCompleted = true;
+      });
+    }
   }
   
   @override
@@ -67,10 +146,10 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
               child: Column(
                 children: [
                   // Number display
-                  NumberDisplay(
-                    number: widget.currentNumber,
-                    word: NumberWords.getWord(widget.currentNumber),
-                  ),
+                  // NumberDisplay(
+                  //   number: widget.currentNumber,
+                  //   word: NumberWords.getWord(widget.currentNumber),
+                  // ),
                   const SizedBox(height: 24),
                   
                   // Continue button
@@ -90,6 +169,24 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   }
   
   Widget _buildVideoPlaceholder() {
+    // If video initialized, show Chewie player
+    if (_chewieController != null && _videoController != null && _videoController!.value.isInitialized) {
+      return Container(
+        margin: const EdgeInsets.all(AppConstants.standardPadding),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+        ),
+        child: AspectRatio(
+          aspectRatio: _videoController!.value.aspectRatio,
+          child: Chewie(
+            controller: _chewieController!,
+          ),
+        ),
+      );
+    }
+
+    // Fallback placeholder
     return Container(
       margin: const EdgeInsets.all(AppConstants.standardPadding),
       decoration: BoxDecoration(
@@ -99,8 +196,6 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // TODO: Phase 2 - Integrate actual video player
-          // Use video_player or chewie package
           Icon(
             _videoCompleted ? Icons.check_circle : Icons.play_circle_outline,
             size: 100,
@@ -112,7 +207,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
           Text(
             _videoCompleted 
                 ? 'Video Completed!' 
-                : 'Playing video...',
+                : 'Preparing video...',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -138,99 +233,31 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
     );
   }
   
-  void _onContinue() {
-    // Find next activity (should be trace)
-    final numberActivities = widget.allActivities
-        .where((a) => a.number == widget.currentNumber)
-        .toList();
+  void _onContinue() async {
+    debugPrint('🎬 Video continue button pressed');
+    debugPrint('  Current activity: ${widget.activity.id} (${widget.activity.type})');
+    debugPrint('  Current number: ${widget.currentNumber}');
+    debugPrint('  Level: ${widget.level.levelNumber}');
     
-    // Sort to get proper order
-    numberActivities.sort((a, b) => a.order.compareTo(b.order));
+    // Use LearningFlowManager to handle progression
+    final learningFlowManager = LearningFlowManager.instance;
     
-    // Find next activity after video
-    final currentIndex = numberActivities.indexWhere((a) => a.id == widget.activity.id);
-    
-    if (currentIndex >= 0 && currentIndex < numberActivities.length - 1) {
-      final nextActivity = numberActivities[currentIndex + 1];
-      
-      // Navigate based on activity type
-      _navigateToActivity(nextActivity);
-    } else {
-      // All activities for this number completed, move to next number or finish
-      _handleNumberCompletion();
-    }
-  }
-  
-  void _navigateToActivity(Activity activity) {
-    Widget screen;
-    
-    switch (activity.type) {
-      case AppConstants.activityTypeTrace:
-        screen = TraceActivityScreen(
-          activity: activity,
-          allActivities: widget.allActivities,
-          currentNumber: widget.currentNumber,
-          level: widget.level,
-        );
-        break;
-      // TODO: Add other activity type navigations
-      default:
-        Get.snackbar(
-          'Coming Soon',
-          'This activity type will be implemented shortly',
-          backgroundColor: Color(AppColors.infoColor),
-          colorText: Colors.white,
-        );
-        return;
-    }
-    
-    Get.to(() => screen);
-  }
-  
-  void _handleNumberCompletion() {
-    // Show success
-    Get.dialog(
-      SuccessAnimation(
-        message: 'Number ${widget.currentNumber} Completed!',
-        onComplete: () {
-          Get.back();
-          
-          // Check if there are more numbers
-          if (widget.currentNumber < widget.level.maxNumber) {
-            // Move to next number
-            _startNextNumber();
-          } else {
-            // Level completed
-            Get.back(); // Return to level selection
-            Get.snackbar(
-              'Level Complete!',
-              'You\'ve mastered all numbers in this level!',
-              backgroundColor: Color(AppColors.successColor),
-              colorText: Colors.white,
-              duration: const Duration(seconds: 3),
-            );
-          }
-        },
-      ),
-      barrierDismissible: false,
-    );
-  }
-  
-  void _startNextNumber() {
-    final nextNumber = widget.currentNumber + 1;
-    final nextActivities = widget.allActivities
-        .where((a) => a.number == nextNumber)
-        .toList();
-    
-    if (nextActivities.isNotEmpty) {
-      nextActivities.sort((a, b) => a.order.compareTo(b.order));
-      
-      Get.off(() => VideoLessonScreen(
-        activity: nextActivities.first,
-        allActivities: widget.allActivities,
-        currentNumber: nextNumber,
+    try {
+      await learningFlowManager.moveToNextActivity(
+        currentActivity: widget.activity,
+        currentNumber: widget.currentNumber,
         level: widget.level,
-      ));
+        isTutorial: true, // Tutorial mode uses easy questions
+      );
+      debugPrint('  ✅ moveToNextActivity completed');
+    } catch (e) {
+      debugPrint('  ❌ Error in moveToNextActivity: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load next activity: $e',
+        backgroundColor: Color(AppColors.errorColor),
+        colorText: Colors.white,
+      );
     }
   }
 }

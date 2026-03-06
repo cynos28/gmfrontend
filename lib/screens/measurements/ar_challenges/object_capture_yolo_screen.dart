@@ -17,6 +17,7 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
   bool _scanning = false;
   List<Detection> _detections = [];
   int? _selectedIndex;
+  String? _capturedImagePath;
 
   @override
   void initState() {
@@ -56,6 +57,7 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
       _scanning = true;
       _detections = [];
       _selectedIndex = null;
+      _capturedImagePath = null;
     });
     
     try {
@@ -64,6 +66,7 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
       if (mounted) {
         setState(() {
           _detections = detections;
+          _capturedImagePath = image.path;
           // Auto-select if only one detection
           if (_detections.length == 1) {
             _selectedIndex = 0;
@@ -256,7 +259,10 @@ class _ObjectCaptureYoloScreenState extends State<ObjectCaptureYoloScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, _detections[_selectedIndex!].label),
+                          onPressed: () => Navigator.pop(context, {
+                            'label': _detections[_selectedIndex!].label,
+                            'imagePath': _capturedImagePath,
+                          }),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.purpleAccent,
                             padding: const EdgeInsets.symmetric(vertical: 16),

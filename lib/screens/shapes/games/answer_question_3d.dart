@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Answer3DQuestionsScreen - Quiz for identifying 3D shapes in real-world objects
+/// Answer3DQuestionsScreen - Quiz for identifying 3D shapes in real-world objects  
+/// Updated for grade 2-3 students with larger fonts and colorful design
 class Answer3DQuestionsScreen extends StatefulWidget {
   const Answer3DQuestionsScreen({super.key});
 
@@ -11,7 +12,7 @@ class Answer3DQuestionsScreen extends StatefulWidget {
 
 class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
   int _currentQuestion = 1;
-  final int _totalQuestions = 10;
+  final int _totalQuestions = 5;
   String? _selectedAnswer;
   bool _isAnswered = false;
   bool _isCorrect = false;
@@ -22,31 +23,31 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
     {
       'question': 'Which object is a Sphere?',
       'correctAnswer': 'Ball',
-      'options': ['Ball', 'Soda can', 'Dice'],
+      'options': ['Ball', 'Soda can', 'Dice', 'Book'],
       'shape': 'sphere',
     },
     {
       'question': 'A tin can has which 3D shape?',
       'correctAnswer': 'Cylinder',
-      'options': ['Cone', 'Cylinder', 'Cube'],
+      'options': ['Cone', 'Cylinder', 'Cube', 'Ball'],
       'shape': 'cylinder',
     },
     {
       'question': 'Which object is a Cube?',
       'correctAnswer': 'Dice',
-      'options': ['Ball', 'Dice', 'Ice cream cone'],
+      'options': ['Ball', 'Dice', 'Ice cream cone', 'Soda can'],
       'shape': 'cube',
     },
     {
       'question': 'Which object is a Cone?',
       'correctAnswer': 'Ice cream cone',
-      'options': ['Ball', 'Box', 'Ice cream cone'],
+      'options': ['Ball', 'Box', 'Ice cream cone', 'Dice'],
       'shape': 'cone',
     },
     {
       'question': 'Which object is a Rectangular Prism?',
       'correctAnswer': 'Book',
-      'options': ['Ball', 'Book', 'Soda can'],
+      'options': ['Ball', 'Book', 'Soda can', 'Cone'],
       'shape': 'prism',
     },
   ];
@@ -75,7 +76,41 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
 
   void _nextQuestion() {
     if (_currentQuestion >= _totalQuestions) {
-      Get.back();
+      // Show completion dialog
+      final isPerfect = _score == _totalQuestions * 10;
+      final isGood = _score >= (_totalQuestions * 10) * 0.7;
+      
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text(
+            isPerfect ? '🌟 Perfect Score! 🌟' : (isGood ? '😊 Great Job! 😊' : '💪 Keep Practicing! 💪'),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'You scored $_score out of ${_totalQuestions * 10} points!',
+            style: const TextStyle(fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Get.back();
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF36D399),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Done', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ],
+          actionsAlignment: MainAxisAlignment.center,
+        ),
+      );
       return;
     }
 
@@ -119,11 +154,11 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Back to Menu',
+                        'Fun 3D Shape Quiz! 🌟',
                         style: TextStyle(
                           color: Colors.black.withOpacity(0.6),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const Spacer(),
@@ -187,26 +222,37 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
   Widget _buildHeader() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 17),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: ShapeDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE8F3FF), Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(25),
         ),
+        shadows: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 37,
-            height: 37,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F3FF),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFF36D399),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.view_in_ar_rounded,
-              size: 24,
-              color: Color(0xFF36D399),
+              size: 32,
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 15),
@@ -215,46 +261,44 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Match 3D Shapes',
+                  '� Fun 3D Shape Quiz!',
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.7),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
+                    color: Colors.black.withOpacity(0.8),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Click the real-world example!',
+                  'Find the right shape! 🚀',
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.5),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Question',
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.5),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF36D399),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '$_currentQuestion/$_totalQuestions',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$_currentQuestion/$_totalQuestions',
-                style: const TextStyle(
-                  color: Color(0xFF36D399),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -265,27 +309,39 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
   Widget _buildQuestionSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 17),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: ShapeDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF9F0), Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         shape: RoundedRectangleBorder(
           side: BorderSide(
-            width: 2,
-            color: Colors.black.withOpacity(0.5),
+            width: 3,
+            color: const Color(0xFF36D399),
           ),
           borderRadius: BorderRadius.circular(25),
         ),
+        shadows: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
           // Question Text
           Text(
-            _currentQuestionData['question'],
+            '❓ ' + _currentQuestionData['question'],
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
             ),
           ),
           
@@ -293,15 +349,26 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
           
           // 3D Shape Image
           Container(
-            width: 150,
-            height: 150,
+            width: 160,
+            height: 160,
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE0E0E0),
-                width: 2,
+              gradient: LinearGradient(
+                colors: [Colors.grey[100]!, Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF36D399),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Center(
               child: _build3DShapeIcon(_currentQuestionData['shape']),
@@ -348,104 +415,150 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
         color = Colors.grey;
     }
     
-    return Icon(iconData, size: 100, color: color);
+    return Icon(iconData, size: 120, color: color);
   }
 
-  // Option buttons
+  // Option buttons in 2x2 grid
   Widget _buildOptionButtons() {
     final options = _currentQuestionData['options'] as List<String>;
     
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      children: options.map((option) {
-        final isSelected = _selectedAnswer == option;
-        final isCorrectAnswer = option == _currentQuestionData['correctAnswer'];
-        final showAsWrong = _isAnswered && isSelected && !_isCorrect;
-        final showAsCorrect = _isAnswered && isCorrectAnswer;
-        
-        return GestureDetector(
-          onTap: () => _selectAnswer(option),
-          child: Container(
-            width: 142,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            decoration: ShapeDecoration(
-              color: showAsCorrect 
-                  ? const Color(0xFF36D399)
-                  : (isSelected 
-                      ? const Color(0xFFD9D9D9)
-                      : Colors.white.withOpacity(0.5)),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(
-                  width: 1,
-                  color: showAsWrong
-                      ? const Color(0xFFE53935)
-                      : (showAsCorrect
-                          ? const Color(0xFF36D399)
-                          : (isSelected 
-                              ? const Color(0xFF8A38F5) 
-                              : const Color(0xA349596D))),
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildOptionButton(options[0])),
+            const SizedBox(width: 12),
+            Expanded(child: _buildOptionButton(options[1])),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _buildOptionButton(options[2])),
+            const SizedBox(width: 12),
+            Expanded(child: _buildOptionButton(options[3])),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOptionButton(String option) {
+    final isSelected = _selectedAnswer == option;
+    final isCorrectAnswer = option == _currentQuestionData['correctAnswer'];
+    final showAsWrong = _isAnswered && isSelected && !_isCorrect;
+    final showAsCorrect = _isAnswered && isCorrectAnswer;
+    
+    String emoji = '';
+    if (showAsCorrect) emoji = '✅ ';
+    if (showAsWrong) emoji = '❌ ';
+    
+    return GestureDetector(
+      onTap: () => _selectAnswer(option),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        decoration: ShapeDecoration(
+          gradient: showAsCorrect 
+              ? const LinearGradient(
+                  colors: [Color(0xFF36D399), Color(0xFF2BC58A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : showAsWrong
+                  ? const LinearGradient(
+                      colors: [Color(0xFFFF6B6B), Color(0xFFE53935)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+          color: showAsCorrect || showAsWrong
+              ? null
+              : (isSelected 
+                  ? const Color(0xFF8A38F5)
+                  : Colors.white),
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              width: 3,
+              color: showAsWrong
+                  ? const Color(0xFFE53935)
+                  : (showAsCorrect
+                      ? const Color(0xFF36D399)
+                      : (isSelected 
+                          ? const Color(0xFF8A38F5) 
+                          : const Color(0xFFA349596D))),
             ),
-            child: Text(
-              option,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: showAsCorrect
-                    ? Colors.white
-                    : (showAsWrong
-                        ? const Color(0xFFE53935)
-                        : const Color(0xFF2859C5)),
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            borderRadius: BorderRadius.circular(20),
           ),
-        );
-      }).toList(),
+          shadows: [
+            if (isSelected || showAsCorrect)
+              BoxShadow(
+                color: (showAsCorrect 
+                    ? const Color(0xFF36D399) 
+                    : const Color(0xFF8A38F5)).withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Text(
+          emoji + option,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: showAsCorrect || showAsWrong
+                ? Colors.white
+                : (isSelected ? Colors.white : const Color(0xFF2859C5)),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 
   // Next button
   Widget _buildNextButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 85),
+      padding: const EdgeInsets.symmetric(horizontal: 60),
       child: GestureDetector(
         onTap: _isAnswered ? _nextQuestion : _submitAnswer,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: ShapeDecoration(
+            gradient: (_selectedAnswer == null && !_isAnswered)
+                ? null
+                : const LinearGradient(
+                    colors: [Color(0xFFF1AD7F), Color(0xFFFF9A6C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
             color: (_selectedAnswer == null && !_isAnswered)
                 ? const Color(0xFFCCCCCC)
-                : const Color(0xFFF1AD7F),
+                : null,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
+            shadows: [
+              if (_selectedAnswer != null || _isAnswered)
+                BoxShadow(
+                  color: const Color(0xFFF1AD7F).withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _isAnswered ? 'Next Question' : 'Submit Answer',
+                _isAnswered ? '➡️ Next Question' : '✨ Check Answer',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              if (_isAnswered) ...[
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
             ],
           ),
         ),

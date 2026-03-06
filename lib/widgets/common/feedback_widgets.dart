@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/tts_service.dart';
 
-/// SuccessAnimation - Animated success feedback
-class SuccessAnimation extends StatelessWidget {
+/// SuccessAnimation - Animated success feedback with TTS voice output
+class SuccessAnimation extends StatefulWidget {
   final String message;
   final VoidCallback? onComplete;
   
@@ -14,14 +14,25 @@ class SuccessAnimation extends StatelessWidget {
   });
   
   @override
-  Widget build(BuildContext context) {
+  State<SuccessAnimation> createState() => _SuccessAnimationState();
+}
+
+class _SuccessAnimationState extends State<SuccessAnimation> {
+  @override
+  void initState() {
+    super.initState();
+    // Speak TTS feedback immediately
+    TTSService.instance.speakSuccess(widget.message);
     // Auto-dismiss after animation
     Future.delayed(const Duration(seconds: 3), () {
-      if (onComplete != null) {
-        onComplete!();
+      if (widget.onComplete != null) {
+        widget.onComplete!();
       }
     });
-    
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       color: Colors.black54,
       child: Center(
@@ -52,7 +63,7 @@ class SuccessAnimation extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  message,
+                  widget.message,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -95,19 +106,33 @@ class SuccessAnimation extends StatelessWidget {
   }
 }
 
-/// FailureAnimation - Animated failure feedback
-class FailureAnimation extends StatelessWidget {
+/// FailureAnimation - Animated failure feedback with TTS voice output
+class FailureAnimation extends StatefulWidget {
   final String message;
   final VoidCallback? onRetry;
   final VoidCallback? onSkip;
+  final VoidCallback? onGoBack; // Optional: navigate back to learning start
   
   const FailureAnimation({
     super.key,
     this.message = 'Try Again!',
     this.onRetry,
     this.onSkip,
+    this.onGoBack,
   });
   
+  @override
+  State<FailureAnimation> createState() => _FailureAnimationState();
+}
+
+class _FailureAnimationState extends State<FailureAnimation> {
+  @override
+  void initState() {
+    super.initState();
+    // Speak TTS feedback immediately
+    TTSService.instance.speakTryAgain(widget.message);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -140,7 +165,7 @@ class FailureAnimation extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  message,
+                  widget.message,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -149,24 +174,46 @@ class FailureAnimation extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // Action buttons
+                Column(
                   children: [
-                    if (onRetry != null)
-                      ElevatedButton.icon(
-                        onPressed: onRetry,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Try Again'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(AppColors.primaryColor),
-                          foregroundColor: Colors.white,
+                    if (widget.onRetry != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: widget.onRetry,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Try Again'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(AppColors.primaryColor),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ),
-                    if (onSkip != null)
+                    if (widget.onGoBack != null) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onGoBack,
+                          icon: const Icon(Icons.school),
+                          label: const Text('Go Back to Learning'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Color(AppColors.numberColor),
+                            side: BorderSide(color: Color(AppColors.numberColor)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.onSkip != null) ...[
+                      const SizedBox(height: 8),
                       TextButton(
-                        onPressed: onSkip,
+                        onPressed: widget.onSkip,
                         child: const Text('Skip'),
                       ),
+                    ],
                   ],
                 ),
               ],
