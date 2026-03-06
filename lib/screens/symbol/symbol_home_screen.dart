@@ -5,6 +5,7 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/symbol/quiz/symbol_quiz_intro_screen.dart';
 import 'package:ganithamithura/screens/symbol/widgets/floating_symbols_background.dart';
 import 'package:ganithamithura/screens/symbol/symbol_performance_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_activity_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/gaming_intro_screen.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/models/user.dart';
@@ -270,6 +271,8 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
                       Get.to(() => const SymbolPerformanceScreen());
                     } else if (name == 'Games') {
                       Get.to(() => const GamingIntroScreen());
+                    } else if (name == 'Activities') {
+                      Get.to(() => const SymbolActivityScreen());
                     } else {
                       Get.snackbar(
                         'Coming Soon',
