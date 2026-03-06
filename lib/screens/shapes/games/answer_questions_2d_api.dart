@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/models/shape_models.dart';
@@ -50,8 +51,24 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
         throw Exception('Invalid game type. Expected question round game.');
       }
 
+      // Randomly select 5 questions from the available questions
+      final random = Random();
+      final allQuestions = game.questions;
+      final shuffledQuestions = List<ShapeQuestion>.from(allQuestions)..shuffle(random);
+      final selectedQuestions = shuffledQuestions.take(5).toList();
+      
+      // Create a new game with only the selected questions
+      final limitedGame = QuestionRoundGame(
+        gameId: game.gameId,
+        level: game.level,
+        title: game.title,
+        questions: selectedQuestions,
+        answerPool: game.answerPool,
+        correctAnswers: game.correctAnswers,
+      );
+
       setState(() {
-        _gameData = game;
+        _gameData = limitedGame;
         _isLoading = false;
       });
     } catch (e) {
@@ -133,6 +150,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
   ShapeQuestion get _currentQuestion => _gameData!.questions[_currentQuestionIndex];
   bool get _hasAnswered => _userAnswers.containsKey(_currentQuestion.id);
   bool get _isLastQuestion => _currentQuestionIndex == _gameData!.questions.length - 1;
+  bool get _is3DQuiz => widget.gameId == 'level4'; // Level 4 is 3D shapes quiz
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +285,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Fun 2D Shape Quiz! 🌟',
+                        _is3DQuiz ? 'Fun 3D Shape Quiz! 🌟' : 'Fun 2D Shape Quiz! 🌟',
                         style: TextStyle(
                           color: Colors.black.withOpacity(0.6),
                           fontSize: 16,
@@ -493,17 +511,17 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
         Row(
           children: [
             Expanded(child: _buildOptionButton(displayOptions[0], q)),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             if (displayOptions.length > 1)
               Expanded(child: _buildOptionButton(displayOptions[1], q)),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           children: [
             if (displayOptions.length > 2)
               Expanded(child: _buildOptionButton(displayOptions[2], q)),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             if (displayOptions.length > 3)
               Expanded(child: _buildOptionButton(displayOptions[3], q)),
           ],
@@ -525,7 +543,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
     return GestureDetector(
       onTap: () => _selectAnswer(option),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
         decoration: ShapeDecoration(
           gradient: showAsCorrect 
               ? const LinearGradient(
@@ -569,15 +587,25 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
               ),
           ],
         ),
-        child: Text(
-          emoji + option,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: showAsCorrect || showAsWrong
-                ? Colors.white
-                : (isSelected ? Colors.white : const Color(0xFF2859C5)),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: 1,
+              maxWidth: MediaQuery.of(context).size.width / 2.5,
+            ),
+            child: Text(
+              emoji + option,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                color: showAsCorrect || showAsWrong
+                    ? Colors.white
+                    : (isSelected ? Colors.white : const Color(0xFF2859C5)),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),

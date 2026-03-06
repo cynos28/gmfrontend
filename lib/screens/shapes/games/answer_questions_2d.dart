@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -23,28 +24,51 @@ class Questions2DShapesScreen extends StatefulWidget {
 }
 
 class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
-  final List<Question> _questions = [
+  // All available questions - randomly select 5 from this pool
+  static final List<Question> _allQuestions = [
     Question(
       question: 'Which shape has all points equidistant from the center?',
-      image: 'assets/images/circle.png',
+      image: 'assets/images/2d_shapes/circle.png',
       options: ['Square', 'Triangle', 'Circle', 'Rectangle'],
       correctIndex: 2,
     ),
     Question(
       question: 'Which shape has 3 sides?',
-      image: 'assets/images/triangle.png',
+      image: 'assets/images/2d_shapes/triangle.png',
       options: ['Circle', 'Triangle', 'Square', 'Rectangle'],
       correctIndex: 1,
     ),
     Question(
       question: 'Which shape has 4 equal sides and 4 right angles?',
-      image: 'assets/images/square.png',
+      image: 'assets/images/2d_shapes/square.png',
       options: ['Square', 'Rectangle', 'Trapezoid', 'Parallelogram'],
       correctIndex: 0,
     ),
+    Question(
+      question: 'Which shape has 4 sides with opposite sides equal?',
+      image: 'assets/images/2d_shapes/rectangle.png',
+      options: ['Circle', 'Triangle', 'Square', 'Rectangle'],
+      correctIndex: 3,
+    ),
+    Question(
+      question: 'Which shape has NO corners or edges?',
+      image: 'assets/images/2d_shapes/circle.png',
+      options: ['Rectangle', 'Circle', 'Triangle', 'Square'],
+      correctIndex: 1,
+    ),
   ];
 
+  late final List<Question> _questions;
   int _current = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Randomly select 5 questions from all available questions
+    final random = Random();
+    final shuffled = List<Question>.from(_allQuestions)..shuffle(random);
+    _questions = shuffled.take(5).toList();
+  }
   int? _selectedIndex;
   List<int> _answers = [];
   bool _showAnswer = false;
@@ -237,8 +261,8 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                         return GestureDetector(
                           onTap: () => _selectOption(i),
                           child: Container(
-                            margin: const EdgeInsets.only(top: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                            margin: const EdgeInsets.only(top: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             decoration: BoxDecoration(
                               color: bg,
                               borderRadius: BorderRadius.circular(20),
@@ -255,16 +279,26 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    emoji + option,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: (_showAnswer && (isCorrect || (isSelected && !isCorrect))) 
-                                          ? Colors.white 
-                                          : (isSelected ? Colors.white : const Color(0xFF2D4059)),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 1,
+                                        maxWidth: MediaQuery.of(context).size.width - 100,
+                                      ),
+                                      child: Text(
+                                        emoji + option,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: (_showAnswer && (isCorrect || (isSelected && !isCorrect))) 
+                                              ? Colors.white 
+                                              : (isSelected ? Colors.white : const Color(0xFF2D4059)),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],
