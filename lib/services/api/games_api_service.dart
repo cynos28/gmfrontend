@@ -4,11 +4,11 @@
 import 'dart:convert';  
 import 'package:http/http.dart' as http; 
 
+import '../../utils/constants.dart';
+
 class GamesApiService {
-  static const List<String> _baseUrls = [
-    'http://172.21.246.68:8000/adaptive-games', // WiFi – primary
-    'http://localhost:8000/adaptive-games', // ADB reverse
-    'http://10.0.2.2:8000/adaptive-games', // Android emulator
+  static List<String> get _baseUrls => [
+    '${AppConstants.measurementBaseUrl}/adaptive-games'
   ];
 
   // ─── internal helpers ────────────────────────────────────────────────────

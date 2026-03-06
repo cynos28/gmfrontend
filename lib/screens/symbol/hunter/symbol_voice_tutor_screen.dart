@@ -256,8 +256,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     } else if (data['type'] == 'image') {
        String rawUrl = data['url'];
        // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1").replaceFirst("192.168.8.118", "127.0.0.1");
-       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
-       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
+       String fixedUrl = rawUrl.replaceAll(RegExp(r'http://(?:localhost|127\.0\.0\.1):\d+'), AppConfig.baseUrl);
        
        print("Loading image: $fixedUrl");
        setState(() {

@@ -1,18 +1,42 @@
 /// Constants for the Ganithamithura Learning App - Phase 1
 library;
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 class AppConstants {
-  // API Configuration - Using WiFi IP (no ADB needed)
-  // Ensure phone and Mac are on same WiFi network
-  static const String baseUrl = 'http://172.21.246.68:8000';
+  // API Configuration
+  static String baseUrl = 'http://localhost:8001';
+  static String authBaseUrl = 'http://localhost:8001';
+  static String symbolBaseUrl = 'http://localhost:8000';
+  static String measurementBaseUrl = 'http://localhost:8002'; // New API
   
+  static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
+  
+  static Future<void> loadDynamicUrls() async {
+    try {
+      // Append a timestamp to bypass GitHub's heavy edge cache for raw assets
+      final String noCacheUrl = "$_gistUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      final response = await http.get(Uri.parse(noCacheUrl));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
+        authBaseUrl = data['auth_api'] ?? authBaseUrl;
+        measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
+        baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
+        
+        print("✅ Backend URLs Loaded from GitHub Gist!");
+        print("Symbol API: \$symbolBaseUrl");
+        print("Auth API: \$authBaseUrl");
+        print("Measurement API: \$measurementBaseUrl");
+      }
+    } catch (e) {
+      print("❌ Failed to fetch backend URLs from Gist: \$e");
+    }
+  }
   
   static const String numBaseUrl =
       'https://macular-patrimonially-olinda.ngrok-free.dev';
-
-  // Auth and Symbol service URLs (fallback to main baseUrl)
-  static const String authBaseUrl = baseUrl;
-  static const String symbolBaseUrl = baseUrl;
 
   // Activity Types
   static const String activityTypeTrace = 'trace';

@@ -5,11 +5,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
-import '../../config/backend_config.dart';
+import '../../utils/constants.dart';
 
 class MeasurementApiService {
-  // Try URLs from centralized config - adapts to network changes
-  static List<String> get _baseUrls => BackendConfig.backendUrls
+  // Use dynamically loaded URLs from AppConstants
+  static List<String> get _baseUrls => [AppConstants.measurementBaseUrl]
       .map((url) => '$url/api/v1/measurements')
       .toList();
   
@@ -103,8 +103,10 @@ class MeasurementApiService {
   /// Check if measurement-service is available
   Future<bool> checkHealth() async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
+      final healthUrl = baseUrl.replaceAll('/api/v1/measurements', '/health');
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8001/health'),
+        Uri.parse(healthUrl),
       ).timeout(const Duration(seconds: 3));
       
       return response.statusCode == 200;

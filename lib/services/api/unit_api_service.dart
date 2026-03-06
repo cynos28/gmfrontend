@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:ganithamithura/models/unit_models.dart';
-import 'package:ganithamithura/config/backend_config.dart';
+import 'package:ganithamithura/utils/constants.dart';
 
 /// API Service for Unit-based Learning
 /// Automatically discovers working backend URL across network changes
 class UnitApiService {
-  // Multiple URLs to try - adapts to network changes automatically
-  static List<String> get _possibleBaseUrls => BackendConfig.backendUrls;
+  // Use URL dynamically fetched from GitHub Gist via AppConstants
+  static List<String> get _possibleBaseUrls => [AppConstants.measurementBaseUrl];
   
   // Cached working URL
   static String? _cachedWorkingUrl;
@@ -25,7 +25,7 @@ class UnitApiService {
       return '$base$rawUrl';
     }
     // Already absolute but pointing to localhost — rewrite to working base
-    if (rawUrl.contains('localhost:8000') || rawUrl.contains('127.0.0.1:8000')) {
+    if (rawUrl.contains('localhost:8002') || rawUrl.contains('127.0.0.1:8002') || rawUrl.contains(':8000')) {
       final path = Uri.parse(rawUrl).path;
       return '$base$path';
     }
