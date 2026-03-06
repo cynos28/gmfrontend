@@ -1,12 +1,35 @@
 /// Constants for the Ganithamithura Learning App - Phase 1
 library;
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 class AppConstants {
   // API Configuration - Set fallback to Android Emulator default.
   // Physical devices should use their Mac's IP in the ignored .env file!
-  static const String baseUrl = 'http://10.0.2.2:8001';
-  static const String authBaseUrl = 'http://10.0.2.2:8001';
-  static const String symbolBaseUrl = 'http://10.0.2.2:8000';
+  static String baseUrl = 'http://10.0.2.2:8001';
+  static String authBaseUrl = 'http://10.0.2.2:8001';
+  static String symbolBaseUrl = 'http://10.0.2.2:8000';
+  
+  static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
+  
+  static Future<void> loadDynamicUrls() async {
+    try {
+      final response = await http.get(Uri.parse(_gistUrl));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
+        authBaseUrl = data['auth_api'] ?? authBaseUrl;
+        baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
+        
+        print("✅ Backend URLs Loaded from GitHub Gist!");
+        print("Symbol API: \$symbolBaseUrl");
+        print("Auth API: \$authBaseUrl");
+      }
+    } catch (e) {
+      print("❌ Failed to fetch backend URLs from Gist: \$e");
+    }
+  }
   
   
   // Activity Types
