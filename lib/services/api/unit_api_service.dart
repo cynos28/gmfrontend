@@ -14,6 +14,24 @@ class UnitApiService {
   // Cached working URL
   static String? _cachedWorkingUrl;
   
+  /// Get the current cached working URL (or first fallback)
+  static String get cachedBaseUrl => _cachedWorkingUrl ?? _possibleBaseUrls.first;
+
+  /// Resolve an image URL: handles relative paths and rewrites localhost URLs
+  static String resolveImageUrl(String rawUrl) {
+    final base = cachedBaseUrl;
+    // Relative path like /static/images/xxx.png
+    if (rawUrl.startsWith('/')) {
+      return '$base$rawUrl';
+    }
+    // Already absolute but pointing to localhost — rewrite to working base
+    if (rawUrl.contains('localhost:8000') || rawUrl.contains('127.0.0.1:8000')) {
+      final path = Uri.parse(rawUrl).path;
+      return '$base$path';
+    }
+    return rawUrl;
+  }
+
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();
   factory UnitApiService() => _instance;

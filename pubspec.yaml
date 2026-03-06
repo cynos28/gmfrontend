@@ -71,6 +71,7 @@ dependencies:
   confetti: ^0.8.0
   flutter_unit_ruler: ^1.0.1
   sensors_plus: ^7.0.0
+  fl_chart: ^0.70.2
 
 dev_dependencies:
   flutter_test:
@@ -101,6 +102,7 @@ flutter:
     - assets/animations/
     - assets/symbols/
     - assets/symbols/game/
+    - assets/sounds/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - assets/models/cone.glb

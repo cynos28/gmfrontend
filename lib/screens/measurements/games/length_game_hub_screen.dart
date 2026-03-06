@@ -1,32 +1,26 @@
-/// Length Game Hub
-/// Ruler Explorer and Build the Bridge games for kids
-
+/// Length Game Hub - Kid-Friendly Redesign
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'length_game_play_screen.dart';
 
-// ─── variant metadata ──────────────────────────────────────────────────────
-
 class _VariantInfo {
-  final String code; // e.g. "L-V1"
+  final String code;
   final String title;
-  final String subtitle;
   final String emoji;
-  final String description;
-  final int stars; // 1-4
+  final int stars;
   final Color color;
-  final Color lightColor;
+  final Color bgColor;
+  final String vectorImage;
 
   const _VariantInfo({
     required this.code,
     required this.title,
-    required this.subtitle,
     required this.emoji,
-    required this.description,
     required this.stars,
     required this.color,
-    required this.lightColor,
+    required this.bgColor,
+    required this.vectorImage,
   });
 }
 
@@ -34,26 +28,22 @@ const List<_VariantInfo> _variants = [
   _VariantInfo(
     code: 'L-V1',
     title: 'Ruler Explorer',
-    subtitle: 'Measure 1 thing',
     emoji: '📏',
-    description: 'Use the ruler to measure one object. How long is it?',
     stars: 1,
-    color: Color(0xFF4285F4),
-    lightColor: Color(0xFFE8F4FF),
+    color: Color(0xFF2196F3), // Blue from home screen
+    bgColor: Color(0xFFBBDEFB), // Stronger Light Blue
+    vectorImage: 'assets/vectors/stitch2.png',
   ),
   _VariantInfo(
     code: 'L-V4',
     title: 'Build a Bridge',
-    subtitle: 'Combine lengths',
     emoji: '🌉',
-    description: 'Pick strips that add up to the target length. Can you build it?',
     stars: 2,
-    color: Color(0xFF9C27B0),
-    lightColor: Color(0xFFF3E5F5),
+    color: Color(0xFF2196F3),
+    bgColor: Color(0xFFBBDEFB),
+    vectorImage: 'assets/vectors/stitch4.png',
   ),
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class LengthGameHubScreen extends StatefulWidget {
   const LengthGameHubScreen({super.key});
@@ -76,7 +66,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _bounceAnimation = Tween<double>(begin: 0, end: 8).animate(
+    _bounceAnimation = Tween<double>(begin: 0, end: 10).animate(
       CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
     );
     _loadParams();
@@ -89,44 +79,22 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
   }
 
   Future<void> _loadParams() async {
-    // Both variants always unlocked
     if (mounted) {
       setState(() {
-        _currentVariant = 'L-V4'; // All unlocked
+        _currentVariant = 'L-V4';
         _isLoading = false;
       });
     }
   }
 
-  bool _isUnlocked(_VariantInfo info) => true;
-
-  bool _isCurrent(_VariantInfo info) => info.code == _currentVariant;
-
   void _play(_VariantInfo info) {
-    if (!_isUnlocked(info)) {
-      Get.snackbar(
-        '🔒 Locked',
-        'Complete earlier levels to unlock ${info.title}!',
-        backgroundColor: KidsColors.warning,
-        colorText: KidsColors.textPrimary,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 16,
-      );
-      return;
-    }
-    Get.to(
-      () => LengthGamePlayScreen(variant: info.code),
-      transition: Transition.rightToLeft,
-    );
+    Get.to(() => LengthGamePlayScreen(variant: info.code), transition: Transition.rightToLeft);
   }
-
-  // ─── build ─────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F7FF),
+      backgroundColor: const Color(0xFFF5F5F7), // Match home screen bg
       body: SafeArea(
         child: Column(
           children: [
@@ -134,10 +102,7 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
             Expanded(
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(
-                        color: KidsColors.lengthColor,
-                        strokeWidth: 3,
-                      ),
+                      child: CircularProgressIndicator(color: Color(0xFF2196F3), strokeWidth: 3),
                     )
                   : _buildVariantList(),
             ),
@@ -150,69 +115,51 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF4285F4), Color(0xFF0D47A1)],
-        ),
+        color: Color(0xFFE8E8F0), // Match home screen header color
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Row(
         children: [
-          Row(
-            children: [
-              _circleBtn(
-                Icons.arrow_back_rounded,
-                Colors.white,
-                Colors.white.withOpacity(0.2),
-                () => Get.back(),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Length Games',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                ),
+                ],
               ),
-              AnimatedBuilder(
-                animation: _bounceAnimation,
-                builder: (_, __) => Transform.translate(
-                  offset: Offset(0, -_bounceAnimation.value),
-                  child: const Text('📏', style: TextStyle(fontSize: 36)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(16),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('⭐', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: 8),
-                Text(
-                  'Your level: $_currentVariant',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              'Length Games',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+                height: 1.1,
+              ),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _bounceAnimation,
+            builder: (_, __) => Transform.translate(
+              offset: Offset(0, -_bounceAnimation.value),
+              child: Image.asset('assets/vectors/stitch1.png', height: 70),
             ),
           ),
         ],
@@ -222,163 +169,108 @@ class _LengthGameHubScreenState extends State<LengthGameHubScreen>
 
   Widget _buildVariantList() {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 60),
       itemCount: _variants.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, i) => _buildVariantCard(_variants[i]),
+      separatorBuilder: (_, __) => const SizedBox(height: 20),
+      itemBuilder: (context, i) => _buildVariantCard(_variants[i], i),
     );
   }
 
-  Widget _buildVariantCard(_VariantInfo info) {
-    final unlocked = _isUnlocked(info);
-    final current = _isCurrent(info);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: unlocked ? Colors.white : const Color(0xFFECECEC),
-        borderRadius: BorderRadius.circular(24),
-        border: current
-            ? Border.all(color: info.color, width: 3)
-            : Border.all(color: Colors.transparent, width: 3),
-        boxShadow: unlocked
-            ? [
-                BoxShadow(
-                  color: info.color.withOpacity(0.18),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : [],
+  Widget _buildVariantCard(_VariantInfo info, int index) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + index * 150),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) => Transform.scale(
+        scale: value,
+        child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => _play(info),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // Icon circle
-                Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: unlocked ? info.lightColor : const Color(0xFFDDDDDD),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Center(
-                    child: Text(
-                      unlocked ? info.emoji : '🔒',
-                      style: const TextStyle(fontSize: 32),
+      child: Container(
+        decoration: BoxDecoration(
+          color: info.bgColor, // Using the background color from home screen
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(info.emoji, style: const TextStyle(fontSize: 40)),
+                        const SizedBox(height: 10),
+                        Text(
+                          info.title,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: List.generate(
+                            info.stars,
+                            (_) => Icon(Icons.star_rounded, color: info.color, size: 22),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                // Text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 12),
+                  Image.asset(info.vectorImage, width: 140, height: 120, fit: BoxFit.contain),
+                ],
+              ),
+            ),
+            // Play Game Action Button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: GestureDetector(
+                onTap: () => _play(info),
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: info.color,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: info.color.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              info.title,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: unlocked
-                                    ? KidsColors.textPrimary
-                                    : KidsColors.textTertiary,
-                              ),
-                            ),
-                          ),
-                          // Stars
-                          Row(
-                            children: List.generate(
-                              info.stars,
-                              (_) => Text(
-                                '⭐',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: unlocked
-                                      ? null
-                                      : Colors.grey.withOpacity(0.4),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
+                      Icon(Icons.videogame_asset_rounded, color: Colors.white, size: 28),
+                      SizedBox(width: 8),
                       Text(
-                        info.subtitle,
+                        'Play!',
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              unlocked ? info.color : KidsColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        info.description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: unlocked
-                              ? KidsColors.textSecondary
-                              : KidsColors.textTertiary,
-                          height: 1.4,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Arrow / play btn
-                if (unlocked)
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: current ? info.color : info.lightColor,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      current
-                          ? Icons.play_arrow_rounded
-                          : Icons.arrow_forward_rounded,
-                      color: current ? Colors.white : info.color,
-                      size: 24,
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _circleBtn(
-    IconData icon,
-    Color iconColor,
-    Color bgColor,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Icon(icon, color: iconColor, size: 22),
       ),
     );
   }

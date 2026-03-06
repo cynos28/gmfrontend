@@ -1,6 +1,4 @@
-/// Weight Game Hub
-/// Magic Scale balance game for kids
-
+/// Weight Game Hub - Kid-Friendly Redesign
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,27 +6,25 @@ import 'package:ganithamithura/services/api/games_api_service.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'magic_scale_game_screen.dart';
 
-// ─── variant metadata ──────────────────────────────────────────────────────
-
 class _VariantInfo {
   final String code;
   final String title;
-  final String subtitle;
   final String emoji;
-  final String description;
   final int stars;
   final Color color;
-  final Color lightColor;
+  final Color bgColor;
+  final String vectorImage;
+  final GameMode gameMode;
 
   const _VariantInfo({
     required this.code,
     required this.title,
-    required this.subtitle,
     required this.emoji,
-    required this.description,
     required this.stars,
     required this.color,
-    required this.lightColor,
+    required this.bgColor,
+    required this.vectorImage,
+    required this.gameMode,
   });
 }
 
@@ -36,26 +32,24 @@ const List<_VariantInfo> _variants = [
   _VariantInfo(
     code: 'W-W1',
     title: 'Match the Target',
-    subtitle: 'Balance to win',
     emoji: '⚖️',
-    description: 'Drag weights to match the target number. Make the scale balance perfectly!',
     stars: 1,
-    color: Color(0xFFE53935),
-    lightColor: Color(0xFFFFEBEE),
+    color: Color(0xFFFF9800), // Orange from home screen
+    bgColor: Color(0xFFFFE0B2), // Stronger Light Orange
+    vectorImage: 'assets/vectors/stitch3.png',
+    gameMode: GameMode.matchTarget,
   ),
   _VariantInfo(
     code: 'W-W2',
     title: 'Equal Sides',
-    subtitle: 'Find balance',
     emoji: '🎯',
-    description: 'Match the locked weights on the other side. Can you make them equal?',
     stars: 2,
-    color: Color(0xFF8E24AA),
-    lightColor: Color(0xFFF3E5F5),
+    color: Color(0xFFFF9800),
+    bgColor: Color(0xFFFFE0B2),
+    vectorImage: 'assets/vectors/stitch5.png',
+    gameMode: GameMode.equalSides,
   ),
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class WeightGameHubScreen extends StatefulWidget {
   const WeightGameHubScreen({super.key});
@@ -79,7 +73,7 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _bounceAnimation = Tween<double>(begin: 0, end: 8).animate(
+    _bounceAnimation = Tween<double>(begin: 0, end: 10).animate(
       CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
     );
     _loadParams();
@@ -114,279 +108,222 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFFFF8E1),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('⚖️', style: TextStyle(fontSize: 80)),
-              const SizedBox(height: 16),
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(KidsColors.weightColor),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8E1),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: KidsColors.textPrimary),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Magic Scale',
-          style: TextStyle(
-            color: KidsColors.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: AnimatedBuilder(
-              animation: _bounceAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, _bounceAnimation.value),
-                  child: child,
-                );
-              },
-              child: const Text('⚖️', style: TextStyle(fontSize: 32)),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF5F5F7), // Match home screen bg
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              
-              // Title
-              const Text(
-                'Balance the Scale! 🎯',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: KidsColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Drag weights to make the scale perfectly balanced',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: KidsColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              // Game modes
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _variants.length,
-                  itemBuilder: (context, index) {
-                    final variant = _variants[index];
-                    return _buildVariantCard(variant, index);
-                  },
-                ),
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('⚖️', style: TextStyle(fontSize: 80)),
+                          const SizedBox(height: 16),
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF9800)),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildVariantList(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildVariantCard(_VariantInfo variant, int index) {
-    final isSelected = variant.code == _currentVariant;
-    
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0), // Match home screen header color
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              'Weight Games',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+                height: 1.1,
+              ),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _bounceAnimation,
+            builder: (_, __) => Transform.translate(
+              offset: Offset(0, -_bounceAnimation.value),
+              child: Image.asset('assets/vectors/stitch2.png', height: 70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantList() {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 60),
+      itemCount: _variants.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 20),
+      itemBuilder: (context, i) => _buildVariantCard(_variants[i], i),
+    );
+  }
+
+  Widget _buildVariantCard(_VariantInfo info, int index) {
+    final level = (_irtLevels[info.code] ?? 1).clamp(1, 5);
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 400 + (index * 120)),
+      duration: Duration(milliseconds: 600 + index * 150),
       curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
-          child: Opacity(
-            opacity: value.clamp(0.0, 1.0),
-            child: child,
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isSelected
-                  ? variant.color
-                  : variant.color.withOpacity(0.2),
-              width: 3,
+      builder: (context, value, child) => Transform.scale(
+        scale: value,
+        child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: info.bgColor, // Using the background color from home screen
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: variant.color.withOpacity(0.15),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(24),
-              onTap: () {
-                if (variant.code == 'W-W1') {
-                  Get.to(
-                    () => const MagicScaleGameScreen(mode: GameMode.matchTarget),
-                    transition: Transition.rightToLeft,
-                  );
-                } else if (variant.code == 'W-W2') {
-                  Get.to(
-                    () => const MagicScaleGameScreen(mode: GameMode.equalSides),
-                    transition: Transition.rightToLeft,
-                  );
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    // Icon
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            variant.color,
-                            variant.color.withOpacity(0.7),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: variant.color.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          variant.emoji,
-                          style: const TextStyle(fontSize: 32),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    
-                    // Text
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            variant.title,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: KidsColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            variant.subtitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: variant.color,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          _buildIRTLevelBadge(_irtLevels[variant.code] ?? 1),
-                        ],
-                      ),
-                    ),
-                    
-                    // Difficulty stars
-                    Column(
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Text and Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            variant.stars,
-                            (i) => const Icon(
-                              Icons.star_rounded,
-                              color: Color(0xFFFFB300),
-                              size: 18,
-                            ),
+                        Text(info.emoji, style: const TextStyle(fontSize: 40)),
+                        const SizedBox(height: 10),
+                        Text(
+                          info.title,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            height: 1.1,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: KidsColors.textSecondary,
-                          size: 20,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: List.generate(
+                            info.stars,
+                            (_) => Icon(Icons.star_rounded, color: info.color, size: 22),
+                          ),
                         ),
+                        const SizedBox(height: 10),
+                        _buildLevelBadge(level, info.color),
                       ],
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 12),
+                  // Vector Image
+                  Image.asset(info.vectorImage, width: 140, height: 120, fit: BoxFit.contain),
+                ],
+              ),
+            ),
+            // Play Game Action Button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: GestureDetector(
+                onTap: () => Get.to(
+                  () => MagicScaleGameScreen(mode: info.gameMode),
+                  transition: Transition.rightToLeft,
+                ),
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: info.color,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: info.color.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.videogame_asset_rounded, color: Colors.white, size: 28),
+                      SizedBox(width: 8),
+                      Text(
+                        'Play!',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildIRTLevelBadge(int level) {
+  Widget _buildLevelBadge(int level, Color color) {
     const labels = ['Easy', 'Medium', 'Hard', 'Expert', 'Master'];
-    const colors = [
-      Color(0xFF4CAF50), Color(0xFF2196F3), Color(0xFFFF9800),
-      Color(0xFFE91E63), Color(0xFF9C27B0),
-    ];
     final idx = (level - 1).clamp(0, 4);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: colors[idx].withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors[idx].withOpacity(0.4), width: 1),
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.psychology_rounded, size: 12, color: colors[idx]),
-          const SizedBox(width: 4),
-          Text(
-            labels[idx],
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: colors[idx],
-            ),
-          ),
-        ],
+      child: Text(
+        'Level $level • ${labels[idx]}',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+          color: color,
+        ),
       ),
     );
   }

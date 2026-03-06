@@ -120,9 +120,10 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
   }
 
   List<double> _getDefaultSizes(int level) {
-    // All levels use same visually distinct sizes: 0.4, 0.65, 0.95
-    // These multiply against base height 140px → 56px, 91px, 133px
-    return [0.4, 0.65, 0.95];
+    // Use more extreme size differences for clear visual distinction
+    // These multiply against base height 140px → 42px, 84px, 140px
+    // This creates unmistakable size differences that children can easily see
+    return [0.3, 0.6, 1.0];
   }
 
   List<String> _getDefaultQuestionTypes(int level) {
@@ -451,8 +452,8 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
         crossAxisCount: count == 4 ? 2 : 3,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        // Extra height so even the largest container fits comfortably
-        childAspectRatio: 0.65,
+        // Increased aspect ratio to accommodate larger container sizes (up to 150px)
+        childAspectRatio: 0.7,
       ),
       itemCount: count,
       itemBuilder: (context, index) => _buildOptionCard(index),
@@ -520,13 +521,14 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
                 // making size differences immediately obvious to children.
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Image.asset(
                     'assets/images/volume/${option.type}.png',
-                    // displaySize is ALWAYS one of 3 fixed pixel heights:
-                    //   small  → 56 px
-                    //   medium → 96 px
-                    //   large  → 140 px
+                    // displaySize creates EXTREME visual differences:
+                    //   small  → 45 px  (30% of 150)
+                    //   medium → 90 px  (60% of 150)
+                    //   large  → 150 px (100% of 150)
+                    // The large is MORE THAN 3X the small for unmistakable differences!
                     height: option.displaySize,
                     fit: BoxFit.contain,
                   ),
@@ -833,17 +835,18 @@ class _Question {
   ) {
     final random = math.Random();
 
-    // Pick 3 distinct sizes: smallest, middle, largest for maximum visual distinction
+    // Pick 3 distinct sizes with EXTREME differences for maximum visual clarity
     final sorted = List<double>.from(availableSizes)..sort();
     final baseSizes = sorted.length >= 3
         ? [sorted.first, sorted[sorted.length ~/ 2], sorted.last]
-        : [0.4, 0.65, 0.95];
+        : [0.3, 0.6, 1.0];  // 30%, 60%, 100% - very clear differences!
     final smallSize = baseSizes.first;
     final largeSize = baseSizes.last;
     final midSize = baseSizes.length > 1 ? baseSizes[1] : (smallSize + largeSize) / 2;
 
-    // Base height for container images (multiplier)
-    const double baseHeight = 140.0;
+    // Base height for container images - larger for better visibility
+    // Creates VERY distinct sizes: 45px (small), 90px (medium), 150px (large)
+    const double baseHeight = 150.0;
 
     if (questionType == 'most') {
       // Three options, shuffled; one large, one medium, one small.

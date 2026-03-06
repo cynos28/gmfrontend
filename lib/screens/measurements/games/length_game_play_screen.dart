@@ -6,7 +6,9 @@
 
 import 'dart:async';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
@@ -90,6 +92,13 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
 
+  // ── bear crossing animation (V4) ─────────────────────────────────────────
+  late AnimationController _bearWalkCtrl;
+  bool _bearCrossing = false;
+  bool _bearOnOtherSide = false;
+  int _lastJumpCount = 0;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   final _rng = Random();
 
   // ── pass threshold: 60% of max stars ─────────────────────────────────────
@@ -128,6 +137,10 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     _shakeAnim = Tween<double>(begin: 0, end: 1)
         .animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
 
+    _bearWalkCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2500))
+      ..addListener(_onBearWalkTick);
+
     _loadAndStart();
   }
 
@@ -137,6 +150,8 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     _bounceCtrl.dispose();
     _starCtrl.dispose();
     _shakeCtrl.dispose();
+    _bearWalkCtrl.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -190,6 +205,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
   }
 
   void _generateRound() {
+    _bearWalkCtrl.reset();
     setState(() {
       _phase = _Phase.playing;
       _roundAttempts = 0;
@@ -198,6 +214,8 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
       _v1MeasuredCm = null;
       _v4Selected    = {};
       _v4PlacedOrder = [];
+      _bearCrossing = false;
+      _bearOnOtherSide = false;
       _shakeCtrl.reset();
     });
 
@@ -320,16 +338,57 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
     _timer?.cancel();
     final stars = _calcStars(_roundAttempts, _hintsUsedThisRound);
     setState(() {
-      _phase = _Phase.showResult;
       _resultMessage = message;
       _roundStars = stars;
       _totalAttempts += _roundAttempts;
       _totalHints += _hintsUsedThisRound;
       _totalStarsEarned += stars;
     });
-    _starCtrl.forward(from: 0);
     // Submit to IRT engine in background (fire-and-forget)
     _submitRoundToIRT(true, stars);
+
+    if (widget.variant == 'L-V4' && !_bearOnOtherSide && !_bearCrossing) {
+      // Animate bear walking across bridge first, then show result
+      _triggerBearCross();
+      Future.delayed(const Duration(milliseconds: 2800), () {
+        if (mounted) {
+          setState(() => _phase = _Phase.showResult);
+          _starCtrl.forward(from: 0);
+        }
+      });
+    } else {
+      // Either not V4, or bear already crossed - show result immediately
+      setState(() => _phase = _Phase.showResult);
+      _starCtrl.forward(from: 0);
+    }
+  }
+
+  // ── Bear cross animation ─────────────────────────────────────────────────
+
+  void _onBearWalkTick() {
+    if (!_bearCrossing) return;
+    const numJumps = 5;
+    final jumpCount = (_bearWalkCtrl.value * numJumps).floor();
+    if (jumpCount > _lastJumpCount) {
+      _lastJumpCount = jumpCount;
+      _audioPlayer.play(AssetSource('sounds/bear_jump.wav'));
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  void _triggerBearCross() {
+    _lastJumpCount = 0;
+    setState(() => _bearCrossing = true);
+    _bearWalkCtrl.forward(from: 0).then((_) {
+      if (mounted) {
+        setState(() {
+          _bearCrossing = false;
+          _bearOnOtherSide = true;
+        });
+        _audioPlayer.play(AssetSource('sounds/bear_success.wav'));
+        HapticFeedback.heavyImpact();
+      }
+    });
   }
 
   void _roundWrong(String message) {
@@ -1137,6 +1196,14 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
             _v4Selected.add(idx);
             _v4PlacedOrder.add(idx);
           });
+          // Check if bridge is complete after placing this plank
+          final newTotal = _v4PlacedOrder.fold(0, (s, i) => s + _v4Strips[i]);
+          if (newTotal == _v4Target && !_bearCrossing && !_bearOnOtherSide) {
+            // Bridge complete! Trigger bear crossing animation
+            Future.delayed(const Duration(milliseconds: 400), () {
+              if (mounted) _triggerBearCross();
+            });
+          }
         }
       },
       builder: (context, candidates, _) {
@@ -1280,12 +1347,13 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                             ),
                           ),
                         )),
-                        // Character waiting
-                        const Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Text('🐻', style: TextStyle(fontSize: 26)),
-                        ),
+                        // Character waiting (hidden while crossing)
+                        if (!_bearCrossing && !_bearOnOtherSide)
+                          const Positioned(
+                            top: 8,
+                            left: 8,
+                            child: Text('🐻', style: TextStyle(fontSize: 26)),
+                          ),
                         // Grass
                         const Positioned(
                           top: 0,
@@ -1534,7 +1602,7 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                   ),
                 ),
                 // ── Tap-to-remove hint ──────────────────────────────
-                if (_v4PlacedOrder.isNotEmpty)
+                if (_v4PlacedOrder.isNotEmpty && !_bearCrossing)
                   Positioned(
                     bottom: 4,
                     left: _kCliffW + 4,
@@ -1552,6 +1620,41 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                           color: Colors.white,
                         ),
                       ),
+                    ),
+                  ),
+
+                // ── Animated bear crossing the bridge ──────────────
+                if (_bearCrossing)
+                  AnimatedBuilder(
+                    animation: _bearWalkCtrl,
+                    builder: (_, __) {
+                      final progress = _bearWalkCtrl.value;
+                      const numJumps = 5;
+                      final jumpY = sin(progress * pi * numJumps).abs() * 22.0;
+                      final bearX = 10.0 + progress * (availW - 54);
+                      final bearY = 56.0 - jumpY;
+                      return Positioned(
+                        left: bearX,
+                        top: bearY,
+                        child: Text(
+                          '🐻',
+                          style: TextStyle(fontSize: 26 + jumpY * 0.3),
+                        ),
+                      );
+                    },
+                  ),
+
+                // ── Bear on right cliff after crossing ──────────────
+                if (_bearOnOtherSide)
+                  Positioned(
+                    right: 8,
+                    top: 58,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('🐻', style: TextStyle(fontSize: 26)),
+                        Text('🎉', style: TextStyle(fontSize: 14)),
+                      ],
                     ),
                   ),
               ],
@@ -1622,6 +1725,14 @@ class _LengthGamePlayScreenState extends State<LengthGamePlayScreen>
                               _v4Selected.add(i);
                               _v4PlacedOrder.add(i);
                             });
+                            // Check if bridge is complete after tapping to add this plank
+                            final newTotal = _v4PlacedOrder.fold(0, (s, idx) => s + _v4Strips[idx]);
+                            if (newTotal == _v4Target && !_bearCrossing && !_bearOnOtherSide) {
+                              // Bridge complete! Trigger bear crossing animation
+                              Future.delayed(const Duration(milliseconds: 400), () {
+                                if (mounted) _triggerBearCross();
+                              });
+                            }
                           },
                     child: _buildPlankBar(cm, barW, color, placed: placed),
                   ),

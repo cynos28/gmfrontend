@@ -328,12 +328,8 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Cute character with greeting
-          _buildCharacterGreeting(),
-          const SizedBox(height: 24),
-          
-          // Instructions Card
-          _buildInstructionsCard(),
+          // Animated Character Header
+          _buildKidFriendlyHeader(),
           const SizedBox(height: 24),
           
           // Object Name Input
@@ -356,124 +352,28 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     );
   }
   
-  Widget _buildCharacterGreeting() {
-    return CuteCard(
-      backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CuteCharacter(
-                color: _primaryColor,
-                size: 60,
-                animate: true,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Hello, Friend!",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: KidsColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Let's measure together!",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: KidsColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Removed Hello Friend and What to do sections
   
-  Widget _buildInstructionsCard() {
-    IconData getIcon() {
-      switch (_measurementType) {
-        case MeasurementType.length:
-          return Icons.straighten_rounded;
-        case MeasurementType.volume:
-          return Icons.local_drink_rounded;
-        case MeasurementType.weight:
-          return Icons.scale_rounded;
-        case MeasurementType.area:
-          return Icons.grid_on_rounded;
-      }
-    }
-
-    return CuteCard(
-      backgroundColor: _primaryColor.withOpacity(0.1),
-      borderColor: _primaryColor.withOpacity(0.3),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _primaryColor,
-                  _primaryColor.withOpacity(0.8),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryColor.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Icon(
-              getIcon(),
-              size: 28,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'What to do?',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: _borderColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Measure something and tell me about it!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: KidsColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+  Widget _buildKidFriendlyHeader() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(seconds: 2),
+      tween: Tween(begin: 0.9, end: 1.05),
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: Center(
+        child: Image.asset(
+          'assets/vectors/kid3.png',
+          height: 120,
+          fit: BoxFit.contain,
+        ),
       ),
+      onEnd: () {
+        // We could loop, but TweenAnimationBuilder onEnd provides a simple pop effect
+      },
     );
   }
   
@@ -485,15 +385,15 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.inventory_2_rounded,
-              size: 22,
+              size: 28,
               color: KidsColors.textPrimary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const Text(
               'What are you measuring?',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
                 color: KidsColors.textPrimary,
               ),
             ),
@@ -514,12 +414,12 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           child: TextField(
             controller: _objectController,
             decoration: InputDecoration(
-              hintText: 'e.g., pencil, water bottle',
-              hintStyle: TextStyle(color: Colors.grey[400]),
+              hintText: 'e.g., pencil, water bottle...',
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 20),
               prefixIcon: Icon(
                 Icons.edit_rounded,
                 color: _borderColor,
-                size: 20,
+                size: 28,
               ),
               suffixIcon: IconButton(
                 icon: Container(
@@ -555,16 +455,18 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.straighten_rounded,
-              size: 22,
+              size: 28,
               color: KidsColors.textPrimary,
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'How much did you measure?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: KidsColors.textPrimary,
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'How much did you measure?',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: KidsColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -584,14 +486,14 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           child: TextField(
             controller: _valueController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
             decoration: InputDecoration(
               hintText: 'Enter number',
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 18),
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 22),
               prefixIcon: Icon(
                 Icons.tag_rounded,
                 color: _borderColor,
-                size: 20,
+                size: 28,
               ),
               suffixIcon: (_measurementType == MeasurementType.length || _measurementType == MeasurementType.area)
                   ? IconButton(
@@ -631,15 +533,15 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
           children: [
             Icon(
               Icons.square_foot_rounded,
-              size: 22,
+              size: 28,
               color: KidsColors.textPrimary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const Text(
               'Choose a unit:',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
                 color: KidsColors.textPrimary,
               ),
             ),

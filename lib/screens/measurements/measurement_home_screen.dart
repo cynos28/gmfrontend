@@ -9,6 +9,7 @@ import 'games/area_game_hub_screen.dart';
 import 'games/volume_game_hub_screen.dart';
 import 'games/weight_game_hub_screen.dart';
 import 'dart:math' as math;
+import 'package:ganithamithura/screens/progress/progress_screen.dart';
 
 /// MeasurementHomeScreen - Kindergarten-friendly measurement module
 class MeasurementHomeScreen extends StatefulWidget {
@@ -79,6 +80,12 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     
     if (index == _currentNavIndex) return;
     
+    if (index == 2) {
+      // Navigate to Progress screen
+      Get.to(() => const ProgressScreen());
+      return;
+    }
+
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',
@@ -90,7 +97,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(AppColors.backgroundColor),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
         child: Stack(
           children: [
@@ -139,14 +146,11 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFF5F5F5),
-            const Color(0xFFE8E8E8),
-          ],
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
       child: Row(
@@ -238,9 +242,9 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     if (availableTopics.contains('Length')) {
       activities.add({
         'title': 'Length',
-        'emoji': '📏',
-        'color': KidsColors.lengthColor,
-        'bgColor': KidsColors.lengthBackground,
+        'image': 'assets/vectors/stitch1.png',
+        'color': const Color(0xFF2196F3), // Blue
+        'bgColor': const Color(0xFFBBDEFB), // Stronger Light Blue
         'icon': Icons.straighten_rounded,
         'arRoute': '/ar-measurement',
         'arArgs': {'type': 'length'},
@@ -251,9 +255,9 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     if (availableTopics.contains('Area')) {
       activities.add({
         'title': 'Area',
-        'emoji': '⬜',
-        'color': KidsColors.areaColor,
-        'bgColor': KidsColors.areaBackground,
+        'image': 'assets/vectors/stitch2.png',
+        'color': const Color(0xFF4CAF50), // Green
+        'bgColor': const Color(0xFFC8E6C9), // Stronger Light Green
         'icon': Icons.grid_on_rounded,
         'arRoute': '/ar-measurement',
         'arArgs': {'type': 'area'},
@@ -264,9 +268,9 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     if (availableTopics.contains('Volume')) {
       activities.add({
         'title': 'Volume',
-        'emoji': '🥤',
-        'color': KidsColors.volumeColor,
-        'bgColor': KidsColors.volumeBackground,
+        'image': 'assets/vectors/stitch3.png',
+        'color': const Color(0xFF00BCD4), // Light Blue / Cyan
+        'bgColor': const Color(0xFFB2EBF2), // Stronger Light Cyan
         'icon': Icons.local_drink_rounded,
         'arRoute': '/ar-measurement',
         'arArgs': {'type': 'volume'},
@@ -277,9 +281,9 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
     if (availableTopics.contains('Weight')) {
       activities.add({
         'title': 'Weight',
-        'emoji': '⚖️',
-        'color': KidsColors.weightColor,
-        'bgColor': KidsColors.weightBackground,
+        'image': 'assets/vectors/stitch4.png',
+        'color': const Color(0xFFFF9800), // Orange
+        'bgColor': const Color(0xFFFFE0B2), // Stronger Light Orange
         'icon': Icons.scale_rounded,
         'arRoute': '/ar-measurement',
         'arArgs': {'type': 'weight'},
@@ -309,7 +313,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
             padding: const EdgeInsets.only(bottom: 20),
             child: _buildBigActivityCard(
               title: activity['title'],
-              emoji: activity['emoji'],
+              image: activity['image'],
               color: activity['color'],
               bgColor: activity['bgColor'],
               icon: activity['icon'],
@@ -344,7 +348,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
 
   Widget _buildBigActivityCard({
     required String title,
-    required String emoji,
+    required String image,
     required Color color,
     required Color bgColor,
     required IconData icon,
@@ -353,58 +357,56 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            bgColor,
-            bgColor.withOpacity(0.6),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 3,
-        ),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Title section with emoji
+          // Main content (Title and Image)
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Animated emoji
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: 1.0 + (_pulseController.value * 0.1),
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 56),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 16),
+                // Left side - Title
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      color: color,
-                      height: 1.1,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
                   ),
+                ),
+                const SizedBox(width: 12),
+                // Right side - Vector Illustration
+                Image.asset(
+                  image,
+                  width: 140,
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 140,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8BBD0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: const Color(0xFFC2185B),
+                        size: 50,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

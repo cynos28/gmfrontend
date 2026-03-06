@@ -200,6 +200,34 @@ class GamesApiService {
     };
   }
 
+  /// Fetch aggregated measurement progress across all domains.
+  static Future<Map<String, dynamic>> getMeasurementProgress({
+    required String studentId,
+  }) async {
+    try {
+      final base = await _getWorkingBaseUrl();
+      final uri = Uri.parse('$base/measurement-progress/$studentId');
+      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return json.decode(res.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {
+      'student_id': studentId,
+      'overall_accuracy': 0.0,
+      'overall_rounds': 0,
+      'overall_stars': 0,
+      'domains': [
+        {'domain': 'length', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
+        {'domain': 'area', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
+        {'domain': 'volume', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
+        {'domain': 'weight', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
+      ],
+    };
+  }
+
   // ─── defaults ────────────────────────────────────────────────────────────
 
   static Map<String, dynamic> _defaultBridgeParams() => {
