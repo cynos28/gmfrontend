@@ -14,7 +14,9 @@ class AppConstants {
   
   static Future<void> loadDynamicUrls() async {
     try {
-      final response = await http.get(Uri.parse(_gistUrl));
+      // Append a timestamp to bypass GitHub's heavy edge cache for raw assets
+      final String noCacheUrl = "$_gistUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      final response = await http.get(Uri.parse(noCacheUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         
