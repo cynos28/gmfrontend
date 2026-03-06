@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'learn_shapes.dart';
+import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/widgets/shapes/animated_shape_background.dart';
 
 class ShapesSelectionScreen extends StatefulWidget {
   const ShapesSelectionScreen({super.key});
@@ -9,36 +12,37 @@ class ShapesSelectionScreen extends StatefulWidget {
   State<ShapesSelectionScreen> createState() => _ShapesSelectionScreenState();
 }
 
-class _ShapesSelectionScreenState extends State<ShapesSelectionScreen> {
+class _ShapesSelectionScreenState extends State<ShapesSelectionScreen> with TickerProviderStateMixin {
   bool is2DSelected = true;
+  late AnimationController _floatingController;
 
   final List<ShapeCardData> shapes2D = [
     ShapeCardData(
       name: 'Circle',
       color: const Color(0xFFD946EF),
-      backgroundColor: const Color(0xFFCB45D0).withOpacity(0.24),
-      borderColor: const Color(0xFFBF41CB),
+      bgColor: const Color(0xFFFFEBFF),
+      borderColor: const Color(0xFFD946EF),
       shapeIndex: 0,
     ),
     ShapeCardData(
       name: 'Square',
-      color: const Color(0xFF5B96E5),
-      backgroundColor: const Color(0xFF5B96E5).withOpacity(0.24),
-      borderColor: const Color(0xFF5690E1),
+      color: const Color(0xFF2196F3),
+      bgColor: const Color(0xFFE3F2FD),
+      borderColor: const Color(0xFF2196F3),
       shapeIndex: 1,
     ),
     ShapeCardData(
       name: 'Rectangle',
-      color: const Color(0xFFBCA43E),
-      backgroundColor: const Color(0xFFBCA43E).withOpacity(0.24),
-      borderColor: const Color(0xFFCDAF42),
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+      borderColor: const Color(0xFFFF9800),
       shapeIndex: 3,
     ),
     ShapeCardData(
       name: 'Triangle',
-      color: const Color(0xFF22B941),
-      backgroundColor: const Color(0xFF22B941).withOpacity(0.24),
-      borderColor: const Color(0xFF37D55D),
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      borderColor: const Color(0xFF4CAF50),
       shapeIndex: 2,
     ),
   ];
@@ -47,498 +51,318 @@ class _ShapesSelectionScreenState extends State<ShapesSelectionScreen> {
     ShapeCardData(
       name: 'Sphere',
       color: const Color(0xFFD946EF),
-      backgroundColor: const Color(0xFFCB45D0).withOpacity(0.24),
-      borderColor: const Color(0xFFBF41CB),
-      shapeIndex: 1,
-    ),
-    ShapeCardData(
-      name: 'Cube',
-      color: const Color(0xFF5B96E5),
-      backgroundColor: const Color(0xFF5B96E5).withOpacity(0.24),
-      borderColor: const Color(0xFF5690E1),
+      bgColor: const Color(0xFFFFEBFF),
+      borderColor: const Color(0xFFD946EF),
       shapeIndex: 0,
     ),
     ShapeCardData(
+      name: 'Cube',
+      color: const Color(0xFF2196F3),
+      bgColor: const Color(0xFFE3F2FD),
+      borderColor: const Color(0xFF2196F3),
+      shapeIndex: 1,
+    ),
+    ShapeCardData(
       name: 'Cylinder',
-      color: const Color(0xFFBCA43E),
-      backgroundColor: const Color(0xFFBCA43E).withOpacity(0.24),
-      borderColor: const Color(0xFFCDAF42),
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+      borderColor: const Color(0xFFFF9800),
       shapeIndex: 2,
     ),
     ShapeCardData(
       name: 'Cone',
-      color: const Color(0xFF22B941),
-      backgroundColor: const Color(0xFF22B941).withOpacity(0.24),
-      borderColor: const Color(0xFF37D55D),
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      borderColor: const Color(0xFF4CAF50),
       shapeIndex: 3,
     ),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final currentShapes = is2DSelected ? shapes2D : shapes3D;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Back button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 10),
-                child: Row(
-                  children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      width: 31,
-                      height: 31,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9D9D9).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 15,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            
-            // 2D/3D Toggle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 46),
-              child: Container(
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD9D9D9),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.black.withOpacity(0.2),
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    AnimatedAlign(
-                      duration: const Duration(milliseconds: 200),
-                      alignment: is2DSelected
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
-                      child: Container(
-                        width: 145,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1AD7F),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                is2DSelected = true;
-                              });
-                            },
-                            child: Container(
-                              color: Colors.transparent,
-                              alignment: Alignment.center,
-                              child: Text(
-                                '2D Shapes',
-                                style: TextStyle(
-                                  fontFamily: 'Be Vietnam Pro',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: is2DSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                is2DSelected = false;
-                              });
-                            },
-                            child: Container(
-                              color: Colors.transparent,
-                              alignment: Alignment.center,
-                              child: Text(
-                                '3D Shapes',
-                                style: TextStyle(
-                                  fontFamily: 'Be Vietnam Pro',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: !is2DSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            
-            // Shapes Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  // First Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildShapeCard(currentShapes[0]),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildShapeCard(currentShapes[1]),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Second Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildShapeCard(currentShapes[2]),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildShapeCard(currentShapes[3]),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Bottom illustration
-            Image.asset(
-              'assets/images/learning_illustration.png',
-              height: 100,
-              errorBuilder: (context, error, stackTrace) {
-                return const SizedBox(
-                  height: 100,
-                  child: Center(
-                    child: Text('👨‍👩‍👧‍👦', style: TextStyle(fontSize: 60)),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 38),
-            
-            // Bottom Navigation Bar
-            _buildBottomNavBar(),
-          ],
-        ),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
   }
 
-  Widget _buildShapeCard(ShapeCardData shapeData) {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to learn shapes screen with the selected shape index and type
-        Get.to(
-          () => LearnShapesScreen(
-            initialIndex: shapeData.shapeIndex,
-            shapeType: is2DSelected ? '2d' : '3d',
-          ),
-        );
-      },
-      child: AspectRatio(
-        aspectRatio: 0.92,
-        child: Container(
-          decoration: BoxDecoration(
-            color: shapeData.backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: shapeData.borderColor,
-              width: 1.5,
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentShapes = is2DSelected ? shapes2D : shapes3D;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final int crossAxisCount = screenWidth > 600 ? 3 : 2;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // 1. Premium Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFE0F7FA),
+                  Color(0xFFF3E5F5),
+                  Color(0xFFFFF9C4),
+                ],
+              ),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
+
+          // 2. Animated Background Shapes
+          Positioned.fill(
+            child: AnimatedShapeBackground(animation: _floatingController),
+          ),
+
+          SafeArea(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Shape
+                _buildHeader(),
+                const SizedBox(height: 20),
+                _buildToggle(),
+                const SizedBox(height: 24),
                 Expanded(
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
-                      child: Image.asset(
-                        _getShapeImagePath(shapeData.name),
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback to custom painter if image not found
-                          return CustomPaint(
-                            painter: ShapePainter(
-                              shapeName: shapeData.name,
-                              color: shapeData.color,
-                            ),
-                          );
-                        },
-                      ),
+                  child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 25,
+                      mainAxisSpacing: 25,
+                      childAspectRatio: 0.75,
                     ),
+                    itemCount: currentShapes.length,
+                    itemBuilder: (context, index) {
+                      return _ShapeCard(
+                        shapeData: currentShapes[index],
+                        is2D: is2DSelected,
+                        index: index,
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Shape Name
-                Text(
-                  shapeData.name,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                    color: Color(0xFF273444),
-                  ),
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildHeader() {
     return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.16),
-            offset: const Offset(6, 6),
-            blurRadius: 54,
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.home_outlined, 'Home', true),
-          _buildNavItem(Icons.school_outlined, 'Learn', false),
-          _buildNavItem(Icons.trending_up, 'Progress', false),
-          _buildNavItem(Icons.person_outline, 'Profile', false),
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'Choose a Shape',
+            style: GoogleFonts.fredoka(
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFEC76A0),
+              shadows: [
+                const Shadow(color: Colors.white, offset: Offset(2, 2), blurRadius: 0),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  String _getShapeImagePath(String shapeName) {
-    final name = shapeName.toLowerCase();
-    final type = is2DSelected ? '2d' : '3d';
-    
-    if (type == '2d') {
-      switch (name) {
-        case 'circle':
-          return 'assets/images/2d_shapes/circle.png';
-        case 'square':
-          return 'assets/images/2d_shapes/square.png';
-        case 'triangle':
-          return 'assets/images/2d_shapes/triangle.png';
-        case 'rectangle':
-          return 'assets/images/2d_shapes/rectangle.png';
-        default:
-          return 'assets/images/$name.png';
-      }
-    } else {
-      switch (name) {
-        case 'cube':
-          return 'assets/images/3d_shapes/cube.png';
-        case 'sphere':
-          return 'assets/images/3d_shapes/sphere.png';
-        case 'cylinder':
-          return 'assets/images/3d_shapes/cylinder.png';
-        case 'cone':
-          return 'assets/images/3d_shapes/cone.png';
-        default:
-          return 'assets/images/$name.png';
-      }
-    }
+  Widget _buildToggle() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      height: 68,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Row(
+        children: [
+          _buildToggleButton('2D Shapes', is2DSelected, () {
+            setState(() => is2DSelected = true);
+          }),
+          _buildToggleButton('3D Shapes', !is2DSelected, () {
+            setState(() => is2DSelected = false);
+          }),
+        ],
+      ),
+    );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          size: 24,
-          color: isActive
-              ? const Color(0xFF8CA9FF)
-              : const Color(0xFF49596E).withOpacity(0.64),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Be Vietnam Pro',
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-            color: isActive
-                ? const Color(0xFF8CA9FF)
-                : const Color(0xFF49596E).withOpacity(0.64),
+  Widget _buildToggleButton(String label, bool isSelected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [Color(0xFFFFB199), Color(0xFFFF0844)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFFF0844).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: GoogleFonts.fredoka(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? Colors.white : Colors.black54,
+            ),
           ),
         ),
-      ],
+      ),
     );
+  }
+}
+
+class _ShapeCard extends StatelessWidget {
+  final ShapeCardData shapeData;
+  final bool is2D;
+  final int index;
+
+  const _ShapeCard({
+    required this.shapeData,
+    required this.is2D,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 800 + (index * 150)),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) => Transform.scale(
+        scale: value,
+        child: Opacity(opacity: value.clamp(0, 1), child: child),
+      ),
+      child: GestureDetector(
+        onTap: () {
+          Get.to(
+            () => LearnShapesScreen(
+              initialIndex: shapeData.shapeIndex,
+              shapeType: is2D ? '2d' : '3d',
+            ),
+            transition: Transition.circularReveal,
+            duration: const Duration(milliseconds: 600),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: shapeData.color.withOpacity(0.2), width: 4),
+            boxShadow: [
+              BoxShadow(
+                color: shapeData.color.withOpacity(0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Hero(
+                    tag: 'shape_${is2D ? "2d" : "3d"}_${shapeData.name}',
+                    child: Image.asset(
+                      _getShapeImagePath(shapeData.name, is2D),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.category_rounded,
+                        size: 60,
+                        color: shapeData.color,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                shapeData.name,
+                style: GoogleFonts.fredoka(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getShapeImagePath(String shapeName, bool is2D) {
+    final name = shapeName.toLowerCase();
+    return is2D ? 'assets/images/2d_shapes/$name.png' : 'assets/images/3d_shapes/$name.png';
   }
 }
 
 class ShapeCardData {
   final String name;
   final Color color;
-  final Color backgroundColor;
+  final Color bgColor;
   final Color borderColor;
   final int shapeIndex;
 
   ShapeCardData({
     required this.name,
     required this.color,
-    required this.backgroundColor,
+    required this.bgColor,
     required this.borderColor,
     required this.shapeIndex,
   });
-}
-
-class ShapePainter extends CustomPainter {
-  final String shapeName;
-  final Color color;
-
-  ShapePainter({
-    required this.shapeName,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final center = Offset(size.width / 2, size.height / 2);
-
-    switch (shapeName) {
-      case 'Circle':
-        canvas.drawCircle(center, size.width * 0.35, paint);
-        break;
-      case 'Square':
-        final rect = Rect.fromCenter(
-          center: center,
-          width: size.width * 0.6,
-          height: size.width * 0.6,
-        );
-        canvas.drawRect(rect, paint);
-        break;
-      case 'Rectangle':
-        final rect = Rect.fromCenter(
-          center: center,
-          width: size.width * 0.7,
-          height: size.width * 0.45,
-        );
-        canvas.drawRect(rect, paint);
-        break;
-      case 'Triangle':
-        final path = Path();
-        path.moveTo(center.dx, center.dy - size.height * 0.3);
-        path.lineTo(center.dx - size.width * 0.35, center.dy + size.height * 0.25);
-        path.lineTo(center.dx + size.width * 0.35, center.dy + size.height * 0.25);
-        path.close();
-        canvas.drawPath(path, paint);
-        break;
-      case 'Sphere':
-        // Draw a circle with gradient effect for 3D look
-        canvas.drawCircle(center, size.width * 0.35, paint);
-        break;
-      case 'Cube':
-        // Simple cube representation
-        final rect = Rect.fromCenter(
-          center: center,
-          width: size.width * 0.5,
-          height: size.width * 0.5,
-        );
-        canvas.drawRect(rect, paint);
-        // Draw simple 3D edges
-        paint.color = color.withOpacity(0.6);
-        final path = Path();
-        path.moveTo(rect.right, rect.top);
-        path.lineTo(rect.right + 15, rect.top - 15);
-        path.lineTo(rect.right + 15, rect.bottom - 15);
-        path.lineTo(rect.right, rect.bottom);
-        canvas.drawPath(path, paint);
-        break;
-      case 'Cylinder':
-        // Draw cylinder
-        final topEllipse = Rect.fromCenter(
-          center: Offset(center.dx, center.dy - size.height * 0.2),
-          width: size.width * 0.5,
-          height: size.height * 0.15,
-        );
-        canvas.drawOval(topEllipse, paint);
-        
-        final bodyRect = Rect.fromLTRB(
-          center.dx - size.width * 0.25,
-          center.dy - size.height * 0.2,
-          center.dx + size.width * 0.25,
-          center.dy + size.height * 0.3,
-        );
-        canvas.drawRect(bodyRect, paint);
-        
-        final bottomEllipse = Rect.fromCenter(
-          center: Offset(center.dx, center.dy + size.height * 0.3),
-          width: size.width * 0.5,
-          height: size.height * 0.15,
-        );
-        canvas.drawOval(bottomEllipse, paint);
-        break;
-      case 'Cone':
-        // Draw cone
-        final path = Path();
-        path.moveTo(center.dx, center.dy - size.height * 0.3);
-        path.lineTo(center.dx - size.width * 0.35, center.dy + size.height * 0.3);
-        path.lineTo(center.dx + size.width * 0.35, center.dy + size.height * 0.3);
-        path.close();
-        canvas.drawPath(path, paint);
-        
-        // Base ellipse
-        final baseEllipse = Rect.fromCenter(
-          center: Offset(center.dx, center.dy + size.height * 0.3),
-          width: size.width * 0.7,
-          height: size.height * 0.15,
-        );
-        canvas.drawOval(baseEllipse, paint);
-        break;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

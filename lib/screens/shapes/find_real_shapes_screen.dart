@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 
-/// FindRealShapesScreen - Camera screen to detect shapes in real world
+/// Kid-Friendly FindRealShapesScreen - Camera screen to detect shapes in real world
 class FindRealShapesScreen extends StatefulWidget {
   const FindRealShapesScreen({super.key});
 
@@ -47,8 +47,8 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
           _isCameraInitialized = true;
         });
         
-        // Hide instructions after 3 seconds
-        Future.delayed(const Duration(seconds: 3), () {
+        // Hide instructions after 4 seconds
+        Future.delayed(const Duration(seconds: 4), () {
           if (mounted) {
             setState(() {
               _showInstructions = false;
@@ -64,36 +64,19 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
   void _showError(String message) {
     Get.dialog(
       AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 8),
-            Text(
-              'Detection Notice',
-              style: TextStyle(
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 32),
+            SizedBox(width: 12),
+            Text('Notice', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
           ],
         ),
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontFamily: 'Be Vietnam Pro',
-            fontSize: 14,
-          ),
-        ),
+        content: Text(message, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text(
-              'Try Again',
-              style: TextStyle(
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: const Text('Try Again', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFFE9638F))),
           ),
         ],
       ),
@@ -107,142 +90,82 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
     }
 
     try {
-      // Show loading indicator
       Get.dialog(
-        const Center(
-          child: CircularProgressIndicator(),
-        ),
+        const Center(child: CircularProgressIndicator(color: Color(0xFFE9638F))),
         barrierDismissible: false,
       );
 
-      // Capture the image
       final image = await _cameraController!.takePicture();
-      
-      // Send image to shape detection API
       await _detectShapeFromImage(image.path);
-      
     } catch (e) {
-      Get.back(); // Close loading dialog
-      _showError('Failed to capture image: $e');
+      Get.back(); // Close loading
+      _showError('Failed to capture: $e');
     }
   }
 
   Future<void> _detectShapeFromImage(String imagePath) async {
     try {
       final url = Uri.parse('${AppConstants.baseUrl}/shapes-patterns/detect-shape/');
-      
       var request = http.MultipartRequest('POST', url);
-      
-      // Add the image file as JPEG
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image_file',
-          imagePath,
-          filename: 'shape_image.jpg',
-        ),
-      );
+      request.files.add(await http.MultipartFile.fromPath('image_file', imagePath));
 
-      // Send request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      Get.back(); // Close loading dialog
+      Get.back(); // Close loading
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         final detectedShape = result['shape'] ?? 'Unknown';
         
-        // Check if no shape was detected
         if (detectedShape == 'None' || detectedShape == 'Unknown') {
-          _showError(
-            'No clear shape detected!\n\n'
-            'Tips:\n'
-            '• Point camera at a clear geometric shape\n'
-            '• Ensure good lighting\n'
-            '• Try simple shapes: Circle, Square, Triangle\n'
-            '• Keep the shape centered and in focus'
-          );
+          _showError('No clear shape detected! 🧐\nTry pointing at a clear object in good light.');
         } else {
-          // Show result dialog
           _showShapeDetectionResult(detectedShape);
         }
       } else {
-        _showError('Failed to detect shape: ${response.statusCode}\nResponse: ${response.body}');
+        _showError('Connection error! Please try again.');
       }
     } catch (e) {
-      Get.back(); // Close loading dialog
-      _showError('Error detecting shape: $e');
+      Get.back();
+      _showError('Oops! Error detecting shape.');
     }
   }
 
   void _showShapeDetectionResult(String shape) {
     Get.dialog(
       AlertDialog(
-        title: const Text(
-          'Shape Detected!',
-          style: TextStyle(
-            fontFamily: 'Be Vietnam Pro',
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 60,
-            ),
+            const Icon(Icons.stars_rounded, color: Colors.amber, size: 80),
             const SizedBox(height: 16),
-            Text(
-              'Detected Shape:',
-              style: TextStyle(
-                color: Colors.black.withOpacity(0.7),
-                fontSize: 14,
-                fontFamily: 'Be Vietnam Pro',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              shape,
-              style: const TextStyle(
-                color: Color(0xFFE9638F),
-                fontSize: 24,
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: FontWeight.w700,
+            const Text('Shape Detected!', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(color: const Color(0xFFE9638F).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+              child: Text(
+                shape,
+                style: const TextStyle(color: Color(0xFFE9638F), fontSize: 34, fontWeight: FontWeight.w900),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'Try Again',
-              style: TextStyle(
-                color: Color(0xFFE9638F),
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: FontWeight.w600,
+          Center(
+            child: ElevatedButton(
+              onPressed: () => Get.back(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE9638F),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
+              child: const Text('Try Another!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back(); // Close dialog
-              Get.back(); // Go back to previous screen
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE9638F),
-            ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Be Vietnam Pro',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -254,242 +177,117 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
     super.dispose();
   }
 
-  void _onNavTap(int index) {
-    if (index == 0) {
-      // Navigate to home
-      Get.back();
-      return;
-    }
-
-    if (index == _currentNavIndex) {
-      // Already on current tab
-      return;
-    }
-
-    // TODO: Navigate to other screens when ready
-    Get.snackbar(
-      'Coming Soon',
-      'This feature will be available soon',
-      backgroundColor: const Color(AppColors.infoColor),
-      colorText: Colors.white,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE5ECF0),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
-            // Camera preview background
             if (_isCameraInitialized && _cameraController != null)
-              Positioned.fill(
-                child: CameraPreview(_cameraController!),
-              )
+              Positioned.fill(child: CameraPreview(_cameraController!))
             else
-              // Loading or placeholder background
-              Positioned.fill(
-                child: Container(
-                  color: const Color(0xFFE5ECF0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Initializing camera...',
-                          style: TextStyle(
-                            color: Colors.black.withOpacity(0.50),
-                            fontSize: 17,
-                            fontFamily: 'Be Vietnam Pro',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              const Positioned.fill(child: Center(child: CircularProgressIndicator(color: Colors.white))),
 
-            // Main content overlay
             Column(
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                  child: Row(
-                    children: [
-                      // Back button
-                      Container(
-                        width: 31,
-                        height: 31,
-                        decoration: ShapeDecoration(
-                          color: const Color(0x7FD9D9D9),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            size: 18,
-                            color: Colors.black,
-                          ),
-                          onPressed: () => Get.back(),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Title
-                      const Expanded(
-                        child: Text(
-                          'Find Real Shapes',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontFamily: 'Be Vietnam Pro',
-                            fontWeight: FontWeight.w700,
-                            height: 1.10,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Info button
-                      Container(
-                        width: 31,
-                        height: 31,
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFE9638F),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Camera preview area
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Instruction text overlay
-                        if (_showInstructions)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Point at objects to detect shapes!',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontFamily: 'Be Vietnam Pro',
-                                fontWeight: FontWeight.w600,
-                                height: 1.29,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Hint card
-                if (_showInstructions)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        '🔍 Look for circles, squares, triangles around you!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.black.withOpacity(0.70),
-                          fontSize: 14,
-                          fontFamily: 'Be Vietnam Pro',
-                          fontWeight: FontWeight.w400,
-                          height: 1.57,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // Capture button
-                if (!_showInstructions)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: _captureImage,
-                        child: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFE9638F),
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 32,
-                            color: Color(0xFFE9638F),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                _buildHeader(),
+                const Spacer(),
+                if (_showInstructions) _buildInstructionOverlay(),
+                const SizedBox(height: 40),
+                if (!_showInstructions) _buildCaptureButton(),
+                const SizedBox(height: 110), // Space for bottom nav
               ],
             ),
 
-            // Bottom Navigation Bar
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: BottomNavBar(
                 currentIndex: _currentNavIndex,
-                onTap: _onNavTap,
+                onTap: (index) {
+                  if (index == 0) Get.back();
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
+            ),
+          ),
+          const Text(
+            'Find Shapes',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, shadows: [Shadow(blurRadius: 10, color: Colors.black)]),
+          ),
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(color: const Color(0xFFE9638F), borderRadius: BorderRadius.circular(15)),
+            child: const Icon(Icons.search_rounded, color: Colors.white, size: 26),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstructionOverlay() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      builder: (context, value, child) => Opacity(opacity: value, child: child),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white24)),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.camera_alt_rounded, color: Colors.white, size: 60),
+            SizedBox(height: 16),
+            Text(
+              'Move your camera around to find shapes! 🔍',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCaptureButton() {
+    return GestureDetector(
+      onTap: _captureImage,
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: const Offset(0, 10))],
+          border: Border.all(color: const Color(0xFFE9638F), width: 6),
+        ),
+        child: const Center(child: Icon(Icons.camera_rounded, color: Color(0xFFE9638F), size: 54)),
       ),
     );
   }
