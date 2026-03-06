@@ -22,7 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Map<int, Map<String, dynamic>> _gradeInfo = {
     1: {
       'color': const Color(0xFF4CAF50),
-      'icon': '🌱',
+      'image': 'assets/vectors/stitch1.png',
       'title': 'Grade 1',
       'subtitle': 'Beginner',
       'description': 'Simple counting, comparing, and basic identification',
@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     },
     2: {
       'color': const Color(0xFF2196F3),
-      'icon': '🌿',
+      'image': 'assets/vectors/stitch2.png',
       'title': 'Grade 2',
       'subtitle': 'Elementary',
       'description': 'Basic calculations, simple measurements, and comparisons',
@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     },
     3: {
       'color': const Color(0xFF9C27B0),
-      'icon': '🌳',
+      'image': 'assets/vectors/stitch3.png',
       'title': 'Grade 3',
       'subtitle': 'Intermediate',
       'description': 'Multi-step problems, conversions, and reasoning',
@@ -49,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     },
     4: {
       'color': const Color(0xFFFF5722),
-      'icon': '🌲',
+      'image': 'assets/vectors/stitch4.png',
       'title': 'Grade 4',
       'subtitle': 'Advanced',
       'description': 'Complex word problems with critical thinking',
@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await UserService.saveGrade(_selectedGrade);
     final gradeInfo = _gradeInfo[_selectedGrade]!;
     Get.snackbar(
-      '${gradeInfo['icon']} Grade Updated!',
+      'Grade Updated!',
       'Now set to ${gradeInfo['title']} (${gradeInfo['subtitle']})',
       backgroundColor: (gradeInfo['color'] as Color).withOpacity(0.9),
       colorText: Colors.white,
@@ -119,8 +119,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Text(
                     'Student Settings',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 24, // Increased
+                      fontWeight: FontWeight.w800,
                       color: Color(AppColors.textBlack),
                     ),
                   ),
@@ -128,8 +128,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     'Select your grade level to get questions matched to your learning stage.',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+                      fontSize: 16, // Increased
+                      color: Colors.grey[700],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -147,48 +147,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () => setState(() => _selectedGrade = grade),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(20), // Increased
                           decoration: BoxDecoration(
                             color: isSelected ? color.withOpacity(0.08) : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20), // Increased
                             border: Border.all(
                               color: isSelected ? color : Colors.grey.withOpacity(0.2),
-                              width: isSelected ? 2 : 1,
+                              width: isSelected ? 3 : 2, // Increased
                             ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: color.withOpacity(0.2),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
+                                      color: color.withOpacity(0.3),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 6),
                                     ),
                                   ]
                                 : [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.03),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                           ),
                           child: Row(
                             children: [
-                              // Grade icon
-                              Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: isSelected ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    info['icon'] as String,
-                                    style: const TextStyle(fontSize: 28),
+                              // Grade vector character
+                              AnimatedScale(
+                                scale: isSelected ? 1.2 : 0.9,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.elasticOut,
+                                child: Container(
+                                  width: 70, // Increased
+                                  height: 70, // Increased
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: Image.asset(
+                                    info['image'] as String,
+                                    colorBlendMode: isSelected ? null : BlendMode.saturation,
+                                    color: isSelected ? null : Colors.grey,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 20),
                               // Grade info
                               Expanded(
                                 child: Column(
@@ -199,52 +204,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         Text(
                                           info['title'] as String,
                                           style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
+                                            fontSize: 22, // Increased
+                                            fontWeight: FontWeight.w800,
                                             color: isSelected ? color : const Color(AppColors.textBlack),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: isSelected ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
                                           child: Text(
                                             info['ageRange'] as String,
                                             style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: isSelected ? color : Colors.grey[600],
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected ? color : Colors.grey[700],
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
                                       info['description'] as String,
                                       style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[600],
+                                        fontSize: 14, // Increased
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 8),
                                     Row(
                                       children: [
                                         Icon(
                                           Icons.speed_rounded,
-                                          size: 14,
-                                          color: isSelected ? color : Colors.grey[500],
+                                          size: 16,
+                                          color: isSelected ? color : Colors.grey[600],
                                         ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: 6),
                                         Text(
                                           info['difficulty'] as String,
                                           style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: isSelected ? color : Colors.grey[500],
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: isSelected ? color : Colors.grey[600],
                                           ),
                                         ),
                                       ],
@@ -301,17 +307,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        children: const [
+                          Icon(Icons.save_rounded, size: 24),
+                          SizedBox(width: 12),
                           Text(
-                            _gradeInfo[_selectedGrade]!['icon'] as String,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
                             'Save Grade Level',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],

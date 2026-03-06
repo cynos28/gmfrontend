@@ -84,6 +84,7 @@ class Question {
   final String difficulty; // easy, medium, hard
   final String explanation;
   final String? imageUrl; // URL to question image
+  final List<String> hints;
 
   Question({
     required this.questionId,
@@ -93,6 +94,7 @@ class Question {
     required this.difficulty,
     required this.explanation,
     this.imageUrl,
+    this.hints = const [],
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
@@ -104,6 +106,7 @@ class Question {
       difficulty: json['difficulty'] ?? 'easy',
       explanation: json['explanation'] ?? json['explanation_en'] ?? '',
       imageUrl: json['imageUrl'] ?? json['image_url'],
+      hints: List<String>.from(json['hints'] ?? []),
     );
   }
 
@@ -116,6 +119,7 @@ class Question {
       'difficulty': difficulty,
       'explanation': explanation,
       'imageUrl': imageUrl,
+      'hints': hints,
     };
   }
 }
@@ -305,6 +309,9 @@ class RAGQuestion {
   });
 
   factory RAGQuestion.fromJson(Map<String, dynamic> json) {
+    // Fix image URLs: handle relative paths and localhost URLs
+    String? rawImageUrl = json['image_url'];
+    
     return RAGQuestion(
       id: json['id'] ?? json['question_id'] ?? '',
       documentId: json['document_id'],
@@ -318,7 +325,7 @@ class RAGQuestion {
       concepts: List<String>.from(json['concepts'] ?? []),
       explanation: json['explanation'],
       hints: List<String>.from(json['hints'] ?? []),
-      imageUrl: json['image_url'],
+      imageUrl: rawImageUrl,
     );
   }
   
@@ -351,6 +358,7 @@ class RAGQuestion {
       difficulty: difficultyLevel <= 2 ? 'easy' : difficultyLevel <= 4 ? 'medium' : 'hard',
       explanation: explanation ?? '',
       imageUrl: imageUrl,
+      hints: hints,
     );
   }
 }

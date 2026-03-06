@@ -1,79 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:ganithamithura/utils/kids_theme.dart';
 import 'measurement_progress_screen.dart';
 import 'numbers_progress_screen.dart';
 import 'symbols_progress_screen.dart';
 import 'shapes_progress_screen.dart';
 
-/// Main Progress screen with 4 large kid-friendly category cards
+/// Main Progress screen with large kid-friendly category cards
 class ProgressScreen extends StatelessWidget {
   const ProgressScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 1 column on phone, 2 on tablet
+    final int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 2 : 1;
+
     return Scaffold(
-      backgroundColor: KidsColors.backgroundLight,
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
         child: Column(
           children: [
             // ─── Header ─────────────────────────────
             _buildHeader(context),
-            const SizedBox(height: KidsSpacing.lg),
+            const SizedBox(height: 16),
 
-            // ─── 4 Grid Cards ────────────────────────
+            // ─── Grid Cards ────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: KidsSpacing.screenPadding,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: KidsSpacing.lg,
-                  crossAxisSpacing: KidsSpacing.lg,
-                  childAspectRatio: 0.85,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 20,
+                  crossAxisSpacing: 20,
+                  // Tweak aspect ratio based on columns so they are always large
+                  childAspectRatio: crossAxisCount == 1 ? 1.8 : 1.2,
                   children: [
                     _CategoryCard(
                       title: 'Numbers',
-                      subtitle: 'Count & Trace',
                       icon: Icons.looks_one_rounded,
-                      color: KidsColors.primaryAccent,
-                      bgColor: KidsColors.primaryBackground,
-                      image: 'assets/vectors/kid1.png',
-                      onTap: () => Get.to(() => const NumbersProgressScreen()),
+                      color: const Color(0xFFFF9800), // Orange
+                      bgColor: const Color(0xFFFFE0B2),
+                      image: 'assets/vectors/stitch1.png',
+                      onTap: () => Get.to(() => const NumbersProgressScreen(), transition: Transition.rightToLeft),
                     ),
                     _CategoryCard(
                       title: 'Symbols',
-                      subtitle: 'Compare & Match',
                       icon: Icons.compare_arrows_rounded,
-                      color: KidsColors.purple,
-                      bgColor: KidsColors.capacityBackground,
-                      image: 'assets/vectors/kid2.png',
-                      onTap: () => Get.to(() => const SymbolsProgressScreen()),
+                      color: const Color(0xFF9C27B0), // Purple
+                      bgColor: const Color(0xFFE1BEE7),
+                      image: 'assets/vectors/stitch2.png',
+                      onTap: () => Get.to(() => const SymbolsProgressScreen(), transition: Transition.rightToLeft),
                     ),
                     _CategoryCard(
                       title: 'Measurements',
-                      subtitle: 'Length, Area & More',
                       icon: Icons.straighten_rounded,
-                      color: KidsColors.secondaryAccent,
-                      bgColor: KidsColors.secondaryBackground,
-                      image: 'assets/vectors/kid3.png',
-                      onTap: () => Get.to(() => const MeasurementProgressScreen()),
+                      color: const Color(0xFF4CAF50), // Green
+                      bgColor: const Color(0xFFC8E6C9),
+                      image: 'assets/vectors/stitch3.png',
+                      onTap: () => Get.to(() => const MeasurementProgressScreen(), transition: Transition.rightToLeft),
                     ),
                     _CategoryCard(
                       title: 'Shapes',
-                      subtitle: '2D & 3D Shapes',
                       icon: Icons.category_rounded,
-                      color: KidsColors.highlightAccent,
-                      bgColor: KidsColors.highlightBackground,
-                      image: 'assets/vectors/kid4.png',
-                      onTap: () => Get.to(() => const ShapesProgressScreen()),
+                      color: const Color(0xFF2196F3), // Blue
+                      bgColor: const Color(0xFFBBDEFB),
+                      image: 'assets/vectors/stitch4.png',
+                      onTap: () => Get.to(() => const ShapesProgressScreen(), transition: Transition.rightToLeft),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: KidsSpacing.lg),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -82,47 +79,57 @@ class ProgressScreen extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        KidsSpacing.screenPadding,
-        KidsSpacing.lg,
-        KidsSpacing.screenPadding,
-        KidsSpacing.sm,
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
       ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Row(
         children: [
           // Back button
           GestureDetector(
             onTap: () => Get.back(),
             child: Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-                boxShadow: KidsShadows.soft,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: KidsColors.textPrimary,
-                size: 24,
-              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
             ),
           ),
-          const SizedBox(width: KidsSpacing.md),
+          const SizedBox(width: 16),
           // Title
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'My Progress 📊',
-                  style: KidsTypography.title.copyWith(fontSize: 26),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'See how far you\'ve come!',
-                  style: KidsTypography.helper.copyWith(
-                    color: KidsColors.textTertiary,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
                   ),
                 ),
               ],
@@ -130,17 +137,23 @@ class ProgressScreen extends StatelessWidget {
           ),
           // Trophy icon
           Container(
-            width: 52,
-            height: 52,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              color: KidsColors.starBackground,
-              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-              boxShadow: KidsShadows.soft,
+              color: const Color(0xFFFFF9C4),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Icon(
               Icons.emoji_events_rounded,
-              color: KidsColors.starGold,
-              size: 32,
+              color: Color(0xFFFFB300),
+              size: 36,
             ),
           ),
         ],
@@ -152,7 +165,6 @@ class ProgressScreen extends StatelessWidget {
 /// Large, colorful kid-friendly category card
 class _CategoryCard extends StatelessWidget {
   final String title;
-  final String subtitle;
   final IconData icon;
   final Color color;
   final Color bgColor;
@@ -161,7 +173,6 @@ class _CategoryCard extends StatelessWidget {
 
   const _CategoryCard({
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.color,
     required this.bgColor,
@@ -175,108 +186,98 @@ class _CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-          boxShadow: KidsShadows.medium,
-          border: Border.all(color: color.withOpacity(0.15), width: 2),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Stack(
+        child: Column(
           children: [
-            // Background gradient
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      bgColor.withOpacity(0.5),
-                      bgColor.withOpacity(0.1),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(KidsSpacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Icon badge
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    // Text side
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(icon, color: Colors.white, size: 28),
+                          ),
+                          const Spacer(),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black87,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                'View Details',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: color,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_rounded, color: color, size: 18),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Image side
+                    Expanded(
+                      flex: 2,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.8, end: 1.0),
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: child,
+                          );
+                        },
+                        child: Image.asset(
+                          image,
+                          fit: BoxFit.contain,
                         ),
-                      ],
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 22),
-                  ),
-                  const Spacer(),
-                  // Character image
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Image.asset(
-                      image,
-                      height: 50,
-                      errorBuilder: (_, __, ___) => Icon(
-                        icon,
-                        size: 40,
-                        color: color.withOpacity(0.3),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // Title
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      title,
-                      style: KidsTypography.subtitle.copyWith(
-                        color: color,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  // Subtitle
-                  Text(
-                    subtitle,
-                    style: KidsTypography.small.copyWith(
-                      color: KidsColors.textTertiary,
-                      fontSize: 11,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            // Arrow indicator
-            Positioned(
-              bottom: KidsSpacing.sm,
-              right: KidsSpacing.sm,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: color,
-                  size: 16,
+                  ],
                 ),
               ),
             ),

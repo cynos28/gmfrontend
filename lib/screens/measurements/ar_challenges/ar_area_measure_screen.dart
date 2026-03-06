@@ -211,13 +211,13 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
   String _getInstructionText() {
     switch (currentStep) {
       case AreaMeasurementStep.lengthStart:
-        return "Hi! Let's measure the AREA!\nFirst, point at the START of the LENGTH\nThen tap the screen!";
+        return "Point at START of LENGTH\nThen tap the screen!";
       case AreaMeasurementStep.lengthEnd:
-        return "Great!\nNow tap the END of the LENGTH";
+        return "Now tap END of LENGTH!";
       case AreaMeasurementStep.widthStart:
-        return "Length measured!\nNow point at the START of the WIDTH\nThen tap the screen!";
+        return "Point at START of WIDTH\nThen tap the screen!";
       case AreaMeasurementStep.widthEnd:
-        return "Almost done!\nNow tap the END of the WIDTH";
+        return "Now tap END of WIDTH!";
       case AreaMeasurementStep.complete:
         return "Awesome! Area calculated!\nTap confirm to save it!";
     }
@@ -408,16 +408,20 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
               ),
               child: Column(
                 children: [
-                  CuteCharacter(size: 50, color: lengthColor),
+                  Image.asset(
+                    'assets/vectors/stitch5.png',
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     _getInstructionText(),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Color(0xFF2C3E50),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      height: 1.3,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -503,7 +507,7 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
                                   'TOTAL AREA',
                                   style: TextStyle(
                                     color: areaColor,
-                                    fontSize: 14,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1,
                                   ),
@@ -515,17 +519,8 @@ class _ARAreaMeasureScreenState extends State<ARAreaMeasureScreen> with SingleTi
                               '${areaCm2!.toStringAsFixed(2)} cm²',
                               style: const TextStyle(
                                 color: areaColor,
-                                fontSize: 36,
+                                fontSize: 44,
                                 fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${lengthCm!.toStringAsFixed(1)} cm × ${widthCm!.toStringAsFixed(1)} cm',
-                              style: TextStyle(
-                                color: areaColor.withOpacity(0.7),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],

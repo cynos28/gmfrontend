@@ -7,6 +7,7 @@ import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
 import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/services/user_service.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class QuestionPracticeScreen extends StatefulWidget {
   final Unit unit;
@@ -23,6 +24,7 @@ class QuestionPracticeScreen extends StatefulWidget {
 class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   final UnitApiService _apiService = UnitApiService();
   final UnitProgressService _progressService = UnitProgressService.instance;
+  final FlutterTts _flutterTts = FlutterTts();
   
   Question? _currentQuestion;
   int? _selectedAnswer;
@@ -30,6 +32,8 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _showingFeedback = false;
+  bool _showingHint = false;
+  bool _isSpeaking = false;
   String? _error;
   DateTime? _questionStartTime;
   
@@ -47,7 +51,20 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
   @override
   void initState() {
     super.initState();
+    _initTts();
     _loadSavedProgress();
+  }
+
+  Future<void> _initTts() async {
+    await _flutterTts.setLanguage('en-US');
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setPitch(1.0);
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    super.dispose();
   }
   
   // Load saved progress for this unit
@@ -105,6 +122,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       _error = null;
       _selectedAnswer = null;
       _answerFeedback = null;
+      _showingHint = false;
       _showingFeedback = false;
       _questionStartTime = DateTime.now();
     });
@@ -298,6 +316,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
         _selectedAnswer = null;
         _answerFeedback = null;
         _showingFeedback = false;
+        _showingHint = false;
       });
     } else {
       debugPrint('   Loading new question from API');
@@ -306,6 +325,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
         _showingFeedback = false;
         _answerFeedback = null;
         _selectedAnswer = null;
+        _showingHint = false;
       });
       _loadNextQuestion();
     }
@@ -322,6 +342,80 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       default:
         return const Color(0xFF6B7FFF);
     }
+  }
+
+  // Build a friendly growth message using difficulty (from IRT) and measurement topic
+  String _getGrowthMessage(bool isCorrect) {
+    final topicLabel = _getMeasurementLabel(widget.unit.id).toLowerCase();
+    final difficulty = _currentQuestion?.difficulty.toLowerCase() ?? '';
+
+    if (isCorrect) {
+      if (difficulty == 'easy') {
+        return 'You are getting started with $topicLabel questions. Great job!';
+      } else if (difficulty == 'medium') {
+        return 'You are getting better at $topicLabel problems!';
+      } else if (difficulty == 'hard') {
+        return 'Wow! You can solve tricky $topicLabel questions now!';
+      }
+      return 'You are getting stronger at $topicLabel each time!';
+    } else {
+      return 'Keep trying – every $topicLabel question helps you learn and grow.';
+    }
+  }
+
+  // Optional icon for answer options based on simple keywords
+  IconData? _getOptionIcon(String optionText) {
+    final text = optionText.toLowerCase();
+    if (text.contains('book')) return Icons.menu_book_rounded;
+    if (text.contains('pencil') || text.contains('pen')) return Icons.create_rounded;
+    if (text.contains('ruler')) return Icons.straighten_rounded;
+    if (text.contains('bag')) return Icons.backpack_rounded;
+    if (text.contains('bottle') || text.contains('water')) return Icons.local_drink_rounded;
+    if (text.contains('apple') || text.contains('fruit')) return Icons.apple_rounded;
+    if (text.contains('ball')) return Icons.sports_soccer_rounded;
+    if (text.contains('box')) return Icons.inbox_rounded;
+    if (text.contains('cup') || text.contains('glass')) return Icons.coffee_rounded;
+    return null;
+  }
+
+  Future<void> _speakQuestion() async {
+    if (_currentQuestion == null) return;
+
+    final buffer = StringBuffer();
+    buffer.writeln(_currentQuestion!.questionText);
+    if (_currentQuestion!.options.isNotEmpty) {
+      buffer.writeln('Options:');
+      for (var i = 0; i < _currentQuestion!.options.length; i++) {
+        final letter = String.fromCharCode(65 + i);
+        buffer.writeln('$letter: ${_currentQuestion!.options[i]}');
+      }
+    }
+
+    try {
+      await _flutterTts.stop();
+      await _flutterTts.speak(buffer.toString());
+      setState(() {
+        _isSpeaking = true;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _stopSpeaking() async {
+    try {
+      await _flutterTts.stop();
+    } catch (_) {}
+    setState(() {
+      _isSpeaking = false;
+    });
+  }
+
+  // Derive a simple, kid-friendly measurement label from the unit id
+  String _getMeasurementLabel(String unitId) {
+    if (unitId.contains('length')) return 'Length';
+    if (unitId.contains('weight')) return 'Weight';
+    if (unitId.contains('area')) return 'Area';
+    if (unitId.contains('volume')) return 'Volume';
+    return 'Measurement';
   }
 
   // Validate if question is relevant to the unit topic
@@ -454,16 +548,50 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                     color: Color(AppColors.textBlack),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _isInitialAssessment 
-                      ? 'Initial Assessment: ${_answeredQuestionsCount}/$INITIAL_ASSESSMENT_QUESTIONS'
-                      : 'Practice Session: ${_answeredQuestionsCount}/$MAX_QUESTIONS_PER_SESSION',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(AppColors.subText1),
-                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(AppColors.measurementIcon).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.straighten_rounded,
+                            size: 14,
+                            color: Color(AppColors.measurementIcon),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getMeasurementLabel(widget.unit.id),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(AppColors.measurementIcon),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _isInitialAssessment 
+                            ? 'Initial Assessment: ${_answeredQuestionsCount}/$INITIAL_ASSESSMENT_QUESTIONS'
+                            : 'Practice Session: ${_answeredQuestionsCount}/$MAX_QUESTIONS_PER_SESSION',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Color(AppColors.subText1),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -558,6 +686,99 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Text-to-speech control for question & options
+          if (_currentQuestion != null && !_showingFeedback)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _isSpeaking ? _stopSpeaking : _speakQuestion,
+                icon: Icon(
+                  _isSpeaking ? Icons.stop_rounded : Icons.volume_up_rounded,
+                  color: const Color(AppColors.measurementIcon),
+                ),
+                label: Text(
+                  _isSpeaking ? 'Stop' : 'Read to me',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(AppColors.measurementIcon),
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                ),
+              ),
+            ),
+
+          // Optional hint button & hint card (kid-friendly support)
+          if (_currentQuestion != null && 
+              _currentQuestion!.hints.isNotEmpty &&
+              !_showingFeedback)
+            Padding(
+              padding: const EdgeInsets.only(bottom: KidsSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _showingHint = !_showingHint;
+                      });
+                    },
+                    icon: const Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: Color(AppColors.measurementIcon),
+                    ),
+                    label: Text(
+                      _showingHint ? 'Hide Hint' : 'Need a little help?',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(AppColors.measurementIcon),
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                    ),
+                  ),
+                  if (_showingHint)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2FD),
+                        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                        border: Border.all(
+                          color: const Color(AppColors.measurementIcon).withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '💡 ',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _currentQuestion!.hints.first,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: KidsColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
           // Question image (if available)
           if (_currentQuestion!.imageUrl != null && _currentQuestion!.imageUrl!.isNotEmpty)
             Container(
@@ -575,7 +796,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
-                  _currentQuestion!.imageUrl!,
+                  UnitApiService.resolveImageUrl(_currentQuestion!.imageUrl!),
                   fit: BoxFit.contain,
                   height: 200,
                   width: double.infinity,
@@ -621,13 +842,44 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
           Container(
             padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
             decoration: KidsComponents.questionCard(),
-            child: Text(
-              _currentQuestion!.questionText,
-              style: KidsTypography.question.copyWith(
-                fontSize: 20,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Subtle ruler motif at the top of the question card
+                Container(
+                  height: 18,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.0),
+                        const Color(AppColors.measurementIcon).withOpacity(0.08),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(
+                      10,
+                      (index) => Container(
+                        width: 2,
+                        height: index.isEven ? 10 : 6,
+                        color: const Color(AppColors.measurementIcon).withOpacity(0.4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: KidsSpacing.md),
+                Text(
+                  _currentQuestion!.questionText,
+                  style: KidsTypography.question.copyWith(
+                    fontSize: 20,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
           
@@ -658,6 +910,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       final isWrong = _showingFeedback && 
                       _selectedAnswer == index && 
                       !_answerFeedback!.isCorrect;
+      final optionIcon = _getOptionIcon(option);
       
       return Padding(
         padding: const EdgeInsets.only(bottom: KidsSpacing.cardMargin),
@@ -705,6 +958,15 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                   ),
                 ),
                 const SizedBox(width: KidsSpacing.lg),
+                // Optional small icon representing the object
+                if (optionIcon != null) ...[
+                  Icon(
+                    optionIcon,
+                    size: 22,
+                    color: KidsColors.textSecondary.withOpacity(0.9),
+                  ),
+                  const SizedBox(width: KidsSpacing.sm),
+                ],
                 // Option text
                 Expanded(
                   child: Text(
@@ -878,6 +1140,16 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                     fontWeight: FontWeight.w500,
                     color: KidsColors.textSecondary,
                     height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: KidsSpacing.md),
+                Text(
+                  _getGrowthMessage(isCorrect),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: KidsColors.textPrimary,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -1127,23 +1399,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Text('🤖', style: TextStyle(fontSize: 22)),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Chat with your AI tutor!',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(AppColors.textBlack),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+
                           SizedBox(height: 10),
                           Row(
                             children: [

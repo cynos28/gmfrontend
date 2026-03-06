@@ -11,6 +11,7 @@ class ResourceCard extends StatelessWidget {
   final Color backgroundColor;
   final Color borderColor;
   final Color iconColor;
+  final String? imagePath;
   final VoidCallback onTap;
   final bool isEnabled;
 
@@ -22,6 +23,7 @@ class ResourceCard extends StatelessWidget {
     required this.backgroundColor,
     required this.borderColor,
     required this.iconColor,
+    this.imagePath,
     required this.onTap,
     this.isEnabled = true,
   });
@@ -72,11 +74,18 @@ class ResourceCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 30,
-                color: iconColor,
-              ),
+              child: imagePath != null
+                  ? Image.asset(
+                      imagePath!,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(
+                      icon,
+                      size: 30,
+                      color: iconColor,
+                    ),
             ),
             const SizedBox(height: 12),
             // Title and Subtitle
@@ -146,15 +155,15 @@ class TodayActivityCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF4CAF50),
-                Color(0xFF81C784),
-                Color(0xFFA5D6A7),
+                Color(0xFFFF9800), // Vibrant Orange
+                Color(0xFFFFB74D),
+                Color(0xFFFFCC80),
               ],
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4CAF50).withOpacity(0.4),
+                color: const Color(0xFFFF9800).withOpacity(0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -271,6 +280,26 @@ class TodayActivityCard extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Character Image
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TweenAnimationBuilder(
+                          tween: Tween<double>(begin: 0.8, end: 1.0),
+                          duration: const Duration(milliseconds: 1000),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: value,
+                              child: Image.asset(
+                                'assets/vectors/scoobydoo.png',
+                                height: 100,
+                                fit: BoxFit.contain,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                       
