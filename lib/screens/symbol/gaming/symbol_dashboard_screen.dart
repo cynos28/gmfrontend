@@ -286,9 +286,12 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
 
     return Column(
       children: [
-        Column(
-          children: [
-            const SizedBox(height: 60), // Top padding for floating avatar!
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 60), // Top padding for floating avatar!
             Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
@@ -524,8 +527,8 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                 ),
               ],
             ),
-        
-        const Spacer(),
+          ),
+        ),
 
         // Bottom Play Button Area
         Padding(
