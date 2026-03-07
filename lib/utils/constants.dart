@@ -5,45 +5,83 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 class AppConstants {
   // API Configuration
-  static String baseUrl = 'http://192.168.8.167:8001';
   static String authBaseUrl = 'http://192.168.8.167:8001';
   static String symbolBaseUrl = 'http://192.168.8.167:8000';
   static String measurementBaseUrl = 'http://192.168.8.167:8002'; // New API
   static String shapeBaseUrl = 'http://192.168.8.167:8003/shapes-patterns';
-  
   static String numBaseUrl = 'http://192.168.8.167:8004';
 
-  static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
+  static String get baseUrl => authBaseUrl;
+  
+  /// Optional callback invoked whenever URLs are successfully refreshed.
+  /// Services can register here to invalidate their internal caches.
+  static void Function()? _onUrlsRefreshed;
+  static void registerUrlRefreshListener(void Function() listener) {
+    _onUrlsRefreshed = listener;
+  }
+  
+  static const String _gistApiUrl = "https://api.github.com/gists/a03d59a6c3a4e84f0688591151f6fd30";
   
   static Future<void> loadDynamicUrls() async {
-    try {
-      // Append a timestamp to bypass GitHub's heavy edge cache for raw assets
-      final String noCacheUrl = "$_gistUrl?t=${DateTime.now().millisecondsSinceEpoch}";
-      final response = await http.get(Uri.parse(noCacheUrl));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+    int retryCount = 0;
+    const int maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        print("📡 Attempting to fetch backend URLs (Attempt ${retryCount + 1})...");
         
-        symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
-        authBaseUrl = data['auth_api'] ?? authBaseUrl;
-        measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
-        numBaseUrl = data['number_api'] ?? numBaseUrl;
-        
-        if (data['shape_api'] != null) {
-          shapeBaseUrl = "${data['shape_api']}/shapes-patterns";
+        // Use the Gist API directly instead of the raw file to avoid GitHub's CDN caching
+        final response = await http.get(
+          Uri.parse("$_gistApiUrl?t=${DateTime.now().millisecondsSinceEpoch}"),
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        ).timeout(const Duration(seconds: 8));
+
+        if (response.statusCode == 200) {
+          final gistData = json.decode(response.body);
+          final fileData = gistData['files']['ganithamithura_urls.json'];
+          
+          if (fileData != null && fileData['content'] != null) {
+            final data = json.decode(fileData['content']);
+            
+            symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
+            authBaseUrl = data['auth_api'] ?? authBaseUrl;
+            measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
+            numBaseUrl = data['number_api'] ?? numBaseUrl;
+            
+            if (data['shape_api'] != null) {
+              shapeBaseUrl = "${data['shape_api']}/shapes-patterns";
+            }
+            
+            // Notify any registered listeners that URLs changed
+            _onUrlsRefreshed?.call();
+            
+            print("✅ Backend URLs Successfully Loaded!");
+            print("   Auth:        $authBaseUrl");
+            print("   Symbol:      $symbolBaseUrl");
+            print("   Measurement: $measurementBaseUrl");
+            return; // Exit on success
+          }
         }
         
-        baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
-        
-        print("✅ Backend URLs Loaded from GitHub Gist!");
-        print("Symbol API: $symbolBaseUrl");
-        print("Auth API: $authBaseUrl");
-        print("Shape API: $shapeBaseUrl");
-        print("Measurement API: $measurementBaseUrl");
-        print("Number API: $numBaseUrl");
+        print("⚠️ Failed to load from Gist (Status: ${response.statusCode})");
+      } catch (e) {
+        print("⚠️ Gist fetch error: $e");
       }
-    } catch (e) {
-      print("❌ Failed to fetch backend URLs from Gist: $e");
+      
+      retryCount++;
+      if (retryCount < maxRetries) {
+        print("🔄 Retrying in ${retryCount * 2} seconds...");
+        await Future.delayed(Duration(seconds: retryCount * 2));
+      }
     }
+    
+    print("❌ Failed to fetch backend URLs after $maxRetries attempts. Using fallback addresses.");
+    print("   Fallback Auth: $authBaseUrl");
   }
 
   // Activity Types

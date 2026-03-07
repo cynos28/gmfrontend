@@ -6,19 +6,26 @@ import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
 /// API Service for Unit-based Learning
-/// Automatically discovers working backend URL across network changes
+/// Uses dynamic URLs from AppConstants (updated from GitHub Gist)
 class UnitApiService {
   static List<String> get _possibleBaseUrls => [
-    AppConstants.measurementBaseUrl,
-    'http://localhost:8002',        // Works on iOS simulator / desktop
-    'http://10.0.2.2:8002',         // Android emulator
+    AppConstants.measurementBaseUrl,  // Always try Gist-loaded URL first
+    'http://localhost:8002',          // Works on iOS simulator / desktop
+    'http://10.0.2.2:8002',           // Android emulator
   ];
   
-  // Cached working URL
+  // Cached working URL - cleared automatically when AppConstants is refreshed
   static String? _cachedWorkingUrl;
+  static String? _lastKnownGistUrl;  // Track if Gist URL changed
+  
+  /// Clear the URL cache (called when AppConstants.measurementBaseUrl is refreshed)
+  static void invalidateCache() {
+    _cachedWorkingUrl = null;
+    _lastKnownGistUrl = null;
+  }
   
   /// Get the current cached working URL (or first fallback)
-  static String get cachedBaseUrl => _cachedWorkingUrl ?? _possibleBaseUrls.first;
+  static String get cachedBaseUrl => _cachedWorkingUrl ?? AppConstants.measurementBaseUrl;
 
   /// Resolve an image URL: handles relative paths and rewrites localhost URLs
   static String resolveImageUrl(String rawUrl) {
@@ -52,7 +59,15 @@ class UnitApiService {
   /// Discover which backend URL is currently working
   /// Tries each URL with a quick health check
   Future<String> _getWorkingBaseUrl() async {
-    // Return cached URL if available
+    // If the Gist URL changed (backend restarted), clear old cache
+    final currentGistUrl = AppConstants.measurementBaseUrl;
+    if (_lastKnownGistUrl != currentGistUrl) {
+      debugPrint('🔄 Gist URL changed, clearing URL cache...');
+      _cachedWorkingUrl = null;
+      _lastKnownGistUrl = currentGistUrl;
+    }
+    
+    // Return cached URL if still healthy
     if (_cachedWorkingUrl != null) {
       try {
         final response = await http.get(

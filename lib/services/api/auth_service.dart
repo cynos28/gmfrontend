@@ -8,14 +8,13 @@ import 'package:ganithamithura/utils/constants.dart';
 /// Authentication Service - Handles user authentication with MongoDB backend
 class AuthService {
   static AuthService? _instance;
-  final String baseUrl;
   
-  AuthService._({required this.baseUrl});
+  String get baseUrl => dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl;
+  
+  AuthService._();
   
   static AuthService get instance {
-    _instance ??= AuthService._(
-      baseUrl: dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl,
-    );
+    _instance ??= AuthService._();
     return _instance!;
   }
   
