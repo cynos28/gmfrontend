@@ -21,10 +21,7 @@ class AuthService {
   
   /// Helper method to create headers
   Map<String, String> _getHeaders({String? token}) {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    final headers = Map<String, String>.from(AppConstants.headers);
     
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';

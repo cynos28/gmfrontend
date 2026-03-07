@@ -22,7 +22,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/character');
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: jsonEncode({'character_name': characterName}),
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
@@ -39,7 +39,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/character');
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
       if (response.statusCode == 200) {
@@ -64,7 +64,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/scores');
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: jsonEncode({
           'game_name': gameName,
           'score': score,
@@ -85,7 +85,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/game/leaderboard');
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
       if (response.statusCode == 200) {
@@ -113,7 +113,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/performance');
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: jsonEncode({
           'grade': grade,
           'level': level,
@@ -142,7 +142,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/performance');
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
       if (response.statusCode == 200) {
@@ -163,7 +163,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/activity');
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
       if (response.statusCode == 200) {
@@ -184,7 +184,7 @@ class SymbolService {
       final url = Uri.parse('$_baseUrl/api/users/$userId/performance/summary');
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: AppConstants.apiTimeout));
 
       if (response.statusCode == 200) {

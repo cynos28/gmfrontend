@@ -21,10 +21,7 @@ class ShapesApiService {
   
   /// Helper method to create headers
   Map<String, String> _getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return AppConstants.headers;
   }
   
   // ==================== Health Check ====================
@@ -33,7 +30,7 @@ class ShapesApiService {
   Future<bool> checkBackendHealth() async {
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       return response.statusCode == 200;
@@ -52,7 +49,7 @@ class ShapesApiService {
     
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       status['isReachable'] = response.statusCode == 200;

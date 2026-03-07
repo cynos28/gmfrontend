@@ -11,6 +11,8 @@ class AppConstants {
   static String measurementBaseUrl = 'http://192.168.8.167:8002'; // New API
   static String shapeBaseUrl = 'http://192.168.8.167:8003/shapes-patterns';
   
+  static String numBaseUrl = 'http://192.168.8.167:8004';
+
   static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
   
   static Future<void> loadDynamicUrls() async {
@@ -24,6 +26,7 @@ class AppConstants {
         symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
         authBaseUrl = data['auth_api'] ?? authBaseUrl;
         measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
+        numBaseUrl = data['number_api'] ?? numBaseUrl;
         
         if (data['shape_api'] != null) {
           shapeBaseUrl = "${data['shape_api']}/shapes-patterns";
@@ -32,17 +35,16 @@ class AppConstants {
         baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
         
         print("✅ Backend URLs Loaded from GitHub Gist!");
-        print("Symbol API: \$symbolBaseUrl");
-        print("Auth API: \$authBaseUrl");
-        print("Shape API: \$shapeBaseUrl");
-        print("Measurement API: \$measurementBaseUrl");
+        print("Symbol API: $symbolBaseUrl");
+        print("Auth API: $authBaseUrl");
+        print("Shape API: $shapeBaseUrl");
+        print("Measurement API: $measurementBaseUrl");
+        print("Number API: $numBaseUrl");
       }
     } catch (e) {
-      print("❌ Failed to fetch backend URLs from Gist: \$e");
+      print("❌ Failed to fetch backend URLs from Gist: $e");
     }
   }
-  
-  static const String numBaseUrl = 'http://192.168.8.167:8004';
 
   // Activity Types
   static const String activityTypeTrace = 'trace';
@@ -116,6 +118,13 @@ class AppConstants {
 
   // Timeouts
   static const int videoLoadTimeout = 30; // seconds
+  // Common headers for API requests
+  static Map<String, String> get headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+  };
+
   static const int apiTimeout = 30; // seconds
   
   // UI Constants

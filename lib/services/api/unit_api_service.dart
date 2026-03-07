@@ -54,6 +54,7 @@ class UnitApiService {
       try {
         final response = await http.get(
           Uri.parse('$_cachedWorkingUrl/health'),
+          headers: AppConstants.headers,
         ).timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
           return _cachedWorkingUrl!;
@@ -72,6 +73,7 @@ class UnitApiService {
         debugPrint('   Trying: $url');
         final response = await http.get(
           Uri.parse('$url/health'),
+          headers: AppConstants.headers,
         ).timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
           debugPrint('');
@@ -110,7 +112,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/api/units?grade=$grade'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -136,7 +138,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/chat'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'studentId': studentId,
           'unitId': unitId,
@@ -165,7 +167,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -191,7 +193,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       await http.delete(
         Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('Error clearing chat history: $e');
@@ -253,7 +255,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/questions/generate/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'num_questions': numQuestions,
           'grade_level': gradeLevel,
@@ -289,7 +291,7 @@ class UnitApiService {
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -310,7 +312,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/documents/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -344,7 +346,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/questions/?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -370,7 +372,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/api/v1/adaptive/submit-answer'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'student_id': studentId,
           'question_id': questionId,
@@ -412,7 +414,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -437,7 +439,7 @@ class UnitApiService {
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
