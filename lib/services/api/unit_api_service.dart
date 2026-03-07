@@ -8,8 +8,12 @@ import 'package:ganithamithura/utils/constants.dart';
 /// API Service for Unit-based Learning
 /// Automatically discovers working backend URL across network changes
 class UnitApiService {
-  // Use URL dynamically fetched from GitHub Gist via AppConstants
-  static List<String> get _possibleBaseUrls => [AppConstants.measurementBaseUrl];
+  // Try multiple URLs for Android compatibility
+  static List<String> get _possibleBaseUrls => [
+    'http://localhost:8002',        // Works on iOS simulator / desktop
+    'http://10.0.2.2:8002',         // Android emulator
+    'http://192.168.166.152:8002',  // Local network (update IP as needed)
+  ];
   
   // Cached working URL
   static String? _cachedWorkingUrl;
@@ -69,11 +73,12 @@ class UnitApiService {
     debugPrint('🔍 Searching for backend server...');
     for (final url in _possibleBaseUrls) {
       try {
-        debugPrint('   Trying: $url');
+        debugPrint('   Trying: $url/health');
         final response = await http.get(
           Uri.parse('$url/health'),
-        ).timeout(const Duration(seconds: 2));
+        ).timeout(const Duration(seconds: 3));
         if (response.statusCode == 200) {
+          debugPrint('   ✅ Success: $url');
           debugPrint('');
           debugPrint('╔════════════════════════════════════════════════════════╗');
           debugPrint('║  ✅ BACKEND CONNECTION ESTABLISHED                    ║');
@@ -86,7 +91,7 @@ class UnitApiService {
           return url;
         }
       } catch (e) {
-        debugPrint('   ❌ Failed: ${e.toString().split(':')[0]}');
+        debugPrint('   ❌ Error ($url): ${e.runtimeType}');
         continue;
       }
     }
