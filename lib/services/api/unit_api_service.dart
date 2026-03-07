@@ -220,6 +220,7 @@ class UnitApiService {
         'POST',
         Uri.parse('$baseUrl/upload/document'),
       );
+      request.headers.addAll(AppConstants.headers);
       
       // Add file
       request.files.add(
