@@ -27,11 +27,14 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
 
   Future<void> _loadUserProgress() async {
     try {
+      // Fetch both regular level progress and build challenge progress
       final progressData = await _apiService.getUserProgress();
+      final buildMatchData = await _apiService.getBuildMatchProgress();
+      
       final levels = progressData['levels'] as List<dynamic>? ?? [];
       
-      // Extract highest_build_challenge from progress data
-      final highestBuildChallenge = progressData['highest_build_challenge'] as int? ?? 0;
+      // Extract highest_build_challenge from build match API
+      final highestBuildChallenge = buildMatchData['highest_build_challenge'] as int? ?? 0;
       
       // Calculate 2D shapes (Circle) mastery based on level 1 and 2
       bool level1Passed = false;
