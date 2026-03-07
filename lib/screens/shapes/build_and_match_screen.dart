@@ -603,122 +603,82 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: Text(
-          isCorrect ? '🎉 Well Done!' : '🤔 Not Quite Right',
+          isCorrect ? '🎉 AMAZING!' : '🤔 ALMOST THERE!',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: isCorrect ? Colors.green : Colors.orange,
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: isCorrect ? const Color(0xFF36D399) : const Color(0xFFF1AD7F),
           ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isCorrect) const Icon(Icons.stars_rounded, color: Colors.amber, size: 80),
+            const SizedBox(height: 16),
             Text(
               isCorrect
-                  ? 'Perfect! You\'ve successfully built the ${challenges[_selectedChallengeIndex]['name']}!'
-                  : 'Your build doesn\'t match yet. Here\'s what you need:',
+                  ? 'Great job! You built the ${challenges[_selectedChallengeIndex]['name']}!'
+                  : 'Your build needs a little more work. Try this:',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
-            if (willUnlockNext) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CEEB2).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF4CEEB2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.lock_open, color: Color(0xFF4CEEB2), size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Next challenge unlocked! 🎉',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green[700],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
             if (!isCorrect) ...[
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  color: const Color(0xFFF1AD7F).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF1AD7F).withOpacity(0.3)),
                 ),
                 child: Text(
                   feedback,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
                 ),
               ),
             ],
           ],
         ),
         actions: [
-          if (!isCorrect)
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Try Again'),
-            ),
-          if (isCorrect)
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  _clearCanvas();
-                });
-              },
-              child: const Text('Build Again'),
-            ),
-          if (isCorrect && _selectedChallengeIndex < challenges.length - 1)
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                final nextIndex = _selectedChallengeIndex + 1;
-                _handleChallengeTap(nextIndex);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CEEB2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!isCorrect)
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF1AD7F),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('OK', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
                 ),
-              ),
-              child: const Text(
-                'Next Challenge',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          if (!isCorrect)
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CEEB2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              if (isCorrect)
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (_selectedChallengeIndex < challenges.length - 1) {
+                      _handleChallengeTap(_selectedChallengeIndex + 1);
+                    } else {
+                      Get.back();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF36D399),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text(
+                    _selectedChallengeIndex < challenges.length - 1 ? 'Next!' : 'Done!',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+                  ),
                 ),
-              ),
-              child: const Text(
-                'OK',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -735,31 +695,31 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Get.back(),
+                    onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 31,
-                      height: 31,
+                      width: 50,
+                      height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0x80D9D9D9),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 18,
-                      ),
+                      child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
                     ),
                   ),
                   const SizedBox(width: 16),
                   const Text(
                     'Build & Match',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
                     ),
                   ),
                 ],
@@ -789,9 +749,9 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
                           const Text(
                             'Build Challenges',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -895,8 +855,9 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
                                 Text(
                                   'Hint: $currentHint',
                                   style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
                                   ),
                                 ),
                               ],

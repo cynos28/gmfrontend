@@ -86,6 +86,11 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/Shapes/
+    - assets/images/2d_shapes/
+    - assets/images/3d_shapes/
+    - assets/images/patterns/
+    - assets/images/patterns/2d_shapes/
     - assets/images/volume/
     - assets/videos/
     - assets/animations/

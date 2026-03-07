@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'ar_hunt_game_screen.dart';
 
 class ArHuntIntroScreen extends StatelessWidget {
@@ -7,37 +8,37 @@ class ArHuntIntroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFBFBFD),
       body: SafeArea(
         child: Column(
           children: [
-            // Header with back button
+            // Header
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => Get.back(),
                     child: Container(
-                      width: 31,
-                      height: 31,
+                      width: 50,
+                      height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0x80D9D9D9),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 18,
-                      ),
+                      child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
                     ),
                   ),
                   const SizedBox(width: 16),
                   const Text(
                     'AR Hunt',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
                     ),
                   ),
                 ],
@@ -46,87 +47,109 @@ class ArHuntIntroScreen extends StatelessWidget {
             
             // Main content
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // AR Image placeholder
-                  Container(
-                    width: 221,
-                    height: 394,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.view_in_ar,
-                        size: 80,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Title
-                  const Text(
-                    'Shape Magic',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Description
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      'Put your hand in front of the camera and see magic shapes! 🪄',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Color(0xA349596E),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Let's Play button
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ArHuntGameScreen(),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // AR Hero Image/Icon
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.8, end: 1.0),
+                        duration: const Duration(seconds: 1),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) => Transform.scale(scale: value, child: child),
+                        child: Container(
+                          width: 280,
+                          height: 380,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF1AD7F), Color(0xFFFFD5B4)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF1AD7F).withOpacity(0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/images/Shapes/kids6.png',
+                              fit: BoxFit.contain,
+                              height: 300,
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                    ),
-                    label: const Text(
-                      'Let\'s Play',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1AD7F),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 27,
-                        vertical: 15,
+                      const SizedBox(height: 48),
+                      
+                      // Title
+                      const Text(
+                        'Shape Magic',
+                        style: TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      const SizedBox(height: 16),
+                      
+                      // Description
+                      const Text(
+                        'Put your hand in front of the camera and see magic shapes! 🪄',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black54,
+                          height: 1.3,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      elevation: 0,
-                    ),
+                      const SizedBox(height: 48),
+                      
+                      // Let's Play button
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(() => const ArHuntGameScreen(), transition: Transition.fadeIn);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1AD7F),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF1AD7F).withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
+                              SizedBox(width: 8),
+                              Text(
+                                'Let\'s Play',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],

@@ -33,12 +33,14 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
   Future<void> _fetchLevelAccess() async {
     try {
       final accessData = await _apiService.getLevelAccessStatus();
+      if (!mounted) return;
       setState(() {
         _levelAccessData = accessData;
         _isLoading = false;
       });
     } catch (e) {
       print('Error fetching level access: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
