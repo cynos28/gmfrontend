@@ -1,13 +1,138 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
+import 'package:ganithamithura/services/api/shapes_api_service.dart';
 
-/// Shapes progress screen — UI only (no backend)
-class ShapesProgressScreen extends StatelessWidget {
+/// Shapes progress screen — Dynamically loads progress from API
+class ShapesProgressScreen extends StatefulWidget {
   const ShapesProgressScreen({super.key});
 
   @override
+  State<ShapesProgressScreen> createState() => _ShapesProgressScreenState();
+}
+
+class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
+  final ShapesApiService _apiService = ShapesApiService.instance;
+  bool _isLoading = true;
+  double _circle2DMastery = 0.0;
+  double _cube3DMastery = 0.0;
+  double _patternMatchProgress = 0.0;
+  double _buildMatchProgress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProgress();
+  }
+
+  Future<void> _loadUserProgress() async {
+    try {
+      // Fetch both regular level progress and build challenge progress
+      final progressData = await _apiService.getUserProgress();
+      final buildMatchData = await _apiService.getBuildMatchProgress();
+      
+      final levels = progressData['levels'] as List<dynamic>? ?? [];
+      
+      // Extract highest_build_challenge from build match API
+      final highestBuildChallenge = buildMatchData['highest_build_challenge'] as int? ?? 0;
+      
+      // Calculate 2D shapes (Circle) mastery based on level 1 and 2
+      bool level1Passed = false;
+      bool level2Passed = false;
+      
+      // Calculate 3D shapes (Cube) mastery based on level 3 and 4
+      bool level3Passed = false;
+      bool level4Passed = false;
+      
+      // Calculate Pattern Match progress based on level 5 and 6
+      bool level5Passed = false;
+      bool level6Passed = false;
+      
+      for (var levelData in levels) {
+        final levelNum = levelData['level'] as int;
+        final isPassed = levelData['is_passed'] as bool? ?? false;
+        
+        if (levelNum == 1) level1Passed = isPassed;
+        if (levelNum == 2) level2Passed = isPassed;
+        if (levelNum == 3) level3Passed = isPassed;
+        if (levelNum == 4) level4Passed = isPassed;
+        if (levelNum == 5) level5Passed = isPassed;
+        if (levelNum == 6) level6Passed = isPassed;
+      }
+      
+      // Calculate mastery percentages
+      double circle2D = 0.0;
+      if (level1Passed && level2Passed) {
+        circle2D = 1.0; // 100%
+      } else if (level1Passed) {
+        circle2D = 0.5; // 50%
+      }
+      
+      double cube3D = 0.0;
+      if (level3Passed && level4Passed) {
+        cube3D = 1.0; // 100%
+      } else if (level3Passed) {
+        cube3D = 0.5; // 50%
+      }
+      
+      double patternMatch = 0.0;
+      if (level5Passed && level6Passed) {
+        patternMatch = 1.0; // 100%
+      } else if (level5Passed) {
+        patternMatch = 0.5; // 50%
+      }
+      
+      // Calculate Build & Match progress as percentage
+      // There are 7 total build challenges (levels 7-13)
+      const totalBuildChallenges = 7;
+      double buildMatch = highestBuildChallenge / totalBuildChallenges;
+      // Clamp to 1.0 maximum
+      buildMatch = buildMatch > 1.0 ? 1.0 : buildMatch;
+      
+      if (mounted) {
+        setState(() {
+          _circle2DMastery = circle2D;
+          _cube3DMastery = cube3D;
+          _patternMatchProgress = patternMatch;
+          _buildMatchProgress = buildMatch;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user progress: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Keep default values on error
+        });
+      }
+    }
+  }
+
+  // Create dynamic shape info lists
+
+  // Create dynamic shape info lists
+  List<_ShapeInfo> get _shapes2D => [
+    _ShapeInfo('Circle', '⭕', 'assets/images/2d_shapes/circle.png', _circle2DMastery,
+        const Color(0xFF4285F4)),
+  ];
+
+  List<_ShapeInfo> get _shapes3D => [
+    _ShapeInfo(
+        'Cube', '🧊', 'assets/images/3d_shapes/cube.png', _cube3DMastery, const Color(0xFF00BCD4)),
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: KidsColors.backgroundLight,
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: KidsColors.backgroundLight,
       body: SafeArea(
@@ -27,7 +152,7 @@ class ShapesProgressScreen extends StatelessWidget {
                     const SizedBox(height: KidsSpacing.xl),
 
                     // 2D Shapes section
-                    Text('2D Shapes',
+                    Text('2D Shapes ',
                         style:
                             KidsTypography.subtitle.copyWith(fontSize: 20)),
                     const SizedBox(height: KidsSpacing.md),
@@ -49,44 +174,18 @@ class ShapesProgressScreen extends StatelessWidget {
                     const SizedBox(height: KidsSpacing.md),
 
                     _ShapeGameCard(
-                      title: 'Match Shapes',
-                      emoji: '🃏',
-                      desc: 'Find the matching pair',
-                      played: 28,
-                      accuracy: 0.82,
-                      color: const Color(0xFFFF9500),
-                    ),
-                    _ShapeGameCard(
                       title: 'Build & Match',
                       emoji: '🏗️',
                       desc: 'Build the right shape',
-                      played: 15,
-                      accuracy: 0.7,
+                      accuracy: _buildMatchProgress,
                       color: const Color(0xFF4CAF50),
-                    ),
-                    _ShapeGameCard(
-                      title: 'Find Real Shapes',
-                      emoji: '📸',
-                      desc: 'Spot shapes in photos',
-                      played: 22,
-                      accuracy: 0.75,
-                      color: const Color(0xFF2196F3),
                     ),
                     _ShapeGameCard(
                       title: 'Pattern Match',
                       emoji: '🧩',
                       desc: 'Complete the pattern',
-                      played: 12,
-                      accuracy: 0.6,
+                      accuracy: _patternMatchProgress,
                       color: const Color(0xFF9C27B0),
-                    ),
-                    _ShapeGameCard(
-                      title: 'AR Shape Hunt',
-                      emoji: '🔍',
-                      desc: 'Find 3D shapes in AR',
-                      played: 8,
-                      accuracy: 0.55,
-                      color: const Color(0xFFE91E63),
                     ),
 
                     const SizedBox(height: KidsSpacing.xxl),
@@ -99,28 +198,6 @@ class ShapesProgressScreen extends StatelessWidget {
       ),
     );
   }
-
-  static const _shapes2D = [
-    _ShapeInfo('Circle', '⭕', 'assets/images/2d_shapes/circle.png', 0.9,
-        Color(0xFF4285F4)),
-    _ShapeInfo('Square', '🟧', 'assets/images/2d_shapes/square.png', 0.85,
-        Color(0xFFFF9500)),
-    _ShapeInfo('Triangle', '🔺', 'assets/images/2d_shapes/triangle.png',
-        0.75, Color(0xFF34C759)),
-    _ShapeInfo('Rectangle', '🟩', 'assets/images/2d_shapes/rectangle.png',
-        0.8, Color(0xFF9C27B0)),
-  ];
-
-  static const _shapes3D = [
-    _ShapeInfo(
-        'Cube', '🧊', 'assets/images/3d_shapes/cube.png', 0.6, Color(0xFF00BCD4)),
-    _ShapeInfo('Sphere', '🔮', 'assets/images/3d_shapes/sphere.png', 0.5,
-        Color(0xFFE91E63)),
-    _ShapeInfo('Cone', '🔻', 'assets/images/3d_shapes/cone.png', 0.4,
-        Color(0xFFFF5722)),
-    _ShapeInfo('Cylinder', '🪣', 'assets/images/3d_shapes/cylinder.png',
-        0.45, Color(0xFF795548)),
-  ];
 
   Widget _buildHeader() {
     return Container(
@@ -167,6 +244,10 @@ class ShapesProgressScreen extends StatelessWidget {
 
   Widget _buildBanner() {
     const color = KidsColors.highlightAccent;
+    // Calculate overall mastery as average of both shapes
+    final overallMastery = (_circle2DMastery + _cube3DMastery) / 2;
+    final masteryPercent = (overallMastery * 100).toInt();
+    
     return Container(
       padding: const EdgeInsets.all(KidsSpacing.cardPadding),
       decoration: BoxDecoration(
@@ -194,7 +275,7 @@ class ShapesProgressScreen extends StatelessWidget {
                   width: 72,
                   height: 72,
                   child: CircularProgressIndicator(
-                    value: 0.62,
+                    value: overallMastery,
                     strokeWidth: 6,
                     backgroundColor: color.withOpacity(0.15),
                     color: color,
@@ -217,7 +298,7 @@ class ShapesProgressScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '62% Mastered',
+                  '$masteryPercent% Mastered',
                   style: KidsTypography.label
                       .copyWith(color: KidsColors.textSecondary),
                 ),
@@ -228,7 +309,7 @@ class ShapesProgressScreen extends StatelessWidget {
                         color: color, size: 18),
                     const SizedBox(width: 4),
                     Text(
-                      '8 Shapes Learned',
+                      '2 Shapes Learning',
                       style: KidsTypography.body.copyWith(
                         color: color,
                         fontWeight: FontWeight.w700,
@@ -363,7 +444,7 @@ class _ShapeGameCard extends StatelessWidget {
   final String title;
   final String emoji;
   final String desc;
-  final int played;
+  final int? played;
   final double accuracy;
   final Color color;
 
@@ -371,7 +452,7 @@ class _ShapeGameCard extends StatelessWidget {
     required this.title,
     required this.emoji,
     required this.desc,
-    required this.played,
+    this.played,
     required this.accuracy,
     required this.color,
   });
@@ -424,22 +505,24 @@ class _ShapeGameCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.sports_esports_rounded,
-                      color: color.withOpacity(0.6), size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$played',
-                    style: KidsTypography.small.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w800,
+              if (played != null) ...[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sports_esports_rounded,
+                        color: color.withOpacity(0.6), size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$played',
+                      style: KidsTypography.small.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
+              ],
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
