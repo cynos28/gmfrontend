@@ -24,6 +24,8 @@ class Questions2DShapesScreen extends StatefulWidget {
 }
 
 class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
+  static const int _quizSize = 5; // Number of questions per quiz round
+  
   // All available questions - randomly select 5 from this pool
   static final List<Question> _allQuestions = [
     Question(
@@ -64,13 +66,14 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
   @override
   void initState() {
     super.initState();
-    // Randomly select 5 questions from all available questions
+    // Randomly select questions from all available questions
     final random = Random();
     final shuffled = List<Question>.from(_allQuestions)..shuffle(random);
-    _questions = shuffled.take(5).toList();
+    _questions = shuffled.take(_quizSize).toList();
+    assert(_questions.length == _quizSize, 'Quiz must have exactly $_quizSize questions');
   }
   int? _selectedIndex;
-  List<int> _answers = [];
+  Map<int, int> _answers = {}; // Map question index to selected answer index
   bool _showAnswer = false;
 
   void _selectOption(int idx) {
@@ -81,10 +84,10 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
   }
 
   void _checkAnswer() {
-    if (_selectedIndex == null) return;
+    if (_selectedIndex == null || _showAnswer || _answers.containsKey(_current)) return; // Prevent multiple answers
     setState(() {
       _showAnswer = true;
-      _answers.add(_selectedIndex!);
+      _answers[_current] = _selectedIndex!; // Use Map to ensure only one answer per question
     });
   }
 
@@ -97,8 +100,11 @@ class _Questions2DShapesScreenState extends State<Questions2DShapesScreen> {
         _showAnswer = false;
       });
     } else {
-      // Show results
-      final correct = List.generate(_questions.length, (i) => _answers[i] == _questions[i].correctIndex).where((v) => v).length;
+      // Show results - count correct answers from Map
+      final correct = _answers.entries.where((entry) => 
+        entry.value == _questions[entry.key].correctIndex
+      ).length;
+      final wrong = _questions.length - correct;
       final isPerfect = correct == _questions.length;
       final isGood = correct >= _questions.length * 0.7;
       
