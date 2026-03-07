@@ -251,8 +251,10 @@ class ShapesApiService {
   /// }
   Future<Map<String, dynamic>> getLevelAccessStatus() async {
     try {
+      print('🔍 DEBUG - Fetching level access status from backend');
       final headers = _getHeaders();
       final url = Uri.parse('$baseUrl/game/user-progress');
+      print('🔍 DEBUG - Fetching level access status from: $url');
       
       final response = await http.get(
         url,

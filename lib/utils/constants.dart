@@ -4,11 +4,18 @@ library;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 class AppConstants {
-  // API Configuration - Set fallback to Android Emulator default.
-  // Physical devices should use their Mac's IP in the ignored .env file!
-  static String baseUrl = 'http://10.0.2.2:8001';
-  static String authBaseUrl = 'http://10.0.2.2:8001';
-  static String symbolBaseUrl = 'http://10.0.2.2:8000';
+  // API Configuration
+  // 🔄 DEVICE TYPE: Change based on your device
+  // - Android Emulator: Use 10.0.2.2
+  // - Physical Device: Use your computer's IP (currently: 192.168.42.12)
+  static String baseUrl = 'http://192.168.42.12:8003';  // For Physical Device
+  static String authBaseUrl = 'http://192.168.42.12:8001';  // For Physical Device
+  static String symbolBaseUrl = 'http://192.168.42.12:8003';  // For Physical Device
+  
+  // FOR EMULATOR: Uncomment these lines and comment the above
+  // static String baseUrl = 'http://10.0.2.2:8003';
+  // static String authBaseUrl = 'http://10.0.2.2:8001';
+  // static String symbolBaseUrl = 'http://10.0.2.2:8003';
   
   static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
   
@@ -22,7 +29,7 @@ class AppConstants {
         
         symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
         authBaseUrl = data['auth_api'] ?? authBaseUrl;
-        baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
+        baseUrl = symbolBaseUrl; // Use shape service (port 8003) as base URL
         
         print("✅ Backend URLs Loaded from GitHub Gist!");
         print("Symbol API: \$symbolBaseUrl");
