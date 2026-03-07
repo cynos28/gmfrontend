@@ -8,10 +8,12 @@ import '../../models/ar_measurement.dart';
 import '../../utils/constants.dart';
 
 class MeasurementApiService {
-  // Use dynamically loaded URLs from AppConstants
-  static List<String> get _baseUrls => [AppConstants.measurementBaseUrl]
-      .map((url) => '$url/api/v1/measurements')
-      .toList();
+  // Use dynamically loaded URL from AppConstants
+  static List<String> get _baseUrls => [
+    '${AppConstants.measurementBaseUrl}/api/v1/measurements',
+    'http://localhost:8002/api/v1/measurements',
+    'http://10.0.2.2:8002/api/v1/measurements',
+  ];
   
   static Map<String, String> get _headers => {
     ...AppConstants.headers,

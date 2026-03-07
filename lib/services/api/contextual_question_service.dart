@@ -9,9 +9,11 @@ import '../../models/ar_measurement.dart';
 import '../../utils/constants.dart';
 
 class ContextualQuestionService {
-  // Use statically loaded configurations from AppConstants
+  // Try multiple URLs for Android compatibility
   static List<String> get _baseUrls => [
-    '${AppConstants.measurementBaseUrl}/api/v1/contextual'
+    'http://localhost:8002/api/v1/contextual',
+    'http://10.0.2.2:8002/api/v1/contextual',
+    'http://192.168.166.152:8002/api/v1/contextual',
   ];
   
   static Future<String> _getWorkingBaseUrl() async {
