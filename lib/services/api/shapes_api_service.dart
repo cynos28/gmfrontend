@@ -9,14 +9,15 @@ import 'package:ganithamithura/utils/constants.dart';
 /// Shapes API Service - Handles all shapes game backend API calls
 class ShapesApiService {
   static ShapesApiService? _instance;
-  final String baseUrl;
   
-  ShapesApiService._({required this.baseUrl});
+  ShapesApiService._();
   
   static ShapesApiService get instance {
-    _instance ??= ShapesApiService._(baseUrl: AppConstants.shapeBaseUrl);
+    _instance ??= ShapesApiService._();
     return _instance!;
   }
+  
+  String get baseUrl => AppConstants.shapeBaseUrl;
   
   /// Helper method to create headers
   Map<String, String> _getHeaders() {

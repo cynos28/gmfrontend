@@ -24,11 +24,17 @@ class AppConstants {
         symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
         authBaseUrl = data['auth_api'] ?? authBaseUrl;
         measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
+        
+        if (data['shape_api'] != null) {
+          shapeBaseUrl = "${data['shape_api']}/shapes-patterns";
+        }
+        
         baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
         
         print("✅ Backend URLs Loaded from GitHub Gist!");
         print("Symbol API: \$symbolBaseUrl");
         print("Auth API: \$authBaseUrl");
+        print("Shape API: \$shapeBaseUrl");
         print("Measurement API: \$measurementBaseUrl");
       }
     } catch (e) {
