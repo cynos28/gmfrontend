@@ -105,7 +105,7 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
 
   Future<void> _detectShapeFromImage(String imagePath) async {
     try {
-      final url = Uri.parse('${AppConstants.baseUrl}/shapes-patterns/detect-shape/');
+      final url = Uri.parse('${AppConstants.shapeBaseUrl}/detect-shape/');
       var request = http.MultipartRequest('POST', url);
       request.files.add(await http.MultipartFile.fromPath('image_file', imagePath));
 
@@ -124,11 +124,11 @@ class _FindRealShapesScreenState extends State<FindRealShapesScreen> {
           _showShapeDetectionResult(detectedShape);
         }
       } else {
-        _showError('Connection error! Please try again.');
+        _showError('Connection error! Status: ${response.statusCode}\n${response.body}');
       }
     } catch (e) {
       Get.back();
-      _showError('Oops! Error detecting shape.');
+      _showError('Oops! Error detecting shape:\n$e');
     }
   }
 
