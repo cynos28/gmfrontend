@@ -5,11 +5,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 class AppConstants {
   // API Configuration
-  static String baseUrl = 'http://localhost:8001';
-  static String authBaseUrl = 'http://localhost:8001';
-  static String symbolBaseUrl = 'http://localhost:8000';
-  static String measurementBaseUrl = 'http://localhost:8002'; // New API
-  static String shapeBaseUrl = 'http://localhost:8003';
+  static String baseUrl = 'http://192.168.8.167:8001';
+  static String authBaseUrl = 'http://192.168.8.167:8001';
+  static String symbolBaseUrl = 'http://192.168.8.167:8000';
+  static String measurementBaseUrl = 'http://192.168.8.167:8002'; // New API
+  static String shapeBaseUrl = 'http://192.168.8.167:8003/shapes-patterns';
   
   static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
   
@@ -36,8 +36,7 @@ class AppConstants {
     }
   }
   
-  static const String numBaseUrl =
-      'https://macular-patrimonially-olinda.ngrok-free.dev';
+  static const String numBaseUrl = 'http://192.168.8.167:8004';
 
   // Activity Types
   static const String activityTypeTrace = 'trace';
