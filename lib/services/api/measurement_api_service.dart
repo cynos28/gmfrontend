@@ -5,14 +5,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
+import '../../utils/constants.dart';
 
 class MeasurementApiService {
-  // WiFi IP - works without ADB, just need same WiFi network
-  static const List<String> _baseUrls = [
-    'http://192.168.1.18:8000/api/v1/measurements',   // WiFi IP (PRIMARY)
-    'http://localhost:8000/api/v1/measurements',      // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/measurements',       // Android Emulator fallback
-  ];
+  // Use dynamically loaded URLs from AppConstants
+  static List<String> get _baseUrls => [AppConstants.measurementBaseUrl]
+      .map((url) => '$url/api/v1/measurements')
+      .toList();
   
   static Future<String> _getWorkingBaseUrl() async {
     for (final url in _baseUrls) {
@@ -104,8 +103,10 @@ class MeasurementApiService {
   /// Check if measurement-service is available
   Future<bool> checkHealth() async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
+      final healthUrl = baseUrl.replaceAll('/api/v1/measurements', '/health');
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8001/health'),
+        Uri.parse(healthUrl),
       ).timeout(const Duration(seconds: 3));
       
       return response.statusCode == 200;

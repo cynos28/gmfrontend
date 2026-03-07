@@ -19,6 +19,8 @@ class Questions2DShapesAPIScreen extends StatefulWidget {
 }
 
 class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen> {
+  static const int _quizSize = 5; // Number of questions per quiz round
+  
   final ShapesApiService _apiService = ShapesApiService.instance;
   
   bool _isLoading = true;
@@ -51,11 +53,13 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
         throw Exception('Invalid game type. Expected question round game.');
       }
 
-      // Randomly select 5 questions from the available questions
+      // Randomly select questions from the available questions
       final random = Random();
       final allQuestions = game.questions;
       final shuffledQuestions = List<ShapeQuestion>.from(allQuestions)..shuffle(random);
-      final selectedQuestions = shuffledQuestions.take(5).toList();
+      final selectedQuestions = shuffledQuestions.take(_quizSize).toList();
+      
+      assert(selectedQuestions.length == _quizSize, 'Quiz must have exactly $_quizSize questions');
       
       // Create a new game with only the selected questions
       final limitedGame = QuestionRoundGame(
@@ -88,7 +92,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
   }
 
   void _submitAnswer() {
-    if (_selectedAnswer == null) return;
+    if (_selectedAnswer == null || _userAnswers.containsKey(_currentQuestion.id)) return; // Prevent duplicate submission
     
     setState(() {
       _userAnswers[_currentQuestion.id] = _selectedAnswer!;
@@ -96,7 +100,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
   }
 
   void _nextQuestion() {
-    if (_currentQuestionIndex < _gameData!.questions.length - 1) {
+    if (_currentQuestionIndex < _quizSize - 1) {
       setState(() {
         _currentQuestionIndex++;
         _selectedAnswer = null;
@@ -149,7 +153,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
 
   ShapeQuestion get _currentQuestion => _gameData!.questions[_currentQuestionIndex];
   bool get _hasAnswered => _userAnswers.containsKey(_currentQuestion.id);
-  bool get _isLastQuestion => _currentQuestionIndex == _gameData!.questions.length - 1;
+  bool get _isLastQuestion => _currentQuestionIndex == _quizSize - 1;
   bool get _is3DQuiz => widget.gameId == 'level4'; // Level 4 is 3D shapes quiz
 
   @override
@@ -416,7 +420,7 @@ class _Questions2DShapesAPIScreenState extends State<Questions2DShapesAPIScreen>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  '${_currentQuestionIndex + 1}/${_gameData!.questions.length}',
+                  '${_currentQuestionIndex + 1}/$_quizSize',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,

@@ -1,8 +1,14 @@
+import 'package:ganithamithura/utils/constants.dart';
+
 class AppConfig {
-  // Replace with your computer's local IP address
-  static const String serverIp = "192.168.1.18"; 
-  static const int serverPort = 8000;
+  static String get baseUrl => AppConstants.symbolBaseUrl;
   
-  static String get baseUrl => "http://$serverIp:$serverPort";
-  static String get wsUrl => "ws://$serverIp:$serverPort";
+  static String get wsUrl {
+    // Replace http/https with ws/wss based on the public URL
+    if (AppConstants.symbolBaseUrl.startsWith("https://")) {
+      return AppConstants.symbolBaseUrl.replaceFirst("https://", "wss://");
+    } else {
+      return AppConstants.symbolBaseUrl.replaceFirst("http://", "ws://");
+    }
+  }
 }

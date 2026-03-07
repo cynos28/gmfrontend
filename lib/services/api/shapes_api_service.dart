@@ -14,7 +14,7 @@ class ShapesApiService {
   ShapesApiService._({required this.baseUrl});
   
   static ShapesApiService get instance {
-    _instance ??= ShapesApiService._(baseUrl: '${AppConstants.baseUrl}/shapes-patterns');
+    _instance ??= ShapesApiService._(baseUrl: AppConstants.shapeBaseUrl);
     return _instance!;
   }
   
@@ -295,6 +295,34 @@ class ShapesApiService {
     }
   }
   
+  /// Get user's game progress (simplified version)
+  /// Returns raw user progress data from the backend
+  Future<Map<String, dynamic>> getUserProgress() async {
+    try {
+      final headers = _getHeaders();
+      final url = Uri.parse('$baseUrl/game/user-progress');
+      
+      final response = await http.get(
+        url,
+        headers: headers,
+      ).timeout(
+        Duration(seconds: AppConstants.apiTimeout),
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get user progress: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return default empty progress on error
+      return {
+        'highest_passed_level': 0,
+        'levels': [],
+      };
+    }
+  }
+
   /// Get Build & Match challenge progress
   /// 
   /// Returns:

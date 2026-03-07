@@ -4,9 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
-import 'package:ganithamithura/screens/symbol/gaming/leaderboard_screen.dart';
+
 import 'package:ganithamithura/screens/symbol/gaming/congratulations_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
+import 'package:ganithamithura/screens/symbol/gaming/utils/symbol_curriculum.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BalloonGameScreen extends StatefulWidget {
   final int grade;
@@ -26,9 +29,7 @@ class BalloonGameScreen extends StatefulWidget {
 
 class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTickerProviderStateMixin {
   late int _score;
-  int _num1 = 2;
-  int _num2 = 2;
-  int _result = 4;
+  List<EquationComponent> _components = [];
   String? _selectedOperation;
   String _correctOperation = '+';
   List<String> _options = ['+', '-', '='];
@@ -46,6 +47,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
   Color _feedingColor = Colors.white;
 
   late Animation<double> _feedRotateAnim;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -71,46 +73,25 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
   @override
   void dispose() {
     _feedController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
+  Future<void> _playSound(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool('audio_enabled') ?? true;
+    final volume = prefs.getDouble('audio_volume') ?? 0.7;
+    if (isEnabled && mounted) {
+      _audioPlayer.setVolume(volume);
+      _audioPlayer.play(AssetSource(path));
+    }
+  }
+
   void _generateQuestion() {
-    // ... no changes to _generateQuestion ...
-    final random = math.Random();
-    final operations = ['+', '-', '×', '÷'];
-    _correctOperation = operations[random.nextInt(operations.length)];
-
-    switch (_correctOperation) {
-      case '+':
-        _num1 = random.nextInt(5) + 1;
-        _num2 = random.nextInt(5) + 1;
-        _result = _num1 + _num2;
-        break;
-      case '-':
-        _result = random.nextInt(5) + 1;
-        _num2 = random.nextInt(_result + 1);
-        _num1 = _result + _num2;
-        break;
-      case '×':
-        _num1 = random.nextInt(5) + 1;
-        _num2 = random.nextInt(5) + 1;
-        _result = _num1 * _num2;
-        break;
-      case '÷':
-        _num2 = random.nextInt(5) + 1;
-        _result = random.nextInt(5) + 1;
-        _num1 = _num2 * _result;
-        break;
-    }
-
-    _options = [_correctOperation];
-    while (_options.length < 3) {
-      String op = operations[random.nextInt(operations.length)];
-      if (!_options.contains(op)) {
-        _options.add(op);
-      }
-    }
-    _options.shuffle();
+    final cur = SymbolCurriculum.generateFor(widget.grade, widget.level);
+    _components = cur.components;
+    _correctOperation = cur.correctOperation;
+    _options = cur.options;
   }
 
   void _onOptionSelected(int index, String text, Color color) {
@@ -143,6 +124,9 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
         _isFeeding = true;
       });
 
+      // Play bite sound immediately upon clicking the symbol
+      _playSound('symbols/sounds/eating-crunchy-food-with-mouth-open-120.wav');
+
       // Fly to mouth
       _feedPositionAnim = Tween<Offset>(begin: startPos, end: endPos).animate(
         CurvedAnimation(parent: _feedController, curve: Curves.easeInOutCubic),
@@ -174,6 +158,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
 
   void _checkAnswer(String operation) {
     if (operation == _correctOperation) {
+      _playSound('symbols/sounds/correct_answer.mp3.mpeg');
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           setState(() {
@@ -193,6 +178,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
         );
       });
     } else {
+      _playSound('symbols/sounds/wrong answer.mp3.mpeg');
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           setState(() {
@@ -206,6 +192,9 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
 
   void _endGame({required bool isWin}) async {
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    
+    // Add artificial delay so the loading spinner stays visible a bit longer
+    await Future.delayed(const Duration(seconds: 2));
     
     try {
       final user = await AuthService.instance.getCurrentUser();
@@ -221,7 +210,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
       if (isWin) {
          Get.off(() => CongratulationsScreen(score: _score, level: widget.level));
       } else {
-         Get.off(() => const LeaderboardScreen());
+         Get.off(() => const SymbolDashboardScreen(initialTabIndex: 2, playCongratsSound: true));
       }
     } catch (e) {
       Get.back(); // close loading UI
@@ -230,28 +219,34 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
       if (isWin) {
          Get.off(() => CongratulationsScreen(score: _score, level: widget.level));
       } else {
-         Get.off(() => const LeaderboardScreen());
+         Get.off(() => const SymbolDashboardScreen(initialTabIndex: 2, playCongratsSound: true));
       }
     }
   }
 
   Widget _buildTopCircle(String text) {
+    final bool isLong = text.length > 2;
     return Container(
-      width: 75,
       height: 75,
+      width: isLong ? null : 75,
+      padding: EdgeInsets.symmetric(horizontal: isLong ? 20 : 0),
       decoration: const BoxDecoration(
         color: Color(0xFF8B3A1C),
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.all(Radius.circular(37.5)),
       ),
-      child: Center(
-        child: Text(
-          text,
-          style: GoogleFonts.lora(
-            fontSize: 44,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: GoogleFonts.lora(
+              fontSize: isLong ? 28 : 44,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -317,7 +312,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                 child: Center(
                   child: Text(
                     text,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.lora(
                       fontSize: 55,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF19324B), // Dark navy color for symbols
@@ -367,7 +362,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
           child: Center(
             child: Text(
               text,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.lora(
                 fontSize: 55,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF19324B),
@@ -494,19 +489,18 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                 const SizedBox(height: 20),
 
                 // Equation Area
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildTopCircle('$_num1'),
-                    const SizedBox(width: 12),
-                    _buildOperationBox(text: '?'),
-                    const SizedBox(width: 12),
-                    _buildTopCircle('$_num2'),
-                    const SizedBox(width: 12),
-                    _buildOperationBox(text: '='),
-                    const SizedBox(width: 12),
-                    _buildTopCircle('$_result'),
-                  ],
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: _components.map((c) {
+                    if (c.type == ComponentType.number) {
+                      return _buildTopCircle(c.text);
+                    } else {
+                      return _buildOperationBox(text: c.text);
+                    }
+                  }).toList(),
                 ),
 
                 Expanded(
@@ -571,11 +565,10 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
                   padding: const EdgeInsets.only(bottom: 70),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildOptionCircle(0, _options[0], Colors.white),
-                      _buildOptionCircle(1, _options[1], Colors.white),
-                      _buildOptionCircle(2, _options[2], Colors.white),
-                    ],
+                    children: List.generate(
+                      _options.length,
+                      (index) => _buildOptionCircle(index, _options[index], Colors.white),
+                    ),
                   ),
                 ),
               ],

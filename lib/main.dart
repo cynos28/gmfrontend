@@ -17,6 +17,10 @@ void main() async {
   // Initialize storage service asynchronously
   // Don't block app launch - initialize in background
   StorageService.instance.init();
+
+  // Load dynamic server URLs from GitHub Gist
+  // Commented out - using localhost instead of ngrok
+  // await AppConstants.loadDynamicUrls();
   
   runApp(const GanithamithuraApp());
 }

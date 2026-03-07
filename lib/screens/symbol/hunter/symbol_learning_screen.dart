@@ -232,8 +232,7 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
        // Use '10.0.2.2' for Emulator, '127.0.0.1' for ADB Reverse
        // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1");
        // fixedUrl = fixedUrl.replaceFirst("192.168.8.118", "127.0.0.1"); // Also fix stuck IP if any
-       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
-       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
+       String fixedUrl = rawUrl.replaceAll(RegExp(r'http://(?:localhost|127\.0\.0\.1):\d+'), AppConfig.baseUrl);
 
        print("Loading image: $fixedUrl"); // Debug log
 

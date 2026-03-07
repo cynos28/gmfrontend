@@ -157,6 +157,27 @@ class SymbolService {
     }
   }
 
+  /// Get aggregated activity history (performance + gaming)
+  Future<List<dynamic>> getActivityHistory(String userId) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/users/$userId/activity');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: AppConstants.apiTimeout));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['activities'] ?? [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching activity history: $e');
+      return [];
+    }
+  }
+
   /// Get aggregated performance summary with latest ML prediction
   Future<Map<String, dynamic>?> getPerformanceSummary(String userId) async {
     try {
