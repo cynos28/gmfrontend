@@ -694,37 +694,7 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                        ],
-                      ),
-                      child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 26),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Build & Match',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildAppBar(),
 
             // Scrollable content
             Expanded(
@@ -735,1085 +705,387 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
                       child: Column(
                         children: [
                           // Build Challenges Section
-                          Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC2E9DB),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0x1AA69696),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Build Challenges',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Horizontal scrolling challenges
-                          SizedBox(
-                            height: 95,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: challenges.length,
-                              itemBuilder: (context, index) {
-                                final challenge = challenges[index];
-                                final isSelected = index == _selectedChallengeIndex;
-                                
-                                final isLocked = _isChallengeLocked(index);
-                                
-                                return GestureDetector(
-                                  onTap: () => _handleChallengeTap(index),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        width: 71,
-                                        margin: const EdgeInsets.only(right: 13),
-                                        decoration: BoxDecoration(
-                                          color: isSelected 
-                                              ? const Color(0xFF4CEEB2) 
-                                              : Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              challenge['icon'],
-                                              style: TextStyle(
-                                                fontSize: 32,
-                                                color: isLocked 
-                                                    ? Colors.grey.withOpacity(0.5) 
-                                                    : null,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              challenge['name'],
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: isLocked
-                                                    ? Colors.grey
-                                                    : (isSelected 
-                                                        ? Colors.white 
-                                                        : Colors.black),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (isLocked)
-                                        Positioned.fill(
-                                          child: Container(
-                                            margin: const EdgeInsets.only(right: 13),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withOpacity(0.3),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: const Icon(
-                                              Icons.lock,
-                                              color: Colors.white,
-                                              size: 28,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Hint
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0x80FCFCFC),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.lightbulb_outline,
-                                  size: 18,
-                                  color: Colors.black,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Hint: $currentHint',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildChallengeSection(),
+                    
+                          const SizedBox(height: 31),
+                          _buildCanvas(height: 280),
+                          const SizedBox(height: 24),
+                          _buildShapePalette(),
+                          const SizedBox(height: 31),
+                          _buildActionButtons(),
+                          const SizedBox(height: 35),
                         ],
                       ),
-                    ),
-                    
-                    const SizedBox(height: 31),
-                    
-                    // Building Canvas
-                    Stack(
-                      children: [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            return Container(
-                              height: 282,
-                              width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFECEAEA),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: const Color(0xFF36D399),
-                              width: 2,
-                            ),
-                          ),
-                          child: GestureDetector(
-                            onTapDown: (details) {
-                              // Close menu when tapping outside
-                              if (_shapeWithMenu != null) {
-                                setState(() {
-                                  _shapeWithMenu = null;
-                                });
-                              }
-                            },
-                            child: Stack(
-                              children: [
-                                // Always render landmarks (hide matched ones)
-                                ...currentLandmarks.asMap().entries.where((entry) => !_isLandmarkMatched(entry.key)).map((entry) {
-                                  final landmark = entry.value;
-                                  final rotation = landmark['rotation'] as double? ?? 0.0;
-                                  return Positioned(
-                                    left: (landmark['position'] as Offset).dx,
-                                    top: (landmark['position'] as Offset).dy,
-                                    child: Transform.rotate(
-                                      angle: rotation * 3.14159 / 180,
-                                      child: Opacity(
-                                        opacity: 0.5,
-                                        child: CustomPaint(
-                                          painter: DashedBorderPainter(
-                                            color: landmark['color'] as Color,
-                                            strokeWidth: 2,
-                                            dashWidth: 5,
-                                            dashSpace: 3,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(5),
-                                            child: _buildShape(
-                                              landmark['type'] as String,
-                                              (landmark['color'] as Color).withOpacity(0.3),
-                                              size: 70,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                
-                                // Show empty state message or placed shapes
-                                if (_placedShapes.isEmpty)
-                                  const Center(
-                                    child: Text(
-                                      'Tap shapes below to Start Building!',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0x80000000),
-                                      ),
-                                    ),
-                                  ),
-                                
-                                // Render placed shapes
-                                ..._placedShapes.map((placedShape) {
-                                      return Positioned(
-                                        left: placedShape.position.dx,
-                                        top: placedShape.position.dy,
-                                        child: GestureDetector(
-                                          behavior: HitTestBehavior.opaque,
-                                          onScaleStart: (details) {
-                                            setState(() {
-                                              _initialScale = placedShape.scale;
-                                              _initialRotation = placedShape.rotation;
-                                              _shapeWithMenu = null; // Close menu on gesture
-                                            });
-                                          },
-                                          onScaleUpdate: (details) {
-                                            setState(() {
-                                              // Handle scaling (details.scale is relative to start)
-                                              placedShape.scale = (_initialScale * details.scale)
-                                                  .clamp(0.5, 3.0);
-                                              
-                                              // Handle rotation (details.rotation is in radians, relative to start)
-                                              placedShape.rotation = _initialRotation + (details.rotation * 180 / 3.14159);
-                                              if (placedShape.rotation >= 360) {
-                                                placedShape.rotation -= 360;
-                                              } else if (placedShape.rotation < 0) {
-                                                placedShape.rotation += 360;
-                                              }
-                                              
-                                              // Handle movement
-                                              final newX = (placedShape.position.dx + details.focalPointDelta.dx)
-                                                  .clamp(0.0, constraints.maxWidth - 60)
-                                                  .toDouble();
-                                              final newY = (placedShape.position.dy + details.focalPointDelta.dy)
-                                                  .clamp(0.0, 282 - 60)
-                                                  .toDouble();
-                                              placedShape.position = Offset(newX, newY);
-                                            });
-                                          },
-                                          onLongPress: () {
-                                            setState(() {
-                                              _shapeWithMenu = placedShape;
-                                            });
-                                          },
-                                          child: Transform.scale(
-                                            scale: placedShape.scale,
-                                            child: Transform.rotate(
-                                              angle: placedShape.rotation * 3.14159 / 180,
-                                              child: Container(
-                                                padding: const EdgeInsets.all(5),
-                                                decoration: _shapeWithMenu == placedShape
-                                                    ? BoxDecoration(
-                                                        border: Border.all(
-                                                          color: Colors.blue,
-                                                          width: 3,
-                                                        ),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      )
-                                                    : null,
-                                                child: _buildShape(
-                                                  placedShape.type,
-                                                  placedShape.color,
-                                                  size: 70,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    // Action Menu
-                                    if (_shapeWithMenu != null)
-                                      Positioned(
-                                        left: (_shapeWithMenu!.position.dx + 70).clamp(0.0, constraints.maxWidth - 60),
-                                        top: _shapeWithMenu!.position.dy,
-                                        child: Material(
-                                          elevation: 8,
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: const Color(0xFF36D399),
-                                                width: 2,
-                                              ),
-                                            ),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                // Scale Up
-                                                IconButton(
-                                                  icon: const Icon(Icons.zoom_in, size: 20),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _shapeWithMenu!.scale = (_shapeWithMenu!.scale + 0.2).clamp(0.5, 3.0);
-                                                    });
-                                                  },
-                                                  tooltip: 'Scale Up',
-                                                ),
-                                                const SizedBox(height: 8),
-                                                // Scale Down
-                                                IconButton(
-                                                  icon: const Icon(Icons.zoom_out, size: 20),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _shapeWithMenu!.scale = (_shapeWithMenu!.scale - 0.2).clamp(0.5, 3.0);
-                                                    });
-                                                  },
-                                                  tooltip: 'Scale Down',
-                                                ),
-                                                const SizedBox(height: 8),
-                                                // Rotate 45°
-                                                IconButton(
-                                                  icon: const Icon(Icons.rotate_right, size: 20),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      final index = _placedShapes.indexOf(_shapeWithMenu!);
-                                                      if (index != -1) {
-                                                        _placedShapes[index].rotation = (_placedShapes[index].rotation + 45) % 360;
-                                                      }
-                                                    });
-                                                  },
-                                                  tooltip: 'Rotate 45°',
-                                                ),
-                                                const SizedBox(height: 8),
-                                                // Delete
-                                                IconButton(
-                                                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _placedShapes.remove(_shapeWithMenu);
-                                                      _shapeWithMenu = null;
-                                                    });
-                                                  },
-                                                  tooltip: 'Delete',
-                                                ),
-                                                const SizedBox(height: 8),
-                                                // Close
-                                                IconButton(
-                                                  icon: const Icon(Icons.close, size: 20),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _shapeWithMenu = null;
-                                                    });
-                                                  },
-                                                  tooltip: 'Close',
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                        );
-                          },
-                        ),
-                        // Full Screen Button
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isFullScreen = true;
-                                _shapeWithMenu = null;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.fullscreen,
-                                size: 20,
-                                color: Color(0xFF4CEEB2),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Shape Palette
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFFFAFAFA),
-                          width: 2,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.add_circle,
-                                color: Color(0xFF4CEEB2),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Tap to Add Shapes',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          // Grid of shapes (4 per row)
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: List.generate(
-                              currentChallengeShapes.length,
-                              (index) {
-                                final shapeData = currentChallengeShapes[index];
-                                final shapeType = shapeData['type'];
-                                final shapeColor = shapeData['color'];
-                                final shapeCount = shapeData['count'];
-                                
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _placedShapes.add(
-                                        PlacedShape(
-                                          type: shapeType,
-                                          color: shapeColor,
-                                          position: Offset(
-                                            50.0 + (_placedShapes.length * 10.0),
-                                            50.0 + (_placedShapes.length * 10.0),
-                                          ),
-                                        ),
-                                      );
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 70,
-                                    height: 83,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8EAEE),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        _buildShape(
-                                          shapeType,
-                                          shapeColor,
-                                          size: 50,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'x$shapeCount',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 31),
-                    
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _clearCanvas,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF1AD7F),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Transform.rotate(
-                                  angle: -1.5708,
-                                  child: const Icon(
-                                    Icons.refresh,
-                                    size: 15,
-                                    color: Color(0xFFD33636),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Clear',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFD33636),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 21),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _deleteLastShape,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFA6ADED),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.delete_outline,
-                                  size: 15,
-                                  color: Color(0x80000000),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Delete',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0x80000000),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Check Build Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _checkBuild,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF1AD7F),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.arrow_forward,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'I\'m Done! Check My Build',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 30),
-                  ],
-                ),
               ),
             ),
           ],
         ),
       ),
         ),
-        // Full Screen Overlay
-        if (_isFullScreen)
-          Container(
-          color: const Color(0xFFE5ECF0),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Full Screen Header
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+        if (_isFullScreen) _buildFullScreenOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildFullScreenOverlay() {
+    final currentChallenge = challenges[_selectedChallengeIndex];
+    
+    return Container(
+      color: const Color(0xFFE5ECF0),
+      child: SafeArea(
+        child: Column(
+          children: [
+             // Full Screen Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        challenges[_selectedChallengeIndex]['name'],
+                        '${currentChallenge['icon']} ${currentChallenge['name']}',
                         style: const TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2D4059),
                         ),
                       ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isFullScreen = false;
-                            _shapeWithMenu = null;
-                            _currentLandmarkOffset = Offset.zero;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4CEEB2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.fullscreen_exit,
-                            size: 24,
-                            color: Colors.white,
-                          ),
+                      const Text(
+                        'BUILDING MODE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFF1AD7F),
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ],
                   ),
-                ),
-                // Full Screen Canvas
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final landmarkOffset = _getLandmarkOffset(constraints.maxWidth, constraints.maxHeight);
-                        // Store offset in state for validation
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_currentLandmarkOffset != landmarkOffset) {
-                            setState(() {
-                              _currentLandmarkOffset = landmarkOffset;
-                            });
-                          }
-                        });
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFECEAEA),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: const Color(0xFF36D399),
-                              width: 2,
-                            ),
-                          ),
-                          child: GestureDetector(
-                            onTapDown: (details) {
-                              if (_shapeWithMenu != null) {
-                                setState(() {
-                                  _shapeWithMenu = null;
-                                });
-                              }
-                            },
-                            child: Stack(
-                              children: [
-                                // Landmarks
-                                ...currentLandmarks.asMap().entries.where((entry) => !_isLandmarkMatched(entry.key, offset: landmarkOffset)).map((entry) {
-                                  final landmark = entry.value;
-                                  final rotation = landmark['rotation'] as double? ?? 0.0;
-                                  final originalPos = landmark['position'] as Offset;
-                                  final centeredPos = originalPos + landmarkOffset;
-                                  return Positioned(
-                                    left: centeredPos.dx,
-                                    top: centeredPos.dy,
-                                    child: Transform.rotate(
-                                      angle: rotation * 3.14159 / 180,
-                                      child: Opacity(
-                                        opacity: 0.5,
-                                        child: CustomPaint(
-                                          painter: DashedBorderPainter(
-                                            color: landmark['color'] as Color,
-                                            strokeWidth: 2,
-                                            dashWidth: 5,
-                                            dashSpace: 3,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(5),
-                                            child: _buildShape(
-                                              landmark['type'] as String,
-                                              (landmark['color'] as Color).withOpacity(0.3),
-                                              size: 70,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                // Empty state
-                                if (_placedShapes.isEmpty)
-                                  const Center(
-                                    child: Text(
-                                      'Tap shapes below to Start Building!',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0x80000000),
-                                      ),
-                                    ),
-                                  ),
-                                // Placed shapes
-                                ..._placedShapes.map((placedShape) {
-                                  return Positioned(
-                                    left: placedShape.position.dx,
-                                    top: placedShape.position.dy,
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onScaleStart: (details) {
-                                        setState(() {
-                                          _initialScale = placedShape.scale;
-                                          _initialRotation = placedShape.rotation;
-                                          _shapeWithMenu = null;
-                                        });
-                                      },
-                                      onScaleUpdate: (details) {
-                                        setState(() {
-                                          placedShape.scale = (_initialScale * details.scale).clamp(0.5, 3.0);
-                                          placedShape.rotation = _initialRotation + (details.rotation * 180 / 3.14159);
-                                          if (placedShape.rotation >= 360) {
-                                            placedShape.rotation -= 360;
-                                          } else if (placedShape.rotation < 0) {
-                                            placedShape.rotation += 360;
-                                          }
-                                          final newX = (placedShape.position.dx + details.focalPointDelta.dx)
-                                              .clamp(0.0, constraints.maxWidth - 80)
-                                              .toDouble();
-                                          final newY = (placedShape.position.dy + details.focalPointDelta.dy)
-                                              .clamp(0.0, constraints.maxHeight - 80)
-                                              .toDouble();
-                                          placedShape.position = Offset(newX, newY);
-                                        });
-                                      },
-                                      onLongPress: () {
-                                        setState(() {
-                                          _shapeWithMenu = placedShape;
-                                        });
-                                      },
-                                      child: Transform.scale(
-                                        scale: placedShape.scale,
-                                        child: Transform.rotate(
-                                          angle: placedShape.rotation * 3.14159 / 180,
-                                          child: Container(
-                                            padding: const EdgeInsets.all(5),
-                                            decoration: _shapeWithMenu == placedShape
-                                                ? BoxDecoration(
-                                                    border: Border.all(
-                                                      color: Colors.blue,
-                                                      width: 3,
-                                                    ),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  )
-                                                : null,
-                                            child: _buildShape(
-                                              placedShape.type,
-                                              placedShape.color,
-                                              size: 70,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                // Action Menu
-                                if (_shapeWithMenu != null)
-                                  Positioned(
-                                    left: (_shapeWithMenu!.position.dx + 70).clamp(0.0, constraints.maxWidth - 60),
-                                    top: _shapeWithMenu!.position.dy,
-                                    child: Material(
-                                      elevation: 8,
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: const Color(0xFF36D399),
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.zoom_in, size: 20),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _shapeWithMenu!.scale = (_shapeWithMenu!.scale + 0.2).clamp(0.5, 3.0);
-                                                });
-                                              },
-                                              tooltip: 'Scale Up',
-                                            ),
-                                            const SizedBox(height: 8),
-                                            IconButton(
-                                              icon: const Icon(Icons.zoom_out, size: 20),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _shapeWithMenu!.scale = (_shapeWithMenu!.scale - 0.2).clamp(0.5, 3.0);
-                                                });
-                                              },
-                                              tooltip: 'Scale Down',
-                                            ),
-                                            const SizedBox(height: 8),
-                                            IconButton(
-                                              icon: const Icon(Icons.rotate_right, size: 20),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              onPressed: () {
-                                                setState(() {
-                                                  final index = _placedShapes.indexOf(_shapeWithMenu!);
-                                                  if (index != -1) {
-                                                    _placedShapes[index].rotation = (_placedShapes[index].rotation + 45) % 360;
-                                                  }
-                                                });
-                                              },
-                                              tooltip: 'Rotate 45°',
-                                            ),
-                                            const SizedBox(height: 8),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _placedShapes.remove(_shapeWithMenu);
-                                                  _shapeWithMenu = null;
-                                                });
-                                              },
-                                              tooltip: 'Delete',
-                                            ),
-                                            const SizedBox(height: 8),
-                                            IconButton(
-                                              icon: const Icon(Icons.close, size: 20),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _shapeWithMenu = null;
-                                                });
-                                              },
-                                              tooltip: 'Close',
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isFullScreen = false;
+                        _shapeWithMenu = null;
+                        _currentLandmarkOffset = Offset.zero;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE76E50).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.fullscreen_exit_rounded,
+                        size: 24,
+                        color: Color(0xFFE76E50),
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            // Canvas
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final landmarkOffset = _getLandmarkOffset(constraints.maxWidth, constraints.maxHeight);
+                    
+                    // Store offset in state for validation
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_currentLandmarkOffset != landmarkOffset) {
+                        setState(() {
+                          _currentLandmarkOffset = landmarkOffset;
+                        });
+                      }
+                    });
+                    
+                    return _buildCanvas(landmarkOffset: landmarkOffset);
+                  },
                 ),
-                // Shape Palette and Action Buttons in Full Screen
-                Container(
-                  padding: const EdgeInsets.all(16),
+              ),
+            ),
+
+            // Bottom Panel
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 15,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildShapePalette(),
+                  const SizedBox(height: 16),
+                  _buildActionButtons(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF1AD7F),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFE76E50), size: 22),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Build & Match',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Text(
+                    'Challenge Your Creativity!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 20),
+                  SizedBox(width: 4),
+                  Text(
+                    'Win Stars!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallengeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'Select a Challenge',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF2D4059),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: challenges.length,
+            itemBuilder: (context, index) {
+              final challenge = challenges[index];
+              final isSelected = index == _selectedChallengeIndex;
+              final isLocked = _isChallengeLocked(index);
+              
+              return GestureDetector(
+                onTap: () => _handleChallengeTap(index),
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 12, bottom: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isSelected ? const Color(0xFFF1AD7F) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: isSelected 
+                            ? const Color(0xFFF1AD7F).withOpacity(0.3) 
+                            : Colors.black.withOpacity(0.05),
                         blurRadius: 8,
-                        offset: const Offset(0, -2),
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                    border: Border.all(
+                      color: isSelected ? Colors.transparent : Colors.black12,
+                      width: 1.5,
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Stack(
                     children: [
-                      // Shape Palette
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.add_circle,
-                            color: Color(0xFF4CEEB2),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Tap to Add Shapes',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 70,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: currentChallengeShapes.length,
-                          itemBuilder: (context, index) {
-                            final shapeData = currentChallengeShapes[index];
-                            final shapeType = shapeData['type'];
-                            final shapeColor = shapeData['color'];
-                            final shapeCount = shapeData['count'];
-                            
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _placedShapes.add(
-                                    PlacedShape(
-                                      type: shapeType,
-                                      color: shapeColor,
-                                      position: Offset(
-                                        50.0 + (_placedShapes.length * 10.0),
-                                        50.0 + (_placedShapes.length * 10.0),
-                                      ),
-                                    ),
-                                  );
-                                });
-                              },
-                              child: Container(
-                                width: 60,
-                                margin: const EdgeInsets.only(right: 12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8EAEE),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildShape(
-                                      shapeType,
-                                      shapeColor,
-                                      size: 35,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'x$shapeCount',
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              challenge['icon'],
+                              style: TextStyle(
+                                fontSize: 32,
+                                color: isLocked ? Colors.grey.withOpacity(0.5) : null,
                               ),
-                            );
-                          },
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              challenge['name'],
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: isLocked 
+                                    ? Colors.grey 
+                                    : (isSelected ? Colors.white : Colors.black87),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _clearCanvas,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF1AD7F),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              child: const Text(
-                                'Clear',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFD33636),
-                                ),
-                              ),
-                            ),
+                      if (isLocked)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _deleteLastShape,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFA6ADED),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0x80000000),
-                                ),
-                              ),
-                            ),
+                          child: const Center(
+                            child: Icon(Icons.lock_rounded, color: Colors.white, size: 24),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _checkBuild,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4CEEB2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              child: const Text(
-                                'Check',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
                     ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildHintSection(),
+      ],
+    );
+  }
+
+  Widget _buildHintSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF36D399).withOpacity(0.1),
+            const Color(0xFF2196F3).withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF36D399).withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF36D399),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.lightbulb_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'MISSION TIP',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF36D399),
+                    letterSpacing: 1,
+                  ),
+                ),
+                Text(
+                  currentHint,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D4059),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1855,6 +1127,433 @@ class _BuildAndMatchScreenState extends State<BuildAndMatchScreen> {
         return const SizedBox();
     }
   }
+
+  Widget _buildCanvas({Offset? landmarkOffset, double? height}) {
+    final currentChallenge = challenges[_selectedChallengeIndex];
+    final currentLandmarks = currentChallenge['landmarks'] as List<Map<String, dynamic>>;
+
+    Widget mainCanvas = LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFFF1AD7F).withOpacity(0.3),
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(21),
+            child: GestureDetector(
+              onTapDown: (details) {
+                if (_shapeWithMenu != null) {
+                  setState(() {
+                    _shapeWithMenu = null;
+                  });
+                }
+              },
+              child: Stack(
+                children: [
+                   // Grid background
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: GridPainter(
+                        color: const Color(0xFFF1AD7F).withOpacity(0.05),
+                        spacing: 20,
+                      ),
+                    ),
+                  ),
+                  
+                  // Landmarks (targets)
+                  ...currentLandmarks.asMap().entries.where((entry) => !_isLandmarkMatched(entry.key, offset: landmarkOffset ?? Offset.zero)).map((entry) {
+                    final landmark = entry.value;
+                    final rotation = landmark['rotation'] as double? ?? 0.0;
+                    return Positioned(
+                      left: (landmark['position'] as Offset).dx + (landmarkOffset?.dx ?? 0),
+                      top: (landmark['position'] as Offset).dy + (landmarkOffset?.dy ?? 0),
+                      child: Transform.rotate(
+                        angle: rotation * 3.14159 / 180,
+                        child: Opacity(
+                          opacity: 0.6,
+                          child: CustomPaint(
+                            painter: DashedBorderPainter(
+                              color: landmark['color'] as Color,
+                              strokeWidth: 2,
+                              dashWidth: 5,
+                              dashSpace: 3,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              child: _buildShape(
+                                landmark['type'] as String,
+                                (landmark['color'] as Color).withOpacity(0.2),
+                                size: 70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+
+                  if (_placedShapes.isEmpty)
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.architecture_rounded, size: 64, color: Colors.grey.withOpacity(0.2)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Tap shapes below to START BUILDING!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.grey.withOpacity(0.4),
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Placed Shapes
+                  ..._placedShapes.map((placedShape) {
+                    return Positioned(
+                      left: placedShape.position.dx,
+                      top: placedShape.position.dy,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onScaleStart: (details) {
+                          setState(() {
+                            _initialScale = placedShape.scale;
+                            _initialRotation = placedShape.rotation;
+                            _shapeWithMenu = null;
+                          });
+                        },
+                        onScaleUpdate: (details) {
+                          setState(() {
+                            placedShape.scale = (_initialScale * details.scale).clamp(0.5, 3.0);
+                            placedShape.rotation = _initialRotation + (details.rotation * 180 / 3.14159);
+                            
+                            final newX = (placedShape.position.dx + details.focalPointDelta.dx)
+                                .clamp(0.0, constraints.maxWidth - 60)
+                                .toDouble();
+                            final newY = (placedShape.position.dy + details.focalPointDelta.dy)
+                                .clamp(0.0, constraints.maxHeight - 60)
+                                .toDouble();
+                            placedShape.position = Offset(newX, newY);
+                          });
+                        },
+                        onLongPress: () {
+                          setState(() => _shapeWithMenu = placedShape);
+                        },
+                        onTap: () {
+                          setState(() => _shapeWithMenu = placedShape);
+                        },
+                        child: Transform.scale(
+                          scale: placedShape.scale,
+                          child: Transform.rotate(
+                            angle: placedShape.rotation * 3.14159 / 180,
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: _shapeWithMenu == placedShape
+                                  ? BoxDecoration(
+                                      border: Border.all(
+                                        color: const Color(0xFF36D399),
+                                        width: 3,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    )
+                                  : null,
+                              child: _buildShape(
+                                placedShape.type,
+                                placedShape.color,
+                                size: 70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+
+                  // Full Screen Button (only in standard view)
+                  if (height != null)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isFullScreen = true;
+                            _shapeWithMenu = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.fullscreen_rounded,
+                            size: 24,
+                            color: Color(0xFF36D399),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Modification Menu
+                  if (_shapeWithMenu != null)
+                    _buildModificationMenu(constraints),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    return height != null 
+        ? SizedBox(height: height, child: mainCanvas) 
+        : Expanded(child: mainCanvas);
+  }
+
+  Widget _buildModificationMenu(BoxConstraints constraints) {
+    return Positioned(
+      left: (_shapeWithMenu!.position.dx + 80).clamp(0.0, constraints.maxWidth - 70),
+      top: _shapeWithMenu!.position.dy,
+      child: Material(
+        elevation: 12,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF1AD7F).withOpacity(0.5), width: 2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _menuIcon(Icons.zoom_in_rounded, () {
+                setState(() => _shapeWithMenu!.scale = (_shapeWithMenu!.scale + 0.2).clamp(0.5, 3.0));
+              }),
+              _menuDivider(),
+              _menuIcon(Icons.zoom_out_rounded, () {
+                setState(() => _shapeWithMenu!.scale = (_shapeWithMenu!.scale - 0.2).clamp(0.5, 3.0));
+              }),
+              _menuDivider(),
+              _menuIcon(Icons.rotate_right_rounded, () {
+                setState(() {
+                  final index = _placedShapes.indexOf(_shapeWithMenu!);
+                  if (index != -1) _placedShapes[index].rotation = (_placedShapes[index].rotation + 45) % 360;
+                });
+              }),
+              _menuDivider(),
+              _menuIcon(Icons.delete_forever_rounded, () {
+                setState(() {
+                  _placedShapes.remove(_shapeWithMenu);
+                  _shapeWithMenu = null;
+                });
+              }, color: Colors.redAccent),
+              _menuDivider(),
+              _menuIcon(Icons.check_circle_rounded, () {
+                setState(() => _shapeWithMenu = null);
+              }, color: Colors.green),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _menuIcon(IconData icon, VoidCallback onTap, {Color color = const Color(0xFFF1AD7F)}) {
+    return IconButton(
+      icon: Icon(icon, color: color, size: 24),
+      onPressed: onTap,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+    );
+  }
+
+  Widget _menuDivider() => Container(height: 24, width: 1, color: Colors.black12, margin: const EdgeInsets.symmetric(horizontal: 8));
+
+  Widget _buildShapePalette() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_box_rounded, color: Color(0xFFF1AD7F), size: 22),
+              SizedBox(width: 8),
+              Text(
+                'Shape Inventory',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF2D4059),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 90,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: currentChallengeShapes.length,
+              itemBuilder: (context, index) {
+                final shapeData = currentChallengeShapes[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _placedShapes.add(PlacedShape(
+                        type: shapeData['type'],
+                        color: shapeData['color'],
+                        position: Offset(50.0 + (_placedShapes.length * 10.0), 50.0 + (_placedShapes.length * 10.0)),
+                      ));
+                    });
+                  },
+                  child: Container(
+                    width: 75,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1AD7F).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFF1AD7F).withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildShape(shapeData['type'], shapeData['color'], size: 45),
+                        const SizedBox(height: 4),
+                        Text(
+                          'x${shapeData['count']}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF2D4059)),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        _actionButton(
+          'Clear',
+          Icons.refresh_rounded,
+          const Color(0xFFFF7675),
+          _clearCanvas,
+        ),
+        const SizedBox(width: 12),
+        _actionButton(
+          'Delete',
+          Icons.backspace_rounded,
+          const Color(0xFF74B9FF),
+          _deleteLastShape,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF36D399), Color(0xFF2DB67C)]),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF36D399).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _checkBuild,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.verified_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'CHECK',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _actionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.3), width: 2),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              Text(
+                label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class PlacedShape {
@@ -1895,4 +1594,30 @@ class TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class GridPainter extends CustomPainter {
+  final Color color;
+  final double spacing;
+
+  GridPainter({required this.color, this.spacing = 20});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0;
+
+    for (double i = 0; i <= size.width; i += spacing) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+
+    for (double i = 0; i <= size.height; i += spacing) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GridPainter oldDelegate) => 
+      oldDelegate.color != color || oldDelegate.spacing != spacing;
 }

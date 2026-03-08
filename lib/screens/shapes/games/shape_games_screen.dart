@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:ganithamithura/screens/shapes/games/match_shapes_3d.dart';
 import 'package:ganithamithura/screens/shapes/games/match_shapes_2d_api.dart';
 import 'package:ganithamithura/screens/shapes/games/answer_questions_2d_api.dart';
 import 'package:ganithamithura/screens/shapes/games/pattern_matching_api.dart';
 import 'package:ganithamithura/services/api/shapes_api_service.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
-import 'package:ganithamithura/widgets/measurements/measurement_widgets.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 
-import '../../../widgets/shapes/shape_widgets.dart';
-
-/// GameHomeScreen - Main screen for Measurement module
+/// GameHomeScreen - Game levels screen for Shapes module
 class GameHomeScreen extends StatefulWidget {
   const GameHomeScreen({super.key});
 
@@ -192,126 +190,218 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
       children: [
         const SizedBox(height: 16),
         // Level 1
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Match 2D Shapes',
-                level: 'Level 1',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(1),
-                onTap: () => _handleLevelTap(1, () async {
-                  return Get.to(() => Match2DShapesAPIScreen(gameId: 'level1'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Match 2D Shapes',
+          subtitle: 'Level 1',
+          localImage: 'assets/images/Shapes/kids1.png',
+          color: const Color(0xFF4CAF50), // Green
+          bgColor: const Color(0xFFC8E6C9),
+          isLocked: _isLevelLocked(1),
+          onTap: () => _handleLevelTap(1, () async {
+            return Get.to(() => Match2DShapesAPIScreen(gameId: 'level1'));
+          }),
         ),
         const SizedBox(height: 16),
         // Level 2
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Answer 2D Questions',
-                level: 'Level 2',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(2),
-                onTap: () => _handleLevelTap(2, () async {
-                  return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level2'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Answer 2D Questions',
+          subtitle: 'Level 2',
+          localImage: 'assets/images/Shapes/kids2.png',
+          color: const Color(0xFFFF9800), // Orange
+          bgColor: const Color(0xFFFFE0B2),
+          isLocked: _isLevelLocked(2),
+          onTap: () => _handleLevelTap(2, () async {
+            return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level2'));
+          }),
         ),
         const SizedBox(height: 16),
         // Level 3
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Match 3D Shapes',
-                level: 'Level 3',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(3),
-                onTap: () => _handleLevelTap(3, () async {
-                  return Get.to(() => Match2DShapesAPIScreen(gameId: 'level3'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Match 3D Shapes',
+          subtitle: 'Level 3',
+          localImage: 'assets/images/Shapes/kids3.png',
+          color: const Color(0xFFE91E63), // Pink
+          bgColor: const Color(0xFFF8BBD0),
+          isLocked: _isLevelLocked(3),
+          onTap: () => _handleLevelTap(3, () async {
+            return Get.to(() => const Match3DShapesScreen());
+          }),
         ),
         const SizedBox(height: 16),
         // Level 4
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Answer 3D Questions',
-                level: 'Level 4',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(4),
-                onTap: () => _handleLevelTap(4, () async {
-                  return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level4'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Answer 3D Questions',
+          subtitle: 'Level 4',
+          localImage: 'assets/images/Shapes/kids4.png',
+          color: const Color(0xFF2196F3), // Blue
+          bgColor: const Color(0xFFBBDEFB),
+          isLocked: _isLevelLocked(4),
+          onTap: () => _handleLevelTap(4, () async {
+            return Get.to(() => Questions2DShapesAPIScreen(gameId: 'level4'));
+          }),
         ),
         const SizedBox(height: 16),
         // Level 5
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Pattern Matching 1',
-                level: 'Level 5',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(5),
-                onTap: () => _handleLevelTap(5, () async {
-                  return Get.to(() => PatternMatchingAPIScreen(gameId: 'level5'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Pattern Matching 1',
+          subtitle: 'Level 5',
+          localImage: 'assets/images/Shapes/kids5.png',
+          color: const Color(0xFF9C27B0), // Purple
+          bgColor: const Color(0xFFE1BEE7),
+          isLocked: _isLevelLocked(5),
+          onTap: () => _handleLevelTap(5, () async {
+            return Get.to(() => PatternMatchingAPIScreen(gameId: 'level5'));
+          }),
         ),
         const SizedBox(height: 16),
         // Level 6
-        Row(
-          children: [
-            Expanded(
-              child: ShapeGameCard(
-                title: 'Pattern Matching 2',
-                level: 'Level 6',
-                icon: 'assets/images/Vector.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                starCount: 3,
-                isLocked: _isLevelLocked(6),
-                onTap: () => _handleLevelTap(6, () async {
-                  return Get.to(() => PatternMatchingAPIScreen(gameId: 'level6'));
-                }),
-              ),
-            ),
-          ],
+        _GameLevelCard(
+          title: 'Pattern Matching 2',
+          subtitle: 'Level 6',
+          localImage: 'assets/images/Shapes/kids6.png',
+          color: const Color(0xFF00BCD4), // Cyan
+          bgColor: const Color(0xFFB2EBF2),
+          isLocked: _isLevelLocked(6),
+          onTap: () => _handleLevelTap(6, () async {
+            return Get.to(() => PatternMatchingAPIScreen(gameId: 'level6'));
+          }),
         ),
         const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+/// Game Level Card Widget - Styled like ShapeHomeScreen cards
+class _GameLevelCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String localImage;
+  final Color color;
+  final Color bgColor;
+  final bool isLocked;
+  final VoidCallback onTap;
+
+  const _GameLevelCard({
+    required this.title,
+    required this.subtitle,
+    required this.localImage,
+    required this.color,
+    required this.bgColor,
+    this.isLocked = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.8, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) => Transform.scale(
+        scale: value,
+        child: child,
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Opacity(
+          opacity: isLocked ? 0.5 : 1.0,
+          child: Container(
+            height: 130,
+            decoration: BoxDecoration(
+              color: isLocked ? Colors.grey.shade300 : bgColor,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: isLocked 
+                                  ? Colors.black45
+                                  : Colors.black87,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (isLocked) ...[
+                              Icon(
+                                Icons.lock,
+                                size: 18,
+                                color: Colors.grey.shade600,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isLocked ? Colors.grey.shade600 : color,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          localImage,
+                          fit: BoxFit.contain,
+                        ),
+                        if (isLocked)
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.lock,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
