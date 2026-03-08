@@ -178,7 +178,7 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
         );
       });
     } else {
-      _playSound('symbols/sounds/wrong answer.mp3.mpeg');
+      _playSound('symbols/sounds/wrong_answer.mp3.mpeg');
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           setState(() {

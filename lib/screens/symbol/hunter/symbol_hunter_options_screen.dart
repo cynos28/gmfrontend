@@ -71,7 +71,7 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
                 title: 'Practice Questions',
                 subtitle: 'Test your knowledge with\nquestions',
                 buttonText: 'Start',
-                imageAsset: 'assets/symbols/hunterOptionQuection.png',
+                imageAsset: 'assets/symbols/unterOptionQuectionnew.png',
                 color: const Color(0xFFFFCCAA), // Peach/Orange
                 textColor: Colors.white,
                 onTap: () {
@@ -85,7 +85,7 @@ class SymbolHunterOptionsScreen extends StatelessWidget {
                 title: 'Learning Pool',
                 subtitle: 'You can learn symbols with\nour AI Tutor',
                 buttonText: "Let's Learn",
-                imageAsset: 'assets/symbols/hunterGame.png',
+                imageAsset: 'assets/symbols/hunterGamenew.png',
                 color: const Color(0xFFA8B5FF), // Periwinkle/Blue
                 textColor: Colors.white,
                 onTap: () {

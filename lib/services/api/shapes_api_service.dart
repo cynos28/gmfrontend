@@ -9,21 +9,19 @@ import 'package:ganithamithura/utils/constants.dart';
 /// Shapes API Service - Handles all shapes game backend API calls
 class ShapesApiService {
   static ShapesApiService? _instance;
-  final String baseUrl;
   
-  ShapesApiService._({required this.baseUrl});
+  ShapesApiService._();
   
   static ShapesApiService get instance {
-    _instance ??= ShapesApiService._(baseUrl: AppConstants.shapeBaseUrl);
+    _instance ??= ShapesApiService._();
     return _instance!;
   }
   
+  String get baseUrl => AppConstants.shapeBaseUrl;
+  
   /// Helper method to create headers
   Map<String, String> _getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return AppConstants.headers;
   }
   
   // ==================== Health Check ====================
@@ -32,7 +30,7 @@ class ShapesApiService {
   Future<bool> checkBackendHealth() async {
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       return response.statusCode == 200;
@@ -51,7 +49,7 @@ class ShapesApiService {
     
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       status['isReachable'] = response.statusCode == 200;
