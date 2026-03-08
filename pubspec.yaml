@@ -97,19 +97,15 @@ flutter:
     - assets/numbers/
     - assets/data/
     - assets/vectors/
-    - assets/images/2d_shapes/
-    - assets/images/3d_shapes/
-    - assets/images/patterns/
     - assets/images/number/
-    - assets/images/patterns/2d_shapes/
-    - assets/videos/
-    - assets/animations/
+    - assets/images/patterns/3d_shapes/
     - assets/symbols/
     - assets/symbols/game/
+    - assets/symbols/sounds/
+    - assets/sounds/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - assets/models/cone.glb
     - assets/models/cylinder.glb
     - assets/models/pyramid.glb
     - .env
-    
