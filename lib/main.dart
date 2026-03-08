@@ -6,6 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/unit_api_service.dart';
+import 'package:ganithamithura/screens/home/home_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 import 'package:ganithamithura/screens/splash/splash_screen.dart';
 import 'package:ganithamithura/screens/measurements/ar_challenges/ar_measurement_screen.dart';
 import 'package:ganithamithura/screens/measurements/ar_challenges/ar_questions_screen.dart';
@@ -83,6 +85,14 @@ class _GanithamithuraAppState extends State<GanithamithuraApp> with WidgetsBindi
       ),
       home: const SplashScreen(),
       getPages: [
+        GetPage(
+          name: '/home',
+          page: () => const HomeScreen(),
+        ),
+        GetPage(
+          name: '/symbol-home',
+          page: () => const SymbolHomeScreen(),
+        ),
         GetPage(
           name: '/ar-measurement',
           page: () => const ARMeasurementScreen(),

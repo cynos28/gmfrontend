@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -145,7 +146,11 @@ class _GamingIntroScreenState extends State<GamingIntroScreen>
     super.dispose();
   }
 
-  void _onPlayPressed() {
+  void _onPlayPressed() async {
+    // Play get_started sound
+    final player = AudioPlayer();
+    await player.play(AssetSource('symbols/sounds/get_started.mp3'));
+    
     // Navigate to symbol dashboard screen
     Get.to(
       () => const SymbolDashboardScreen(),

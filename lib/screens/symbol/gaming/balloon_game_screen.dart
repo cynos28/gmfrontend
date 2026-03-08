@@ -29,6 +29,7 @@ class BalloonGameScreen extends StatefulWidget {
 
 class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTickerProviderStateMixin {
   late int _score;
+  int _correctCount = 0; // Track correct answers for level completion
   List<EquationComponent> _components = [];
   String? _selectedOperation;
   String _correctOperation = '+';
@@ -163,13 +164,20 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
         if (mounted) {
           setState(() {
             _score += 10;
+            _correctCount++;
             _selectedOperation = null;
-            _generateQuestion();
+            
+            // Check for level completion (e.g., 10 questions)
+            if (_correctCount >= 10) {
+              _endGame(isWin: true);
+            } else {
+              _generateQuestion();
+            }
           });
         }
         Get.snackbar(
           'Correct! 🎉',
-          '+10 points',
+          _correctCount >= 10 ? 'Level Completed! +100 Bonus!' : '+10 points',
           backgroundColor: const Color(0xFF4CAF50),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -198,6 +206,12 @@ class _BalloonGameScreenState extends State<BalloonGameScreen> with SingleTicker
     
     try {
       final user = await AuthService.instance.getCurrentUser();
+      
+      // If win, add 100 points level-up bonus
+      if (isWin) {
+        _score += 100;
+      }
+
       if (user != null) {
         await SymbolService.instance.saveScore(
           userId: user.id,

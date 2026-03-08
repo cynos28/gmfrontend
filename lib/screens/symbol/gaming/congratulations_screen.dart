@@ -82,7 +82,7 @@ class _CongratulationsScreenState extends State<CongratulationsScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.home_outlined, color: Colors.black, size: 40),
-                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
+                          onPressed: () => Get.offAllNamed('/home'),
                         ),
                       ),
                       

@@ -127,7 +127,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
-                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
+                          onPressed: () => Get.offAllNamed('/home'),
                         ),
                       ),
                       

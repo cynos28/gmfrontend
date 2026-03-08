@@ -76,6 +76,10 @@ class _SymbolVideoPlayerScreenState extends State<SymbolVideoPlayerScreen> {
         ),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: Center(
         child: _isLoading

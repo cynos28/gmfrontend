@@ -67,6 +67,9 @@ class _GameWelcomeScreenState extends State<GameWelcomeScreen>
   }
 
   void _onGetStartedPressed() async {
+    // Play game start sound
+    _audioPlayer.play(AssetSource('symbols/sounds/game_start.mp3'));
+    
     Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
     try {
       final user = await AuthService.instance.getCurrentUser();
