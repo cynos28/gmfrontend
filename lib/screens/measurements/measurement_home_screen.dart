@@ -74,7 +74,11 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
 
   void _onNavTap(int index) {
     if (index == 0) {
-      Get.back();
+      if (Navigator.canPop(context)) {
+        Get.back();
+      } else {
+        Get.offAllNamed('/home');
+      }
       return;
     }
     
@@ -186,9 +190,13 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                   size: 28,
                   color: Colors.black,
                 ),
-                padding: EdgeInsets.zero,
-                onPressed: () => Get.back(),
-              ),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Get.back();
+                  } else {
+                    Get.offAllNamed('/home');
+                  }
+                },
             ),
           ),
           const SizedBox(width: 16),

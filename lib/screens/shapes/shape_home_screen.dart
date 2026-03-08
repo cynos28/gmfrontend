@@ -24,7 +24,11 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
 
   void _onNavTap(int index) {
     if (index == 0) {
-      Get.back();
+      if (Navigator.canPop(context)) {
+        Get.back();
+      } else {
+        Get.offAllNamed('/home');
+      }
       return;
     }
     if (index == _currentNavIndex) return;
@@ -160,7 +164,13 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Get.back(),
+            onTap: () {
+              if (Navigator.canPop(context)) {
+                Get.back();
+              } else {
+                Get.offAllNamed('/home');
+              }
+            },
             child: Container(
               width: 56,
               height: 56,

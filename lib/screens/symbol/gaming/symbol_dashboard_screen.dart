@@ -156,7 +156,13 @@ class _SymbolDashboardScreenState extends State<SymbolDashboardScreen> {
                   children: [
                     // Back Button
                     GestureDetector(
-                      onTap: () => Get.back(),
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Get.back();
+                        } else {
+                          Get.offAllNamed('/home');
+                        }
+                      },
                       child: Container(
                         width: 45,
                         height: 45,
