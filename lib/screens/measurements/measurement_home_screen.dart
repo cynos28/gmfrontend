@@ -190,6 +190,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                   size: 28,
                   color: Colors.black,
                 ),
+                padding: EdgeInsets.zero,
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Get.back();
@@ -197,6 +198,7 @@ class _MeasurementHomeScreenState extends State<MeasurementHomeScreen>
                     Get.offAllNamed('/home');
                   }
                 },
+              ),
             ),
           ),
           const SizedBox(width: 16),

@@ -89,7 +89,7 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
                     icon: Icons.games_rounded,
                     color: const Color(0xFFF3E5F5), // Light Purple
                     iconColor: const Color(0xFF9C27B0),
-                    imageAsset: null, 
+                    imageAsset: 'assets/symbols/gamesnew.png', 
                     isLarge: false,
                     onTap: () {
                       Get.to(() => const GamingIntroScreen());
