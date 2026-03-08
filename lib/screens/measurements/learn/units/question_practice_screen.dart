@@ -418,6 +418,25 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     return 'Measurement';
   }
 
+  // Get topic-specific color for kids-friendly border
+  Color _getTopicColor() {
+    final id = widget.unit.id;
+    if (id.contains('length')) return KidsColors.lengthColor;
+    if (id.contains('area')) return KidsColors.areaColor;
+    if (id.contains('volume')) return KidsColors.volumeColor;
+    if (id.contains('weight')) return KidsColors.weightColor;
+    return KidsColors.primaryAccent;
+  }
+
+  // Border colors cycling list for rainbow effect
+  static const List<Color> _borderColors = [
+    Color(0xFF4285F4), // blue
+    Color(0xFF34C759), // green
+    Color(0xFFFF9500), // orange
+    Color(0xFFFF4081), // pink
+    Color(0xFF9C27B0), // purple
+  ];
+
   // Validate if question is relevant to the unit topic
   bool _isQuestionRelevantToUnit(String questionText, String unitId) {
     final lowerQuestion = questionText.toLowerCase();
@@ -784,57 +803,109 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
             Container(
               margin: const EdgeInsets.only(bottom: KidsSpacing.lg),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: _getTopicColor(),
+                  width: 4,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: _getTopicColor().withOpacity(0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                    spreadRadius: 2,
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  UnitApiService.resolveImageUrl(_currentQuestion!.imageUrl!),
-                  fit: BoxFit.contain,
-                  height: 200,
-                  width: double.infinity,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[100],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Colorful top label strip
+                  Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: _getTopicColor(),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(19),
+                        topRight: Radius.circular(19),
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint('❌ Image load error: $error');
-                    debugPrint('   URL: ${_currentQuestion!.imageUrl}');
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[100],
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Image expired',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🔍', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Look at the picture',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 6),
+                        const Text('🔍', style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  // Image area with light-tinted background
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _getTopicColor().withOpacity(0.06),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(19),
+                        bottomRight: Radius.circular(19),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        UnitApiService.resolveImageUrl(_currentQuestion!.imageUrl!),
+                        fit: BoxFit.contain,
+                        height: 200,
+                        width: double.infinity,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.transparent,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: _getTopicColor(),
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          debugPrint('❌ Image load error: $error');
+                          debugPrint('   URL: ${_currentQuestion!.imageUrl}');
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[100],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image expired',
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           

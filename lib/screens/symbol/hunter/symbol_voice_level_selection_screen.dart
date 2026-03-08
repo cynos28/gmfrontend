@@ -170,7 +170,7 @@ class _SymbolVoiceLevelSelectionScreenState extends State<SymbolVoiceLevelSelect
                         description: "Speak your answers to solve math!",
                         isLocked: false,
                         color: const Color(0xFFFFCCBC), 
-                        imageAsset: 'assets/symbols/beging1.png', 
+                        imageAsset: 'assets/symbols/beging1new.png', 
                         progress: "1/3",
                         onTap: () {
                           Get.to(() => SymbolVoiceTutorScreen(
@@ -187,7 +187,7 @@ class _SymbolVoiceLevelSelectionScreenState extends State<SymbolVoiceLevelSelect
                         description: "Speak your answers to solve math!",
                         isLocked: _unlockedLevel < 2,
                         color: const Color(0xFFFFCCBC).withOpacity(_unlockedLevel >= 2 ? 1.0 : 0.5), 
-                        imageAsset: 'assets/symbols/beging1.png', 
+                        imageAsset: 'assets/symbols/beging1new.png', 
                         progress: "2/3",
                         onTap: () {
                           if (_unlockedLevel < 2) {
@@ -208,7 +208,7 @@ class _SymbolVoiceLevelSelectionScreenState extends State<SymbolVoiceLevelSelect
                         description: "Speak your answers to solve math!",
                         isLocked: _unlockedLevel < 3,
                         color: const Color(0xFFFFCCBC).withOpacity(_unlockedLevel >= 3 ? 1.0 : 0.5),
-                        imageAsset: 'assets/symbols/beging1.png', 
+                        imageAsset: 'assets/symbols/beging1new.png', 
                         progress: "3/3",
                         onTap: () {
                            if (_unlockedLevel < 3) {

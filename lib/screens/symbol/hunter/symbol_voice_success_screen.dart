@@ -77,7 +77,7 @@ class _SymbolVoiceSuccessScreenState extends State<SymbolVoiceSuccessScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.offAll(() => const SymbolVoiceLevelSelectionScreen()), 
+          onPressed: () => Get.off(() => const SymbolVoiceLevelSelectionScreen()), 
         ),
         title: Text(
           'Symbol Hunter',
@@ -142,7 +142,7 @@ class _SymbolVoiceSuccessScreenState extends State<SymbolVoiceSuccessScreen> {
                         height: 55,
                         child: ElevatedButton(
                           onPressed: () {
-                             Get.offAll(() => const SymbolVoiceLevelSelectionScreen());
+                             Get.off(() => const SymbolVoiceLevelSelectionScreen());
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFEF5350), 

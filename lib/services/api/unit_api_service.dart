@@ -6,16 +6,26 @@ import 'package:ganithamithura/models/unit_models.dart';
 import 'package:ganithamithura/utils/constants.dart';
 
 /// API Service for Unit-based Learning
-/// Automatically discovers working backend URL across network changes
+/// Uses dynamic URLs from AppConstants (updated from GitHub Gist)
 class UnitApiService {
-  // Use URL dynamically fetched from GitHub Gist via AppConstants
-  static List<String> get _possibleBaseUrls => [AppConstants.measurementBaseUrl];
+  static List<String> get _possibleBaseUrls => [
+    AppConstants.measurementBaseUrl,  // Always try Gist-loaded URL first
+    'http://localhost:8002',          // Works on iOS simulator / desktop
+    'http://10.0.2.2:8002',           // Android emulator
+  ];
   
-  // Cached working URL
+  // Cached working URL - cleared automatically when AppConstants is refreshed
   static String? _cachedWorkingUrl;
+  static String? _lastKnownGistUrl;  // Track if Gist URL changed
+  
+  /// Clear the URL cache (called when AppConstants.measurementBaseUrl is refreshed)
+  static void invalidateCache() {
+    _cachedWorkingUrl = null;
+    _lastKnownGistUrl = null;
+  }
   
   /// Get the current cached working URL (or first fallback)
-  static String get cachedBaseUrl => _cachedWorkingUrl ?? _possibleBaseUrls.first;
+  static String get cachedBaseUrl => _cachedWorkingUrl ?? AppConstants.measurementBaseUrl;
 
   /// Resolve an image URL: handles relative paths and rewrites localhost URLs
   static String resolveImageUrl(String rawUrl) {
@@ -49,11 +59,20 @@ class UnitApiService {
   /// Discover which backend URL is currently working
   /// Tries each URL with a quick health check
   Future<String> _getWorkingBaseUrl() async {
-    // Return cached URL if available
+    // If the Gist URL changed (backend restarted), clear old cache
+    final currentGistUrl = AppConstants.measurementBaseUrl;
+    if (_lastKnownGistUrl != currentGistUrl) {
+      debugPrint('🔄 Gist URL changed, clearing URL cache...');
+      _cachedWorkingUrl = null;
+      _lastKnownGistUrl = currentGistUrl;
+    }
+    
+    // Return cached URL if still healthy
     if (_cachedWorkingUrl != null) {
       try {
         final response = await http.get(
           Uri.parse('$_cachedWorkingUrl/health'),
+          headers: AppConstants.headers,
         ).timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
           return _cachedWorkingUrl!;
@@ -69,11 +88,13 @@ class UnitApiService {
     debugPrint('🔍 Searching for backend server...');
     for (final url in _possibleBaseUrls) {
       try {
-        debugPrint('   Trying: $url');
+        debugPrint('   Trying: $url/health');
         final response = await http.get(
           Uri.parse('$url/health'),
-        ).timeout(const Duration(seconds: 2));
+          headers: AppConstants.headers,
+        ).timeout(const Duration(seconds: 3));
         if (response.statusCode == 200) {
+          debugPrint('   ✅ Success: $url');
           debugPrint('');
           debugPrint('╔════════════════════════════════════════════════════════╗');
           debugPrint('║  ✅ BACKEND CONNECTION ESTABLISHED                    ║');
@@ -86,7 +107,7 @@ class UnitApiService {
           return url;
         }
       } catch (e) {
-        debugPrint('   ❌ Failed: ${e.toString().split(':')[0]}');
+        debugPrint('   ❌ Error ($url): ${e.runtimeType}');
         continue;
       }
     }
@@ -110,7 +131,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/api/units?grade=$grade'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -136,7 +157,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/chat'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'studentId': studentId,
           'unitId': unitId,
@@ -165,7 +186,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -191,7 +212,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       await http.delete(
         Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('Error clearing chat history: $e');
@@ -214,6 +235,7 @@ class UnitApiService {
         'POST',
         Uri.parse('$baseUrl/upload/document'),
       );
+      request.headers.addAll(AppConstants.headers);
       
       // Add file
       request.files.add(
@@ -253,7 +275,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/questions/generate/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'num_questions': numQuestions,
           'grade_level': gradeLevel,
@@ -289,7 +311,7 @@ class UnitApiService {
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -310,7 +332,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/documents/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -344,7 +366,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/questions/?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -370,7 +392,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/api/v1/adaptive/submit-answer'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: json.encode({
           'student_id': studentId,
           'question_id': questionId,
@@ -412,7 +434,7 @@ class UnitApiService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -437,7 +459,7 @@ class UnitApiService {
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {

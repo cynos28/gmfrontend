@@ -80,6 +80,14 @@ dev_dependencies:
   json_serializable: ^6.7.1
   hive_generator: ^2.0.1
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/symbols/logoicon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
@@ -99,12 +107,15 @@ flutter:
     - assets/numbers/
     - assets/data/
     - assets/vectors/
+    - assets/images/number/
+    - assets/images/patterns/3d_shapes/
     - assets/symbols/
     - assets/symbols/game/
+    - assets/symbols/sounds/
+    - assets/sounds/
     - assets/models/classroom.tflite
     - assets/labels/classes.txt
     - assets/models/cone.glb
     - assets/models/cylinder.glb
     - assets/models/pyramid.glb
     - .env
-    

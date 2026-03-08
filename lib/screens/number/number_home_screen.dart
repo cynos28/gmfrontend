@@ -151,7 +151,13 @@ class _NumberHomeScreenState extends State<NumberHomeScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Get.back();
+            } else {
+              Get.offAllNamed('/home');
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(

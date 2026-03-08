@@ -7,18 +7,19 @@ import 'package:ganithamithura/utils/constants.dart';
 /// NumApiService - Handles all backend API calls
 class NumApiService {
   static NumApiService? _instance;
-  final String numBaseUrl;
 
-  NumApiService._({required this.numBaseUrl});
+  NumApiService._();
 
   static NumApiService get instance {
-    _instance ??= NumApiService._(numBaseUrl: AppConstants.numBaseUrl);
+    _instance ??= NumApiService._();
     return _instance!;
   }
 
+  String get numBaseUrl => AppConstants.numBaseUrl;
+
   /// Helper method to create headers
   Map<String, String> _getHeaders() {
-    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
+    return AppConstants.headers;
   }
 
   // ==================== Activity Endpoints ====================
@@ -195,7 +196,7 @@ class NumApiService {
   Future<bool> healthCheck() async {
     try {
       final url = Uri.parse('$numBaseUrl/health');
-      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      final response = await http.get(url, headers: _getHeaders()).timeout(const Duration(seconds: 5));
 
       return response.statusCode == 200;
     } catch (e) {
