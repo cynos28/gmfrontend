@@ -3,28 +3,31 @@ library;
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 class AppConstants {
   // API Configuration
   static String baseUrl = 'http://localhost:8001';
   static String authBaseUrl = 'http://localhost:8001';
   static String symbolBaseUrl = 'http://localhost:8000';
   static String measurementBaseUrl = 'http://localhost:8002'; // New API
-  
-  static const String _gistUrl = "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
-  
+
+  static const String _gistUrl =
+      "https://gist.githubusercontent.com/Sithu99-dev/a03d59a6c3a4e84f0688591151f6fd30/raw/ganithamithura_urls.json";
+
   static Future<void> loadDynamicUrls() async {
     try {
       // Append a timestamp to bypass GitHub's heavy edge cache for raw assets
-      final String noCacheUrl = "$_gistUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      final String noCacheUrl =
+          "$_gistUrl?t=${DateTime.now().millisecondsSinceEpoch}";
       final response = await http.get(Uri.parse(noCacheUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         symbolBaseUrl = data['symbol_api'] ?? symbolBaseUrl;
         authBaseUrl = data['auth_api'] ?? authBaseUrl;
         measurementBaseUrl = data['measurement_api'] ?? measurementBaseUrl;
         baseUrl = authBaseUrl; // or whichever it defaults to, usually auth
-        
+
         print("✅ Backend URLs Loaded from GitHub Gist!");
         print("Symbol API: \$symbolBaseUrl");
         print("Auth API: \$authBaseUrl");
@@ -34,7 +37,7 @@ class AppConstants {
       print("❌ Failed to fetch backend URLs from Gist: \$e");
     }
   }
-  
+
   static const String numBaseUrl =
       'https://macular-patrimonially-olinda.ngrok-free.dev';
 
@@ -111,7 +114,7 @@ class AppConstants {
   // Timeouts
   static const int videoLoadTimeout = 30; // seconds
   static const int apiTimeout = 30; // seconds
-  
+
   // UI Constants
   static const double buttonBorderRadius = 16.0;
   static const double cardElevation = 4.0;
@@ -219,7 +222,7 @@ class AppColors {
   static const int symbolColor = 0xFFFCE4EC; // Bright pink background
   static const int symbolBorder = 0xFFF8BBD0; // Bright pink border
   static const int symbolIcon = 0xFFFF4081; // Bright pink icon
-  
+
   // Text Colors
   static const int textBlack = 0xFF273444;
   static const int subText1 = 0xFF334156;
@@ -228,32 +231,33 @@ class AppColors {
   // Background Colors
   static const int white = 0xFFFFFFFF;
   static const int backgroundColor = 0xFFFAFBFF; // Very light blue-purple tint
-  static const int splashBackground = 0xFFF6F7FF; // Light purple-blue for splash screen
-  
+  static const int splashBackground =
+      0xFFF6F7FF; // Light purple-blue for splash screen
+
   // Activity Card Colors - Updated for Kids-Friendly UI
   static const int timeCardBg = 0xFFE8EEFF; // Soft purple-blue
   static const int completedCardBg = 0xFFE8F8F0; // Soft green
   static const int progressBadgeBg = 0xFFFFEDE4; // Soft orange
   static const int progressBadgeText = 0xFFFF8C52; // Orange text
-  
+
   // Navigation & UI
   static const int navActiveColor = 0xFF6B7FFF; // Primary accent
   static const int navInactiveColor = 0x7F49596E; // rgba(73,89,110,0.5)
   static const int dailyTipBg = 0xFF6B7FFF; // Primary accent
-  
+
   // Border Colors
   static const int borderLight = 0xFFE8EEFF; // Very light purple-blue
-  
+
   // Status Colors - Kids-Friendly
   static const int successColor = 0xFF2EB872; // Soft green
   static const int errorColor = 0xFFFF6B6B; // Soft red
   static const int warningColor = 0xFFFFC107; // Yellow
   static const int infoColor = 0xFF6B7FFF; // Primary accent
-  
+
   // Star/Achievement Colors
   static const int starGold = 0xFFFFD700; // Gold
   static const int starBackground = 0xFFFFF9E6; // Very light yellow
-  
+
   // Legacy colors for backward compatibility
   static const int primaryColor = 0xFF6B7FFF; // Primary accent
   static const int disabledColor = 0xFFBDBDBD; // Gray for disabled state

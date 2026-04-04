@@ -89,41 +89,47 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
 
             // Drawing canvas
             Expanded(
-              child: Stack(
-                children: [
-                  // Background with dotted number outline
-                  Center(child: _buildDottedNumberOutline()),
+              child: Center(
+                child: SizedBox(
+                  width: 350,
+                  height: 350,
+                  child: Stack(
+                    children: [
+                      // Background with dotted number outline
+                      Center(child: _buildDottedNumberOutline()),
 
-                  // Drawing canvas
-                  GestureDetector(
-                    onPanStart: _onPanStart,
-                    onPanUpdate: _onPanUpdate,
-                    onPanEnd: _onPanEnd,
-                    child: RepaintBoundary(
-                      key: _canvasKey,
-                      child: CustomPaint(
-                        painter: _DrawingPainter(
-                          _points,
-                          includeBackground: false,
-                        ),
-                        size: Size.infinite,
-                      ),
-                    ),
-                  ),
-
-                  // Result overlay
-                  if (_result != null)
-                    _result!
-                        ? SuccessAnimation(
-                            message: _feedbackMessage ?? 'Great job!',
-                            onComplete: _onSuccess,
-                          )
-                        : FailureAnimation(
-                            message: _feedbackMessage ?? 'Try again!',
-                            onRetry: _clearDrawing,
-                            onGoBack: _goBackToLearning,
+                      // Drawing canvas
+                      GestureDetector(
+                        onPanStart: _onPanStart,
+                        onPanUpdate: _onPanUpdate,
+                        onPanEnd: _onPanEnd,
+                        child: RepaintBoundary(
+                          key: _canvasKey,
+                          child: CustomPaint(
+                            painter: _DrawingPainter(
+                              _points,
+                              includeBackground: false,
+                            ),
+                            size: Size.infinite,
                           ),
-                ],
+                        ),
+                      ),
+
+                      // Result overlay
+                      if (_result != null)
+                        _result!
+                            ? SuccessAnimation(
+                                message: _feedbackMessage ?? 'Great job!',
+                                onComplete: _onSuccess,
+                              )
+                            : FailureAnimation(
+                                message: _feedbackMessage ?? 'Try again!',
+                                onRetry: _clearDrawing,
+                                onGoBack: _goBackToLearning,
+                              ),
+                    ],
+                  ),
+                ),
               ),
             ),
 
@@ -227,7 +233,7 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
       // Draw strokes in WHITE
       final strokePaint = Paint()
         ..color = Colors.white
-        ..strokeWidth = 8.0
+        ..strokeWidth = 28.0
         ..strokeCap = StrokeCap.round;
 
       for (int i = 0; i < _points.length - 1; i++) {
@@ -325,25 +331,24 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
         // Submit to backend (non-blocking)
         _apiService
             .submitActivityScore(
-              activityId: widget.activity.id,
-              score: progress.score,
-              isCompleted: true,
-              additionalData: progress.additionalData,
-            )
+          activityId: widget.activity.id,
+          score: progress.score,
+          isCompleted: true,
+          additionalData: progress.additionalData,
+        )
             .timeout(
-              Duration(seconds: AppConstants.apiTimeout),
-              onTimeout: () {
-                debugPrint('Score submission timed out');
-                return <String, dynamic>{'status': 'timeout'};
-              },
-            )
-            .catchError((e) {
-              debugPrint('Error submitting score: $e');
-              return <String, dynamic>{
-                'status': 'error',
-                'error': e.toString(),
-              };
-            });
+          Duration(seconds: AppConstants.apiTimeout),
+          onTimeout: () {
+            debugPrint('Score submission timed out');
+            return <String, dynamic>{'status': 'timeout'};
+          },
+        ).catchError((e) {
+          debugPrint('Error submitting score: $e');
+          return <String, dynamic>{
+            'status': 'error',
+            'error': e.toString(),
+          };
+        });
       }
 
       setState(() {
