@@ -1779,15 +1779,18 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
       onResult: (result) {
         if (result.recognizedWords.isNotEmpty) {
           setState(() {
-            _recognizedText = result.recognizedWords;
+            _recognizedText = result.recognizedWords.toLowerCase();
           });
         }
         if (result.finalResult) {
+          setState(() {
+            _isListening = false;
+          });
           _stopListeningAndCheck();
         }
       },
       listenFor: const Duration(seconds: 10),
-      pauseFor: const Duration(milliseconds: 2000),
+      pauseFor: const Duration(milliseconds: 2500),
       listenOptions: stt.SpeechListenOptions(
         partialResults: true,
         cancelOnError: true,
@@ -1797,7 +1800,7 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
   }
 
   void _stopListeningAndCheck() async {
-    if (!_isListening || _submitted) return; // guard against double-invocation
+    if (_submitted) return; // guard against double-invocation
 
     // Provide haptic feedback when stopping microphone
     HapticFeedback.heavyImpact();
@@ -1808,31 +1811,77 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
     });
 
     if (_recognizedText.isNotEmpty && !_submitted) {
-      _checkAnswer(_recognizedText.toLowerCase().trim());
+      _checkAnswer(_recognizedText.trim());
     }
   }
 
-  void _checkAnswer(String answer) {
-    final alternatives = widget.question.alternatives ?? [];
-    final correctAnswer = widget.question.correctAnswer ?? '';
+  void _checkAnswer(String recognizedText) {
+    final alternatives = (widget.question.alternatives ?? []).map((a) => a.toLowerCase()).toList();
+    final correctAnswer = (widget.question.correctAnswer ?? '').toLowerCase();
+    
+    // Mapping of common phonetically similar words for single digits
+    const soundsLike = {
+      'won': 'one',
+      'to': 'two',
+      'too': 'two',
+      'tree': 'three',
+      'free': 'three',
+      'for': 'four',
+      'fore': 'four',
+      'ate': 'eight',
+    };
 
-    // Normalize: speech engines often return digits ("7") instead of words
-    // ("seven"). Convert digit strings to their word equivalent before comparing.
-    final asInt = int.tryParse(answer);
-    if (asInt != null) {
-      final asWord = NumberWords.getWord(asInt);
-      if (asWord.isNotEmpty) answer = asWord;
+    if (recognizedText.isEmpty) return;
+
+    // Split into words to catch the target number inside a phrase
+    final words = recognizedText.toLowerCase().split(RegExp(r'\s+'));
+    
+    bool isMatch = false;
+    String matchedWord = recognizedText;
+
+    for (var word in words) {
+      // 1. Direct word match
+      if (word == correctAnswer || alternatives.contains(word)) {
+        isMatch = true;
+        matchedWord = word;
+        break;
+      }
+
+      // 2. Phonetic/Sounds-like match
+      if (soundsLike[word] != null) {
+        final phonelike = soundsLike[word]!;
+        if (phonelike == correctAnswer || alternatives.contains(phonelike)) {
+          isMatch = true;
+          matchedWord = phonelike;
+          break;
+        }
+      }
+
+      // 3. Try parsing as integer and converting to word
+      final asInt = int.tryParse(word);
+      if (asInt != null) {
+        final asWord = NumberWords.getWord(asInt).toLowerCase();
+        if (asWord == correctAnswer || alternatives.contains(asWord)) {
+          isMatch = true;
+          matchedWord = asWord;
+          break;
+        }
+        
+        // Also check if the raw digit matches (e.g. "5" matches "5")
+        if (word == correctAnswer || alternatives.contains(word)) {
+          isMatch = true;
+          matchedWord = word;
+          break;
+        }
+      }
     }
-
-    final isCorrect = answer == correctAnswer ||
-        alternatives.any((alt) => alt.toLowerCase() == answer);
 
     setState(() {
       _submitted = true;
-      _isCorrect = isCorrect;
+      _isCorrect = isMatch;
     });
 
-    widget.onAnswered(isCorrect, answer);
+    widget.onAnswered(isMatch, matchedWord);
   }
 
   Future<void> _resetSpeech() async {
