@@ -1,14 +1,16 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Progress;
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/utils/ui_helpers.dart';
 import 'package:ganithamithura/models/models.dart';
-import 'package:ganithamithura/widgets/common/buttons_and_cards.dart';
 import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/widgets/test/question_widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/number/widgets/floating_numbers_background.dart';
 
 /// ProgressTestScreen - Hub for placement quiz and difficulty-level tests
 /// Flow: Hub → (optional placement quiz) → Beginner/Intermediate/Advanced tests
@@ -64,7 +66,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -114,8 +116,10 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
 
   /// Load saved unlock state from local storage
   Future<void> _loadUnlockState() async {
-    final completed = await _storageService.getProgressValue('progress_test_completed');
-    final difficulty = await _storageService.getProgressValue('progress_test_difficulty');
+    final completed =
+        await _storageService.getProgressValue('progress_test_completed');
+    final difficulty =
+        await _storageService.getProgressValue('progress_test_difficulty');
 
     if (mounted) {
       setState(() {
@@ -196,7 +200,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
         timer.cancel();
         return;
       }
-      
+
       setState(() {
         _feedbackCountdown--;
       });
@@ -389,159 +393,167 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
 
   Widget _buildHub() {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFE8E8F0),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Activity Hub',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            Text(
-              "Let's Test Your Knowledge Together !",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.white,
-              child: Image.asset(
-                'assets/images/number/teacher_avatar.png',
-                width: 48,
-                height: 48,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.person,
-                    color: Color(0xFF7C6FDD),
-                    size: 28,
-                  );
-                },
-              ),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => Get.back(),
+                        icon: const Icon(Icons.arrow_back_ios_new,
+                            size: 20, color: Colors.black54),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Activity Hub',
+                              style: GoogleFonts.poppins(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              "Let's Test Your Knowledge Together!",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white,
+                        child: Image.asset(
+                          'assets/images/number/teacher_avatar.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.person,
+                              color: Color(0xFF7C6FDD),
+                              size: 24,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Quiz Card with pulse animation
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _pulseAnimation.value,
+                              child: FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                                  child: _buildQuizCard(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Difficulty Level Cards with staggered animation
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: [
+                              FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SlideTransition(
+                                  position: _slideAnimation,
+                                  child: _AnimatedTestCard(
+                                    delay: 100,
+                                    child: _buildDifficultyLevelCard(
+                                      title: 'Beginner',
+                                      subtitle: 'Number basics',
+                                      backgroundColor: const Color(0xFFB9E6D3),
+                                      isUnlocked: _beginnerUnlocked,
+                                      progress: '1/3',
+                                      onTap: () => _startTest('beginner'),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SlideTransition(
+                                  position: _slideAnimation,
+                                  child: _AnimatedTestCard(
+                                    delay: 200,
+                                    child: _buildDifficultyLevelCard(
+                                      title: 'Intermediate',
+                                      subtitle: 'Matching, patterns, counting',
+                                      backgroundColor: const Color(0xFFFFCC80),
+                                      isUnlocked: _intermediateUnlocked,
+                                      progress: '2/3',
+                                      onTap: () => _startTest('intermediate'),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SlideTransition(
+                                  position: _slideAnimation,
+                                  child: _AnimatedTestCard(
+                                    delay: 300,
+                                    child: _buildDifficultyLevelCard(
+                                      title: 'Advanced',
+                                      subtitle: 'Word problems, estimation',
+                                      backgroundColor: const Color(0xFFEF9A9A),
+                                      isUnlocked: _advancedUnlocked,
+                                      progress: '3/3',
+                                      onTap: () => _startTest('advanced'),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header section
-            Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8E8F0),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: const SizedBox.shrink(),
-            ),
-
-            // Quiz Card with pulse animation
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: _buildQuizCard(),
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Difficulty Level Cards with staggered animation
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _AnimatedTestCard(
-                        delay: 100,
-                        child: _buildDifficultyLevelCard(
-                          title: 'Beginner',
-                          subtitle: 'Number basics',
-                          backgroundColor: const Color(0xFFB9E6D3),
-                          isUnlocked: _beginnerUnlocked,
-                          progress: '1/3',
-                          onTap: () => _startTest('beginner'),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _AnimatedTestCard(
-                        delay: 200,
-                        child: _buildDifficultyLevelCard(
-                          title: 'Intermediate',
-                          subtitle: 'Matching, patterns, counting',
-                          backgroundColor: const Color(0xFFFFCC80),
-                          isUnlocked: _intermediateUnlocked,
-                          progress: '2/3',
-                          onTap: () => _startTest('intermediate'),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _AnimatedTestCard(
-                        delay: 300,
-                        child: _buildDifficultyLevelCard(
-                          title: 'Advanced',
-                          subtitle: 'Word problems, estimation',
-                          backgroundColor: const Color(0xFFEF9A9A),
-                          isUnlocked: _advancedUnlocked,
-                          progress: '3/3',
-                          onTap: () => _startTest('advanced'),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -554,12 +566,12 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF7C6FDD).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -567,7 +579,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _startTest('placement'),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Row(
@@ -576,7 +588,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(
                     Icons.school,
@@ -590,8 +602,10 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _placementDone ? 'Retake Placement Quiz' : 'Placement Quiz',
-                        style: const TextStyle(
+                        _placementDone
+                            ? 'Retake Placement Quiz'
+                            : 'Placement Quiz',
+                        style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -600,7 +614,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                       const SizedBox(height: 8),
                       Text(
                         '5 Quick questions to determine\nyour starting level',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: Colors.white.withOpacity(0.9),
                           height: 1.4,
@@ -641,12 +655,12 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: backgroundColor.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -662,7 +676,7 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -671,9 +685,9 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                       const SizedBox(height: 8),
                       Text(
                         subtitle,
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 15,
-                          color: Colors.grey[700],
+                          color: Colors.black87.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -681,23 +695,27 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                         onPressed: isUnlocked ? onTap : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isUnlocked
-                              ? const Color(0xFF81C784)
-                              : const Color(0xFF9E9E9E),
-                          foregroundColor: Colors.white,
+                              ? const Color(0xFFFFFFFF)
+                              : Colors.white.withOpacity(0.5),
+                          foregroundColor:
+                              isUnlocked ? backgroundColor : Colors.black54,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 10,
+                            horizontal: 24,
+                            vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          elevation: 0,
+                          elevation: isUnlocked ? 4 : 0,
+                          shadowColor: isUnlocked
+                              ? backgroundColor.withOpacity(0.5)
+                              : Colors.transparent,
                         ),
                         child: Text(
                           isUnlocked ? 'Start' : 'Unlock',
-                          style: const TextStyle(
+                          style: GoogleFonts.poppins(
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -707,16 +725,16 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
                 const SizedBox(width: 12),
                 Image.asset(
                   'assets/images/number/difficulty_illustration.png',
-                  width: 140,
+                  width: 120,
                   height: 120,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      width: 140,
+                      width: 120,
                       height: 120,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Icon(
                         Icons.school,
@@ -730,18 +748,18 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
             ),
           ),
           Positioned(
-            top: 12,
-            right: 12,
+            top: 16,
+            right: 16,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2C3E50),
+                color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 progress,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: GoogleFonts.poppins(
+                  color: Colors.black87,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -753,15 +771,21 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     );
   }
 
-
-
   // ==================== LOADING VIEW ====================
 
   Widget _buildLoading() {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      body: const Center(
-        child: LoadingOverlay(message: 'Preparing your test...'),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          const Center(
+            child: LoadingOverlay(message: 'Preparing your test...'),
+          ),
+        ],
       ),
     );
   }
@@ -771,96 +795,219 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
   Widget _buildIntro() {
     final testLabel = _getTestLabel(_activeTestType);
     final testColor = _getTestColor(_activeTestType);
+    final testColorDark = _getTestColorDark(_activeTestType);
 
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: Text(testLabel),
-        backgroundColor: testColor,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => setState(() => _currentView = _ScreenView.hub),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _getTestIcon(_activeTestType),
-                size: 90,
-                color: testColor,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                testLabel,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _getTestDescription(_activeTestType),
-                style: const TextStyle(fontSize: 15, color: Colors.black54),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
                     children: [
-                      _buildInfoRow(
-                        Icons.numbers,
-                        '${_testData!.totalQuestions} Questions',
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => _currentView = _ScreenView.hub),
+                        icon: const Icon(Icons.close,
+                            size: 22, color: Colors.black54),
                       ),
-                      const SizedBox(height: 10),
-                      _buildInfoRow(Icons.timer_off, 'No time limit'),
-                      const SizedBox(height: 10),
-                      _buildInfoRow(
-                          Icons.category, 'Different question types'),
-                      if (_testData!.passingScore != null) ...[
-                        const SizedBox(height: 10),
-                        _buildInfoRow(
-                          Icons.check_circle_outline,
-                          'Pass: ${_testData!.passingScore}/${_testData!.totalQuestions} correct',
+                      Expanded(
+                        child: Text(
+                          testLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              ActionButton(
-                text: 'Start Test',
-                icon: Icons.play_arrow,
-                color: testColor,
-                onPressed: () {
-                  setState(() => _currentView = _ScreenView.testing);
-                },
-              ),
-            ],
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: Column(
+                      children: [
+                        // Hero banner
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 36, horizontal: 24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [testColor, testColorDark],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: testColor.withOpacity(0.35),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  _getTestIcon(_activeTestType),
+                                  size: 56,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                testLabel,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _getTestDescription(_activeTestType),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.9),
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Info card
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'What to Expect',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildInfoRow(
+                                Icons.numbers_rounded,
+                                '${_testData!.totalQuestions} Questions',
+                                testColor,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(Icons.timer_off_rounded,
+                                  'No time limit', testColor),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(Icons.category_rounded,
+                                  'Different question types', testColor),
+                              if (_testData!.passingScore != null) ...[
+                                const SizedBox(height: 12),
+                                _buildInfoRow(
+                                  Icons.check_circle_outline_rounded,
+                                  'Pass: ${_testData!.passingScore}/${_testData!.totalQuestions} correct',
+                                  testColor,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // Start button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(
+                                  () => _currentView = _ScreenView.testing);
+                            },
+                            icon:
+                                const Icon(Icons.play_arrow_rounded, size: 24),
+                            label: Text(
+                              'Start Test',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: testColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 6,
+                              shadowColor: testColor.withOpacity(0.4),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(IconData icon, String text, Color color) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF6B7FFF)),
-        const SizedBox(width: 12),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 15, color: Colors.black87),
+          ),
+        ),
       ],
     );
   }
@@ -870,7 +1017,6 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
   Widget _buildQuestion() {
     // Check if all questions answered
     if (_currentQuestionIndex >= _testData!.questions.length) {
-      // Trigger evaluation
       if (_currentView != _ScreenView.evaluating) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _evaluateTest();
@@ -880,174 +1026,299 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     }
 
     final question = _testData!.questions[_currentQuestionIndex];
-    final progress = _currentQuestionIndex / _testData!.questions.length;
+    final totalQ = _testData!.questions.length;
+    final progress = _currentQuestionIndex / totalQ;
     final testColor = _getTestColor(_activeTestType);
+    final testColorDark = _getTestColorDark(_activeTestType);
+    final correctCount = _results.values.where((v) => v).length;
+    final isCorrectAnswer = _results[question.id] == true;
 
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: Text(
-          'Question ${_currentQuestionIndex + 1}/${_testData!.questions.length}',
-        ),
-        backgroundColor: testColor,
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text(
-                '${_results.values.where((v) => v).length} correct',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress bar
-            AnimatedBuilder(
-              animation: _progressAnimController,
-              builder: (context, child) {
-                return LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[200],
-                  color: testColor,
-                  minHeight: 6,
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-
-            // Question type badge
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getTypeColor(question.type).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Custom gradient header ──
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [testColor, testColorDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getTypeIcon(question.type),
-                          size: 16,
-                          color: _getTypeColor(question.type),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _getTypeLabel(question.type),
-                          style: TextStyle(
-                            color: _getTypeColor(question.type),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(28),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: testColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  Text(
-                    '${question.points} pts',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Question widget
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Stack(
-                  children: [
-                    _buildQuestionWidget(question),
-                    
-                    // Feedback overlay with countdown
-                    if (_showingFeedback)
-                      Container(
-                        color: Colors.black.withOpacity(0.3),
-                        child: Center(
-                          child: Card(
-                            margin: const EdgeInsets.all(32),
-                            elevation: 8,
-                            shape: RoundedRectangleBorder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          // Question counter pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _results[question.id] == true
-                                        ? Icons.check_circle
-                                        : Icons.cancel,
-                                    color: _results[question.id] == true
-                                        ? Colors.green
-                                        : Colors.red,
-                                    size: 80,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    _results[question.id] == true
-                                        ? 'Correct!'
-                                        : 'Incorrect',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: _results[question.id] == true
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Next question in $_feedbackCountdown...',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      onPressed: _moveToNextQuestion,
-                                      icon: const Icon(Icons.skip_next),
-                                      label: const Text('Next Question'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: testColor,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 16,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            child: Text(
+                              'Q ${_currentQuestionIndex + 1} / $totalQ',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ),
+                          const Spacer(),
+                          // Type badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getTypeIcon(question.type),
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _getTypeLabel(question.type),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Score pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded,
+                                    size: 14, color: Colors.amber),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$correctCount correct',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedBuilder(
+                          animation: _progressAnimController,
+                          builder: (context, child) {
+                            return LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: Colors.white.withOpacity(0.25),
+                              valueColor:
+                                  const AlwaysStoppedAnimation(Colors.white),
+                              minHeight: 8,
+                            );
+                          },
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 8),
+
+                // ── Question content ──
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Stack(
+                      children: [
+                        _buildQuestionWidget(question),
+
+                        // ── Polished feedback overlay ──
+                        if (_showingFeedback)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: (isCorrectAnswer
+                                      ? const Color(0xFF388E3C)
+                                      : const Color(0xFFD32F2F))
+                                  .withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: BackdropFilter(
+                              filter: ui.ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                              child: Center(
+                                child: Container(
+                                  margin: const EdgeInsets.all(28),
+                                  padding: const EdgeInsets.all(28),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(28),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (isCorrectAnswer
+                                                ? Colors.green
+                                                : Colors.red)
+                                            .withOpacity(0.25),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: (isCorrectAnswer
+                                              ? Colors.green
+                                              : Colors.red)
+                                          .withOpacity(0.3),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: (isCorrectAnswer
+                                                  ? Colors.green
+                                                  : Colors.red)
+                                              .withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          isCorrectAnswer
+                                              ? Icons.check_circle_rounded
+                                              : Icons.cancel_rounded,
+                                          color: isCorrectAnswer
+                                              ? Colors.green
+                                              : Colors.red,
+                                          size: 64,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        isCorrectAnswer
+                                            ? '🎉 Correct!'
+                                            : 'Not quite!',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          color: isCorrectAnswer
+                                              ? Colors.green
+                                              : Colors.red,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        isCorrectAnswer
+                                            ? 'Keep up the great work!'
+                                            : 'Better luck next time!',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      // Countdown indicator
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.timer_rounded,
+                                            size: 18,
+                                            color: Colors.grey[500],
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Next in $_feedbackCountdown...',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              color: Colors.black45,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: _moveToNextQuestion,
+                                          icon: const Icon(
+                                              Icons.arrow_forward_rounded),
+                                          label: Text(
+                                            'Next Question',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: testColor,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            elevation: 4,
+                                            shadowColor:
+                                                testColor.withOpacity(0.4),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1126,9 +1397,17 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
 
   Widget _buildEvaluating() {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      body: const Center(
-        child: LoadingOverlay(message: 'Evaluating your answers...'),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          const Center(
+            child: LoadingOverlay(message: 'Evaluating your answers...'),
+          ),
+        ],
       ),
     );
   }
@@ -1140,128 +1419,551 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     final isExcellent = eval.percentage >= 80;
     final isGood = eval.percentage >= 50;
     final testColor = _getTestColor(_activeTestType);
+    final testColorDark = _getTestColorDark(_activeTestType);
+
+    final resultEmoji = isExcellent
+        ? '🏆'
+        : isGood
+            ? '👍'
+            : '📚';
+    final resultTitle = isExcellent
+        ? 'Outstanding!'
+        : isGood
+            ? 'Great Job!'
+            : 'Good Start!';
 
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: Text('${_getTestLabel(_activeTestType)} Results'),
-        backgroundColor: testColor,
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              // Score
-              ScoreCard(
-                score: eval.score,
-                total: eval.total,
-                title: 'Your Score',
-              ),
-              const SizedBox(height: 20),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Header ──
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 48),
+                      Expanded(
+                        child: Text(
+                          '${_getTestLabel(_activeTestType)} Results',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
 
-              // Result icon
-              Icon(
-                isExcellent
-                    ? Icons.star
-                    : isGood
-                        ? Icons.thumb_up
-                        : Icons.school,
-                size: 72,
-                color: isExcellent
-                    ? Colors.amber
-                    : isGood
-                        ? Color(AppColors.successColor)
-                        : Color(AppColors.infoColor),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: Column(
+                      children: [
+                        // ── Score hero card ──
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 32, horizontal: 24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [testColor, testColorDark],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: testColor.withOpacity(0.35),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                resultEmoji,
+                                style: const TextStyle(fontSize: 56),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                resultTitle,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${eval.score} / ${eval.total} correct',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Percentage bar
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: LinearProgressIndicator(
+                                  value: eval.percentage / 100,
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.3),
+                                  valueColor: const AlwaysStoppedAnimation(
+                                      Colors.white),
+                                  minHeight: 8,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${eval.percentage.toStringAsFixed(0)}%',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Message card ──
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            eval.message,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              color: Colors.black87,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Skill summary card ──
+                        if (_testData != null) _buildSkillSummaryCard(),
+
+                        const SizedBox(height: 16),
+
+                        // ── Unlocked levels card ──
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Level Progress',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildLevelUnlockRow(
+                                'Beginner',
+                                Icons.looks_one_rounded,
+                                true,
+                                const Color(0xFF2E7D32),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLevelUnlockRow(
+                                'Intermediate',
+                                Icons.looks_two_rounded,
+                                _intermediateUnlocked,
+                                const Color(0xFFE65100),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLevelUnlockRow(
+                                'Advanced',
+                                Icons.looks_3_rounded,
+                                _advancedUnlocked,
+                                const Color(0xFFC62828),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // ── Action buttons ──
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _startTest(_activeTestType),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: Text(
+                              'Retake This Test',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[700],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() => _currentView = _ScreenView.hub);
+                            },
+                            icon: const Icon(Icons.grid_view_rounded),
+                            label: Text(
+                              'Back to Tests',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: testColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 6,
+                              shadowColor: testColor.withOpacity(0.4),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillSummaryCard() {
+    // Group questions by type and compute accuracy per type
+    final Map<String, List<bool>> typeResults = {};
+    for (final q in _testData!.questions) {
+      final isCorrect = _results[q.id] ?? false;
+      typeResults.putIfAbsent(q.type, () => []).add(isCorrect);
+    }
+
+    // Build sorted lists: strengths (≥70%) and needs practice (<70%)
+    final strengths = <MapEntry<String, double>>[];
+    final practice = <MapEntry<String, double>>[];
+
+    typeResults.forEach((type, results) {
+      final acc = results.where((r) => r).length / results.length;
+      if (acc >= 0.7) {
+        strengths.add(MapEntry(type, acc));
+      } else {
+        practice.add(MapEntry(type, acc));
+      }
+    });
+
+    strengths.sort((a, b) => b.value.compareTo(a.value));
+    practice.sort((a, b) => a.value.compareTo(b.value));
+
+    if (typeResults.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C6FDD).withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.insights_rounded,
+                  color: Color(0xFF7C6FDD),
+                  size: 20,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(width: 12),
               Text(
-                isExcellent
-                    ? 'Outstanding!'
-                    : isGood
-                        ? 'Great Job!'
-                        : 'Good Start!',
-                style: const TextStyle(
-                  fontSize: 26,
+                'Skill Summary',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                eval.message,
-                style: const TextStyle(fontSize: 15, color: Colors.black54),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-
-              // Unlocked levels card
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            ],
+          ),
+          if (strengths.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.star_rounded,
+                    color: Color(0xFF2E7D32), size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'Strong skills',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2E7D32),
+                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Unlocked Levels',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildLevelUnlockRow(
-                        'Beginner',
-                        Icons.looks_one,
-                        true,
-                        Colors.green,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLevelUnlockRow(
-                        'Intermediate',
-                        Icons.looks_two,
-                        _intermediateUnlocked,
-                        Colors.orange,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLevelUnlockRow(
-                        'Advanced',
-                        Icons.looks_3,
-                        _advancedUnlocked,
-                        Colors.red,
-                      ),
-                    ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...strengths.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildSkillRow(
+                    type: e.key,
+                    accuracy: e.value,
+                    isStrength: true,
+                    total: typeResults[e.key]!.length,
+                    correct: typeResults[e.key]!.where((r) => r).length,
+                  ),
+                )),
+          ],
+          if (practice.isNotEmpty) ...[
+            SizedBox(height: strengths.isNotEmpty ? 16 : 16),
+            Row(
+              children: [
+                const Icon(Icons.trending_up_rounded,
+                    color: Color(0xFFE65100), size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'Needs more practice',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFE65100),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...practice.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildSkillRow(
+                    type: e.key,
+                    accuracy: e.value,
+                    isStrength: false,
+                    total: typeResults[e.key]!.length,
+                    correct: typeResults[e.key]!.where((r) => r).length,
+                  ),
+                )),
+          ],
+          if (practice.isEmpty && strengths.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E7D32).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '🎉 Perfect! You nailed every skill in this test!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: const Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillRow({
+    required String type,
+    required double accuracy,
+    required bool isStrength,
+    required int total,
+    required int correct,
+  }) {
+    final label = _getTypeLabel(type);
+    final icon = _getTypeIcon(type);
+    final accent =
+        isStrength ? const Color(0xFF2E7D32) : const Color(0xFFE65100);
+    final bg = isStrength
+        ? const Color(0xFF2E7D32).withOpacity(0.07)
+        : const Color(0xFFE65100).withOpacity(0.07);
+    final tip = _getSkillTip(type, isStrength);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
-
-              // Actions
-              ActionButton(
-                text: 'Retake This Test',
-                icon: Icons.refresh,
-                color: Colors.grey[600]!,
-                onPressed: () => _startTest(_activeTestType),
-              ),
-              const SizedBox(height: 10),
-              ActionButton(
-                text: 'Back to Tests',
-                icon: Icons.list,
-                color: testColor,
-                onPressed: () {
-                  setState(() => _currentView = _ScreenView.hub);
-                },
+              Text(
+                '$correct / $total',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: accent,
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: accuracy,
+              backgroundColor: accent.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation(accent),
+              minHeight: 5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tip,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  String _getSkillTip(String type, bool isStrength) {
+    // [0] = strong tip, [1] = practice tip
+    const tips = <String, List<String>>{
+      'select': [
+        'Great at recognising and choosing the right number!',
+        'Try the Read activity to practise choosing the right number.',
+      ],
+      'matching': [
+        'Excellent at matching numbers to their names!',
+        'Practise matching numbers and words in the Read activity.',
+      ],
+      'image_counting': [
+        'You can count objects perfectly!',
+        'Practise counting objects by going through the video lessons.',
+      ],
+      'drag_drop_order': [
+        'You know the order of numbers well!',
+        'Work on ordering numbers \u2014 try the Beginner activities.',
+      ],
+      'drag_drop_count': [
+        'Great at counting and dragging items!',
+        'Keep practising counting by dragging the right number.',
+      ],
+      'pattern_fill': [
+        'You can spot and fill number patterns easily!',
+        'Practise number patterns to improve this skill.',
+      ],
+      'trace': [
+        'You write numbers beautifully!',
+        'Use the Trace activity to practise writing numbers.',
+      ],
+      'say': [
+        'Great at saying numbers aloud!',
+        'Use the Say activity to practise pronouncing numbers correctly.',
+      ],
+      'show': [
+        'You can show the right number of objects!',
+        'Practise showing the right number of objects to the camera.',
+      ],
+      'object_detection': [
+        'You can show the right number of objects!',
+        'Practise showing the right number of objects to the camera.',
+      ],
+    };
+    final t = tips[type];
+    if (t == null) {
+      return isStrength
+          ? 'You did well on this skill!'
+          : 'Keep practising to improve this skill.';
+    }
+    return isStrength ? t[0] : t[1];
   }
 
   Widget _buildLevelUnlockRow(
@@ -1270,43 +1972,68 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     bool isUnlocked,
     Color color,
   ) {
-    return Row(
-      children: [
-        Icon(
-          isUnlocked ? Icons.lock_open : Icons.lock,
-          color: isUnlocked ? color : Colors.grey[400],
-          size: 26,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isUnlocked
+            ? color.withOpacity(0.08)
+            : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isUnlocked
+              ? color.withOpacity(0.3)
+              : Colors.grey.withOpacity(0.2),
+          width: 1.5,
         ),
-        const SizedBox(width: 10),
-        Icon(icon, color: isUnlocked ? color : Colors.grey[400], size: 26),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isUnlocked ? Colors.black87 : Colors.grey[400],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isUnlocked
+                  ? color.withOpacity(0.15)
+                  : Colors.grey.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isUnlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
+              color: isUnlocked ? color : Colors.grey[400],
+              size: 20,
             ),
           ),
-        ),
-        if (isUnlocked)
+          const SizedBox(width: 12),
+          Icon(icon, color: isUnlocked ? color : Colors.grey[400], size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isUnlocked ? Colors.black87 : Colors.grey[400],
+              ),
+            ),
+          ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: isUnlocked
+                  ? color.withOpacity(0.15)
+                  : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              'Unlocked',
-              style: TextStyle(
-                color: color,
+              isUnlocked ? 'Unlocked ✓' : 'Locked',
+              style: GoogleFonts.poppins(
+                color: isUnlocked ? color : Colors.grey[500],
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1342,6 +2069,21 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
     }
   }
 
+  Color _getTestColorDark(String testType) {
+    switch (testType) {
+      case 'placement':
+        return const Color(0xFF3D52D5);
+      case 'beginner':
+        return const Color(0xFF1B5E20);
+      case 'intermediate':
+        return const Color(0xFFE65100);
+      case 'advanced':
+        return const Color(0xFFB71C1C);
+      default:
+        return const Color(0xFF3D52D5);
+    }
+  }
+
   IconData _getTestIcon(String testType) {
     switch (testType) {
       case 'placement':
@@ -1369,30 +2111,6 @@ class _ProgressTestScreenState extends State<ProgressTestScreen>
         return 'Word problems, estimation, and complex patterns.\nProve you have mastered all levels!';
       default:
         return 'Answer the questions to test your knowledge.';
-    }
-  }
-
-  Color _getTypeColor(String type) {
-    switch (type) {
-      case 'matching':
-        return Colors.purple;
-      case 'drag_drop_order':
-      case 'drag_drop_count':
-        return Colors.orange;
-      case 'image_counting':
-        return Colors.teal;
-      case 'pattern_fill':
-        return Colors.indigo;
-      case 'trace':
-        return Colors.blue;
-      case 'say':
-        return Colors.green;
-      case 'show':
-      case 'object_detection':
-        return Colors.cyan;
-      case 'select':
-      default:
-        return Colors.deepPurple;
     }
   }
 

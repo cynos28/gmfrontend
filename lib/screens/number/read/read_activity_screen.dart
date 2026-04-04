@@ -8,6 +8,8 @@ import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/learning_flow_manager.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/number/widgets/floating_numbers_background.dart';
 
 /// ReadActivityScreen - Read and recognize numbers
 /// Mode 1: Show digit → select correct word
@@ -89,78 +91,109 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: const Text('Read Activity'),
-        backgroundColor: Color(AppColors.numberColor),
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.standardPadding * 2),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Stack(
+              children: [
+                Column(
                   children: [
-                    // Instructions
-                    Text(
-                      _isMode1 
-                          ? 'Which word matches this number?'
-                          : 'Which number matches this word?',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black54),
+                          ),
+                          Text(
+                            'Read Activity',
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 48), // Match width of back button for balance
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    
-                    const SizedBox(height: 32),
-                    
-                  // Question display
-                  _buildQuestionDisplay(),
-                  
-                  const SizedBox(height: 48),
-                  
-                  // Options
-                  ...List.generate(
-                    _options.length,
-                    (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildOptionButton(_options[index]),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                           padding: const EdgeInsets.all(AppConstants.standardPadding * 2),
+                           child: Column(
+                             mainAxisAlignment: MainAxisAlignment.center,
+                             children: [
+                               // Instructions
+                               Text(
+                                 _isMode1 
+                                     ? 'Which word matches this number?'
+                                     : 'Which number matches this word?',
+                                 style: GoogleFonts.poppins(
+                                   fontSize: 20,
+                                   fontWeight: FontWeight.w600,
+                                   color: Colors.black87,
+                                 ),
+                                 textAlign: TextAlign.center,
+                               ),
+                               
+                               const SizedBox(height: 32),
+                               
+                               // Question display
+                               _buildQuestionDisplay(),
+                               
+                               const SizedBox(height: 48),
+                               
+                               // Options
+                               ...List.generate(
+                                 _options.length,
+                                 (index) => Padding(
+                                   padding: const EdgeInsets.only(bottom: 12),
+                                   child: _buildOptionButton(_options[index]),
+                                 ),
+                               ),
+                               
+                               const SizedBox(height: 32),
+                               
+                               // Submit button
+                               ActionButton(
+                                 text: 'Check Answer',
+                                 icon: Icons.check,
+                                 isEnabled: _selectedAnswer != null && !_isChecking,
+                                 onPressed: _checkAnswer,
+                               ),
+                             ],
+                           ),
+                        ),
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Submit button
-                  ActionButton(
-                    text: 'Check Answer',
-                    icon: Icons.check,
-                    isEnabled: _selectedAnswer != null && !_isChecking,
-                    onPressed: _checkAnswer,
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                
+                // Result overlay
+                if (_result != null)
+                  _result!
+                      ? SuccessAnimation(
+                          message: 'Great job! That is correct!',
+                          onComplete: _onSuccess,
+                        )
+                      : FailureAnimation(
+                          message: 'Not quite right! Try again.',
+                          onRetry: _resetQuestion,
+                          onGoBack: _goBackToLearning,
+                        ),
+              ],
             ),
-            ),
-            
-            // Result overlay
-            if (_result != null)
-              _result!
-                  ? SuccessAnimation(
-                      message: 'Great job! That is correct!',
-                      onComplete: _onSuccess,
-                    )
-                  : FailureAnimation(
-                      message: 'Not quite right! Try again.',
-                      onRetry: _resetQuestion,
-                      onGoBack: _goBackToLearning,
-                    ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -171,21 +204,30 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
         : NumberWords.getWord(widget.currentNumber);
     
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
       decoration: BoxDecoration(
-        color: Color(AppColors.numberColor).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Color(AppColors.numberIcon).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
         border: Border.all(
-          color: Color(AppColors.numberColor),
-          width: 3,
+          color: Color(AppColors.numberIcon).withOpacity(0.3),
+          width: 4,
         ),
       ),
       child: Text(
         displayText,
-        style: TextStyle(
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(
           fontSize: _isMode1 ? 120 : 48,
           fontWeight: FontWeight.bold,
-          color: Color(AppColors.numberColor),
+          color: Color(AppColors.numberIcon),
         ),
       ),
     );
@@ -207,17 +249,17 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? Color(AppColors.numberColor)
+              ? Color(AppColors.numberIcon)
               : Colors.white,
           borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
           border: Border.all(
-            color: Color(AppColors.numberColor),
+            color: Color(AppColors.numberIcon),
             width: 2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Color(AppColors.numberColor).withOpacity(0.3),
+                    color: Color(AppColors.numberIcon).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

@@ -6,13 +6,13 @@ import 'package:ganithamithura/services/tts_service.dart';
 class SuccessAnimation extends StatefulWidget {
   final String message;
   final VoidCallback? onComplete;
-  
+
   const SuccessAnimation({
     super.key,
     this.message = 'Great Job!',
     this.onComplete,
   });
-  
+
   @override
   State<SuccessAnimation> createState() => _SuccessAnimationState();
 }
@@ -39,7 +39,8 @@ class _SuccessAnimationState extends State<SuccessAnimation> {
         child: Card(
           margin: const EdgeInsets.all(32),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+            borderRadius:
+                BorderRadius.circular(AppConstants.buttonBorderRadius),
           ),
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -87,7 +88,8 @@ class _SuccessAnimationState extends State<SuccessAnimation> {
                             builder: (context, value, child) {
                               return Icon(
                                 Icons.star,
-                                color: Color(AppColors.warningColor).withOpacity(value),
+                                color: Color(AppColors.warningColor)
+                                    .withOpacity(value),
                                 size: 32,
                               );
                             },
@@ -112,7 +114,7 @@ class FailureAnimation extends StatefulWidget {
   final VoidCallback? onRetry;
   final VoidCallback? onSkip;
   final VoidCallback? onGoBack; // Optional: navigate back to learning start
-  
+
   const FailureAnimation({
     super.key,
     this.message = 'Try Again!',
@@ -120,7 +122,7 @@ class FailureAnimation extends StatefulWidget {
     this.onSkip,
     this.onGoBack,
   });
-  
+
   @override
   State<FailureAnimation> createState() => _FailureAnimationState();
 }
@@ -141,7 +143,8 @@ class _FailureAnimationState extends State<FailureAnimation> {
         child: Card(
           margin: const EdgeInsets.all(32),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+            borderRadius:
+                BorderRadius.circular(AppConstants.buttonBorderRadius),
           ),
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -201,7 +204,8 @@ class _FailureAnimationState extends State<FailureAnimation> {
                           label: const Text('Go Back to Learning'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Color(AppColors.numberColor),
-                            side: BorderSide(color: Color(AppColors.numberColor)),
+                            side:
+                                BorderSide(color: Color(AppColors.numberColor)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
@@ -228,12 +232,12 @@ class _FailureAnimationState extends State<FailureAnimation> {
 /// LoadingOverlay - Show loading indicator
 class LoadingOverlay extends StatelessWidget {
   final String message;
-  
+
   const LoadingOverlay({
     super.key,
     this.message = 'Loading...',
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -242,7 +246,8 @@ class LoadingOverlay extends StatelessWidget {
         child: Card(
           margin: const EdgeInsets.all(32),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+            borderRadius:
+                BorderRadius.circular(AppConstants.buttonBorderRadius),
           ),
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -272,22 +277,22 @@ class ScoreCard extends StatelessWidget {
   final int score;
   final int total;
   final String title;
-  
+
   const ScoreCard({
     super.key,
     required this.score,
     required this.total,
     this.title = 'Your Score',
   });
-  
+
   double get percentage => total > 0 ? (score / total) * 100 : 0;
-  
+
   Color get scoreColor {
     if (percentage >= 80) return Color(AppColors.successColor);
     if (percentage >= 60) return Color(AppColors.warningColor);
     return Color(AppColors.errorColor);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -349,7 +354,8 @@ class ScoreCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildStatItem('Correct', score, Color(AppColors.successColor)),
-                _buildStatItem('Wrong', total - score, Color(AppColors.errorColor)),
+                _buildStatItem(
+                    'Wrong', total - score, Color(AppColors.errorColor)),
               ],
             ),
           ],
@@ -357,7 +363,7 @@ class ScoreCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildStatItem(String label, int value, Color color) {
     return Column(
       children: [
@@ -385,13 +391,13 @@ class ScoreCard extends StatelessWidget {
 class NumberDisplay extends StatelessWidget {
   final int number;
   final String? word;
-  
+
   const NumberDisplay({
     super.key,
     required this.number,
     this.word,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
@@ -406,7 +412,8 @@ class NumberDisplay extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Color(AppColors.numberColor).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+                borderRadius:
+                    BorderRadius.circular(AppConstants.buttonBorderRadius),
                 border: Border.all(
                   color: Color(AppColors.numberColor),
                   width: 3,

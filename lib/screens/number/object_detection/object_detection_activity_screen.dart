@@ -10,6 +10,8 @@ import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/learning_flow_manager.dart';
 import 'package:ganithamithura/services/camera_service.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/number/widgets/floating_numbers_background.dart';
 
 // ---------------------------------------------------------------------------
 // Learning-mode object map: use practical, affordable, YOLO-detectable items
@@ -136,66 +138,91 @@ class _ObjectDetectionActivityScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: const Text('Object Detection'),
-        backgroundColor: Color(AppColors.numberColor),
-        foregroundColor: Colors.white,
-        actions: [
-          if (_isCameraInitialized)
-            IconButton(
-              icon: const Icon(Icons.flip_camera_ios),
-              onPressed: _switchCamera,
-              tooltip: 'Switch Camera',
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Stack(
               children: [
-                // Instructions
-                _buildInstructionCard(),
-                
-                const SizedBox(height: 8),
-                
-                // Camera preview or error
-                Expanded(
-                  child: _errorMessage != null
-                      ? _buildErrorWidget()
-                      : _isCameraInitialized
-                          ? _buildCameraPreview()
-                          : _buildLoadingWidget(),
+                Column(
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black54),
+                          ),
+                          Text(
+                            'Object Detection',
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (_isCameraInitialized)
+                            IconButton(
+                              icon: const Icon(Icons.flip_camera_ios, color: Colors.black54),
+                              onPressed: _switchCamera,
+                              tooltip: 'Switch Camera',
+                            )
+                          else
+                            const SizedBox(width: 48), // Match width of icon button
+                        ],
+                      ),
+                    ),
+                    
+                    // Instructions
+                    _buildInstructionCard(),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Camera preview or error
+                    Expanded(
+                      child: _errorMessage != null
+                          ? _buildErrorWidget()
+                          : _isCameraInitialized
+                              ? _buildCameraPreview()
+                              : _buildLoadingWidget(),
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Detection result
+                    if (_detectionResult != null)
+                      _buildDetectionResult(),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Control buttons
+                    _buildControlButtons(),
+                  ],
                 ),
                 
-                const SizedBox(height: 8),
-                
-                // Detection result
-                if (_detectionResult != null)
-                  _buildDetectionResult(),
-                
-                const SizedBox(height: 8),
-                
-                // Control buttons
-                _buildControlButtons(),
+                // Result overlay
+                if (_result != null)
+                  _result!
+                      ? SuccessAnimation(
+                          message: _detectionResult?.validation?.feedback ?? 'Great job!',
+                          onComplete: _onSuccess,
+                        )
+                      : FailureAnimation(
+                          message: _detectionResult?.validation?.feedback ?? 'Try again!',
+                          onRetry: _resetDetection,
+                          onGoBack: _goBackToLearning,
+                        ),
               ],
             ),
-            
-            // Result overlay
-            if (_result != null)
-              _result!
-                  ? SuccessAnimation(
-                      message: _detectionResult?.validation?.feedback ?? 'Great job!',
-                      onComplete: _onSuccess,
-                    )
-                  : FailureAnimation(
-                      message: _detectionResult?.validation?.feedback ?? 'Try again!',
-                      onRetry: _resetDetection,
-                      onGoBack: _goBackToLearning,
-                    ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -208,20 +235,23 @@ class _ObjectDetectionActivityScreenState
     final instruction = 'Can you show me $countLabel?';
     
     return Container(
-      margin: const EdgeInsets.all(AppConstants.standardPadding),
-      padding: const EdgeInsets.all(AppConstants.standardPadding),
+      margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(AppColors.numberColor).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
-        border: Border.all(
-          color: Color(AppColors.numberColor),
-          width: 2,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Icon(
-            Icons.camera_alt,
+            Icons.camera_alt_rounded,
             color: Color(AppColors.numberColor),
             size: 32,
           ),
@@ -232,14 +262,14 @@ class _ObjectDetectionActivityScreenState
               children: [
                 Text(
                   instruction,
-                  style: const TextStyle(
-                    fontSize: 18,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   'Hold up ${widget.currentNumber == 1 ? "a" : "${widget.currentNumber}"} ${widget.currentNumber == 1 ? learningObj.display : learningObj.plural} in front of the camera',
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: Colors.grey[700],
                   ),
@@ -309,19 +339,25 @@ class _ObjectDetectionActivityScreenState
     if (controller == null) return const SizedBox();
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppConstants.standardPadding),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: Color(AppColors.numberColor).withOpacity(0.3),
+          width: 4,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Color(AppColors.numberColor).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppConstants.buttonBorderRadius),
+        borderRadius: BorderRadius.circular(28),
         child: AspectRatio(
           aspectRatio: controller.value.aspectRatio,
           child: CameraPreview(controller),
