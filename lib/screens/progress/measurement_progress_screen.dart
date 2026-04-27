@@ -202,6 +202,16 @@ class _MeasurementProgressScreenState extends State<MeasurementProgressScreen> {
             _buildAccuracyBarChart(domains),
             const SizedBox(height: KidsSpacing.xl),
           ],
+          
+          // Cognitive Skills Profile
+          if (_progressData['cognitive_skills'] != null &&
+              (_progressData['cognitive_skills'] as List).isNotEmpty) ...[
+            Text('Cognitive Skills Profile 🧠',
+                style: KidsTypography.subtitle.copyWith(fontSize: 20)),
+            const SizedBox(height: KidsSpacing.md),
+            _buildCognitiveSkillsProfile(_progressData['cognitive_skills'] as List<dynamic>),
+            const SizedBox(height: KidsSpacing.xl),
+          ],
 
           // Domain cards
           Text('Tap a topic for details',
@@ -348,6 +358,281 @@ class _MeasurementProgressScreenState extends State<MeasurementProgressScreen> {
               ],
             );
           }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCognitiveSkillsProfile(List<dynamic> cognitiveSkills) {
+    return Container(
+      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+        boxShadow: KidsShadows.soft,
+      ),
+      child: Column(
+        children: cognitiveSkills.map((skill) {
+          final title = skill['name'] as String;
+          final desc = skill['description'] as String;
+          final emoji = skill['emoji'] as String;
+          final score = ((skill['score'] ?? 0.0) as num).toDouble();
+          
+          // Parse color
+          final hex = (skill['color_hex'] as String).replaceAll('#', '');
+          final color = Color(int.parse(hex, radix: 16) + 0xFF000000);
+
+          return GestureDetector(
+            onTap: () => _showCognitiveSkillDetails(context, skill, color),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: KidsSpacing.md),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                ),
+                child: Row(
+              children: [
+                // Emoji Icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular( KidsSpacing.radiusMedium),
+                  ),
+                  child: Center(
+                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                ),
+                const SizedBox(width: KidsSpacing.md),
+                // Text and Progress Bar
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: KidsTypography.label.copyWith(
+                                color: KidsColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${(score * 100).toInt()}%',
+                            style: KidsTypography.label.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(desc, style: KidsTypography.small.copyWith(fontSize: 12, color: KidsColors.textSecondary)),
+                      const SizedBox(height: 8),
+                      // Progress wrapper
+                      Stack(
+                        children: [
+                          Container(
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: score.clamp(0.0, 1.0),
+                            child: Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: color.withOpacity(0.4),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }).toList(),
+  ),
+);
+}
+
+  void _showCognitiveSkillDetails(BuildContext context, Map<String, dynamic> skill, Color color) {
+    final title = skill['name'] as String;
+    final emoji = skill['emoji'] as String;
+    final desc = skill['description'] as String;
+    
+    String tips = '';
+    String relatedGames = '';
+    
+    if (title.contains('Spatial')) {
+      relatedGames = 'Area Architect, Length Explorer';
+      tips = 'Practice playing with building blocks, doing jigsaw puzzles, and drawing shapes to improve spatial reasoning.';
+    } else if (title.contains('Logic')) {
+      relatedGames = 'Magic Scale, Volume Compare';
+      tips = 'Play sorting games, balance a seesaw, or help with cooking to better understand concepts like heavier, lighter, and more/less.';
+    } else if (title.contains('Estimation')) {
+      relatedGames = 'Volume Fill, Area Architect';
+      tips = 'Try guessing how many steps it takes to reach the door, or how many small cups of water fill a big jug before actually trying it!';
+    } else if (title.contains('Conservation')) {
+      relatedGames = 'Magic Scale, Weight Match';
+      tips = 'Pour water between different sized glasses to see that the amount of water stays the same even if it looks taller or shorter!';
+    } else {
+      relatedGames = 'Area Tiles, Length Ruler';
+      tips = 'Practice lining up identical objects (like paper clips or blocks) end-to-end without any gaps to measure things accurately.';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(KidsSpacing.screenPadding),
+        decoration: const BoxDecoration(
+          color: KidsColors.backgroundLight,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 48,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+            const SizedBox(height: KidsSpacing.xl),
+            Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                  ),
+                  child: Center(
+                    child: Text(emoji, style: const TextStyle(fontSize: 32)),
+                  ),
+                ),
+                const SizedBox(width: KidsSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: KidsTypography.title.copyWith(fontSize: 24, color: color),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        desc,
+                        style: KidsTypography.subtitle.copyWith(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: KidsSpacing.xl),
+            Container(
+              padding: const EdgeInsets.all(KidsSpacing.md),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                border: Border.all(color: color.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.videogame_asset_rounded, color: color),
+                      const SizedBox(width: 8),
+                      Text('Related Games', style: KidsTypography.label.copyWith(color: color)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(relatedGames, style: KidsTypography.small),
+                ],
+              ),
+            ),
+            const SizedBox(height: KidsSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(KidsSpacing.md),
+              decoration: BoxDecoration(
+                color: KidsColors.starGold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
+                border: Border.all(color: KidsColors.starGold.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.lightbulb_rounded, color: KidsColors.starGold),
+                      const SizedBox(width: 8),
+                      Text('How to Improve', style: KidsTypography.label.copyWith(color: KidsColors.starGold)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(tips, style: KidsTypography.small.copyWith(height: 1.4)),
+                ],
+              ),
+            ),
+            const SizedBox(height: KidsSpacing.xxl),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Got it!',
+                  style: KidsTypography.label.copyWith(color: Colors.white, fontSize: 18),
+                ),
+              ),
+            ),
+            const SizedBox(height: KidsSpacing.lg),
+          ],
         ),
       ),
     );

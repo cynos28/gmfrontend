@@ -447,12 +447,15 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
       if (lowerQuestion.contains('long') || 
           lowerQuestion.contains('short') || 
           lowerQuestion.contains('tall') ||
-          lowerQuestion.contains('height') ||
+          lowerQuestion.contains('high') ||
+          lowerQuestion.contains('heigh') ||
           lowerQuestion.contains('distance') ||
           lowerQuestion.contains('meter') ||
           lowerQuestion.contains('centimeter') ||
           lowerQuestion.contains('cm') ||
-          lowerQuestion.contains('km')) {
+          lowerQuestion.contains('km') ||
+          lowerQuestion.contains('ruler') ||
+          lowerQuestion.contains('measure')) {
         return true;
       }
       return false;
@@ -460,15 +463,16 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
     
     // Check if it's a weight unit
     if (unitId.contains('weight')) {
-      // Weight keywords
-      if (lowerQuestion.contains('heavy') || 
+      // Weight keywords - use stems to match heavier/lighter/weighing
+      if (lowerQuestion.contains('heav') || 
           lowerQuestion.contains('light') || 
           lowerQuestion.contains('weigh') ||
-          lowerQuestion.contains('weight') ||
           lowerQuestion.contains('kg') ||
           lowerQuestion.contains('kilogram') ||
           lowerQuestion.contains('gram') ||
-          lowerQuestion.contains('mass')) {
+          lowerQuestion.contains('mass') ||
+          lowerQuestion.contains('balance') ||
+          lowerQuestion.contains('scale')) {
         return true;
       }
       return false;
@@ -482,6 +486,7 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
           lowerQuestion.contains('space') ||
           lowerQuestion.contains('cover') ||
           lowerQuestion.contains('surface') ||
+          lowerQuestion.contains('size') ||
           lowerQuestion.contains('m²') ||
           lowerQuestion.contains('cm²')) {
         return true;
@@ -496,10 +501,13 @@ class _QuestionPracticeScreenState extends State<QuestionPracticeScreen> {
           lowerQuestion.contains('contain') || 
           lowerQuestion.contains('fill') ||
           lowerQuestion.contains('volume') ||
-          lowerQuestion.contains('volume') ||
+          lowerQuestion.contains('capacit') ||
           lowerQuestion.contains('liter') ||
+          lowerQuestion.contains('litre') ||
           lowerQuestion.contains('ml') ||
-          lowerQuestion.contains('litre')) {
+          lowerQuestion.contains('cup') ||
+          lowerQuestion.contains('bottle') ||
+          lowerQuestion.contains('liquid')) {
         return true;
       }
       return false;

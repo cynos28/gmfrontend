@@ -225,6 +225,13 @@ class GamesApiService {
         {'domain': 'volume', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
         {'domain': 'weight', 'variants': [], 'total_rounds': 0, 'total_correct': 0, 'total_attempts': 0, 'total_stars': 0, 'accuracy': 0.0, 'avg_theta': 0.0, 'avg_difficulty': 0.0, 'theta_trend': [], 'difficulty_trend': []},
       ],
+      'cognitive_skills': [
+        {'name': 'Spatial Reasoning', 'description': 'Visualizing and organizing spaces.', 'emoji': '🧩', 'score': 0.0, 'color_hex': '#2196F3'},
+        {'name': 'Logic & Comparing', 'description': 'Understanding relationships.', 'emoji': '⚖️', 'score': 0.0, 'color_hex': '#9C27B0'},
+        {'name': 'Estimation', 'description': 'Making good visual guesses.', 'emoji': '🤔', 'score': 0.0, 'color_hex': '#FF9800'},
+        {'name': 'Conservation', 'description': 'Knowing quantity persists.', 'emoji': '🪄', 'score': 0.0, 'color_hex': '#4CAF50'},
+        {'name': 'Using Units', 'description': 'Measuring with standard units.', 'emoji': '📏', 'score': 0.0, 'color_hex': '#00BCD4'},
+      ],
     };
   }
 

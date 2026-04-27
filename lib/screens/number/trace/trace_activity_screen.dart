@@ -11,6 +11,7 @@ import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/learning_flow_manager.dart';
+import 'package:ganithamithura/utils/kids_theme.dart';
 
 /// TraceActivityScreen - Trace numbers with drawing canvas
 class TraceActivityScreen extends StatefulWidget {
@@ -56,8 +57,11 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
     return Scaffold(
       backgroundColor: Color(AppColors.backgroundColor),
       appBar: AppBar(
-        title: Text('Trace ${widget.currentNumber}'),
-        backgroundColor: Color(AppColors.numberColor),
+        title: Text(
+          'Trace ${widget.currentNumber}',
+          style: KidsTypography.buttonLarge.copyWith(color: Colors.white),
+        ),
+        backgroundColor: KidsColors.primaryAccent,
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _clearDrawing),
@@ -68,19 +72,19 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
           children: [
             // Instructions
             Container(
-              padding: const EdgeInsets.all(AppConstants.standardPadding),
-              color: Color(AppColors.numberColor).withOpacity(0.1),
+              padding: const EdgeInsets.symmetric(
+                horizontal: KidsSpacing.screenPadding,
+                vertical: KidsSpacing.md,
+              ),
+              color: KidsColors.primaryBackground,
               child: Row(
                 children: [
-                  Icon(Icons.touch_app, color: Color(AppColors.numberColor)),
+                  const Icon(Icons.touch_app, color: KidsColors.primaryAccent, size: 28),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Trace the number with your finger',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: KidsTypography.label,
                     ),
                   ),
                 ],
@@ -430,7 +434,7 @@ class _DrawingPainter extends CustomPainter {
     }
 
     final paint = Paint()
-      ..color = Color(AppColors.numberColor)
+      ..color = KidsColors.primaryAccent
       ..strokeWidth = 8.0
       ..strokeCap = StrokeCap.round;
 
@@ -456,7 +460,7 @@ class _DottedNumberPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Color(AppColors.numberColor).withOpacity(0.3)
+      ..color = KidsColors.primaryAccent.withOpacity(0.15)
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
