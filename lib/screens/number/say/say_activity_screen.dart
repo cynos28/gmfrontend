@@ -11,6 +11,8 @@ import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/learning_flow_manager.dart';
 import 'package:ganithamithura/services/tts_service.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ganithamithura/screens/number/widgets/floating_numbers_background.dart';
 
 /// SayActivityScreen - Voice recognition activity
 class SayActivityScreen extends StatefulWidget {
@@ -66,8 +68,8 @@ class _SayActivityScreenState extends State<SayActivityScreen>
   /// Speak the number aloud using TTS so the student can hear the pronunciation
   Future<void> _pronounceNumber() async {
     final word = NumberWords.getWord(widget.currentNumber);
-    await TTSService.instance.speak(
-        'The number is ${widget.currentNumber}. Say: $word');
+    await TTSService.instance
+        .speak('The number is ${widget.currentNumber}. Say: $word');
   }
 
   @override
@@ -184,7 +186,9 @@ class _SayActivityScreenState extends State<SayActivityScreen>
             setState(() {});
 
             // When speech recognition finishes, check the result if we have text
-            if (status == 'done' && _recognizedText.isNotEmpty && _result == null) {
+            if (status == 'done' &&
+                _recognizedText.isNotEmpty &&
+                _result == null) {
               Future.delayed(const Duration(milliseconds: 200), () {
                 if (mounted) {
                   _checkResult();
@@ -216,203 +220,271 @@ class _SayActivityScreenState extends State<SayActivityScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(AppColors.backgroundColor),
-      appBar: AppBar(
-        title: const Text('Say Activity'),
-        backgroundColor: Color(AppColors.numberColor),
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.standardPadding * 2),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.6,
+            child: FloatingNumbersBackground(),
+          ),
+          SafeArea(
+            child: Stack(
+              children: [
+                Column(
                   children: [
-                    // Instructions
-                    const Text(
-                      'Say the number aloud',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Number display
-                    NumberDisplay(
-                      number: widget.currentNumber,
-                      word: NumberWords.getWord(widget.currentNumber),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Hear-it-again button so the student can re-listen to the pronunciation
-                    OutlinedButton.icon(
-                      onPressed: _pronounceNumber,
-                      icon: const Icon(Icons.volume_up),
-                      label: const Text('Hear it again'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Color(AppColors.numberColor),
-                        side: BorderSide(color: Color(AppColors.numberColor)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Microphone button
-                    _buildMicrophoneButton(),
-
-                    const SizedBox(height: 32),
-
-                    // Status text
-                    if (_isListening || _speech.isListening)
-                      const Text(
-                        'Listening...',
-                        style: TextStyle(fontSize: 18, color: Colors.black54),
-                      )
-                    else if (_recognizedText.isNotEmpty)
-                      Column(
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'You said:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(Icons.arrow_back_ios_new,
+                                size: 20, color: Colors.black54),
                           ),
-                          const SizedBox(height: 8),
                           Text(
-                            _recognizedText,
-                            style: TextStyle(
-                              fontSize: 24,
+                            'Say Activity',
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Color(AppColors.numberColor),
+                              color: Colors.black87,
                             ),
                           ),
+                          const SizedBox(
+                              width:
+                                  48), // Match width of back button for balance
                         ],
                       ),
-
-                    const SizedBox(height: 32),
-
-                    // Status/Error message display
-                    if (_statusMessage != null)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _statusColor ?? Color(AppColors.errorColor),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _statusMessage!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    if (_statusMessage != null) const SizedBox(height: 16),
-
-                    // Instructions card
-                    if (!_speechAvailable)
-                      Card(
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
                         child: Padding(
                           padding: const EdgeInsets.all(
-                            AppConstants.standardPadding,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Color(AppColors.errorColor),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Speech recognition not available. Please check permissions.',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                            AppConstants.standardPadding,
-                          ),
+                              AppConstants.standardPadding * 2),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: Color(AppColors.infoColor),
+                              // Instructions
+                              Text(
+                                'Say the number aloud',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+
+                              const SizedBox(height: 32),
+
+                              // Number display
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(32),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(AppColors.numberIcon)
+                                          .withOpacity(0.15),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: NumberDisplay(
+                                  number: widget.currentNumber,
+                                  word:
+                                      NumberWords.getWord(widget.currentNumber),
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Hear-it-again button so the student can re-listen to the pronunciation
+                              OutlinedButton.icon(
+                                onPressed: _pronounceNumber,
+                                icon: const Icon(Icons.volume_up),
+                                label: const Text('Hear it again'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Color(AppColors.numberIcon),
+                                  side: BorderSide(
+                                      color: Color(AppColors.numberIcon)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'How to play:',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 32),
+
+                              // Microphone button
+                              _buildMicrophoneButton(),
+
+                              const SizedBox(height: 32),
+
+                              // Status text
+                              if (_isListening || _speech.isListening)
+                                const Text(
+                                  'Listening...',
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.black54),
+                                )
+                              else if (_recognizedText.isNotEmpty)
+                                Column(
+                                  children: [
+                                    const Text(
+                                      'You said:',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _recognizedText,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(AppColors.numberIcon),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                              const SizedBox(height: 32),
+
+                              // Status/Error message display
+                              if (_statusMessage != null)
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: _statusColor ??
+                                        Color(AppColors.errorColor),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _statusMessage!,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              if (_statusMessage != null)
+                                const SizedBox(height: 16),
+
+                              // Instructions card
+                              if (!_speechAvailable)
+                                Card(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                  elevation: 4,
+                                  shadowColor: Colors.black12,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      AppConstants.standardPadding,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: Color(AppColors.errorColor),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Expanded(
+                                          child: Text(
+                                            'Speech recognition not available. Please check permissions.',
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '1. Tap the microphone button\n'
-                                '2. Say "${NumberWords.getWord(widget.currentNumber)}" clearly\n'
-                                '3. Speak at a normal volume\n'
-                                '4. Avoid background noise',
-                                style: const TextStyle(fontSize: 14),
-                              ),
+                                )
+                              else
+                                Card(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                  elevation: 4,
+                                  shadowColor: Colors.black12,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      AppConstants.standardPadding,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: Color(AppColors.infoColor),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'How to play:',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '1. Tap the microphone button\n'
+                                          '2. Say "${NumberWords.getWord(widget.currentNumber)}" clearly\n'
+                                          '3. Speak at a normal volume\n'
+                                          '4. Avoid background noise',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
-              ),
-            ),
 
-            // Result overlay
-            if (_result != null)
-              _result!
-                  ? SuccessAnimation(
-                      message: 'Great job! Perfect pronunciation!',
-                      onComplete: _onSuccess,
-                    )
-                  : FailureAnimation(
-                      message: 'Try again! Listen carefully and repeat.',
-                      onRetry: _resetActivity,
-                      onGoBack: _goBackToLearning,
-                    ),
-          ],
-        ),
+                // Result overlay
+                if (_result != null)
+                  _result!
+                      ? SuccessAnimation(
+                          message: 'Great job! Perfect pronunciation!',
+                          onComplete: _onSuccess,
+                        )
+                      : FailureAnimation(
+                          message: 'Try again! Listen carefully and repeat.',
+                          onRetry: _resetActivity,
+                          onGoBack: _goBackToLearning,
+                        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -437,14 +509,14 @@ class _SayActivityScreenState extends State<SayActivityScreen>
                       AppColors.successColor,
                     ).withOpacity(0.2 + (_micAnimationController.value * 0.3))
                   : _speechAvailable
-                  ? Color(AppColors.numberColor).withOpacity(0.2)
-                  : Color(AppColors.disabledColor).withOpacity(0.2),
+                      ? Color(AppColors.numberIcon).withOpacity(0.2)
+                      : Color(AppColors.disabledColor).withOpacity(0.2),
               border: Border.all(
                 color: isActive
                     ? Color(AppColors.successColor)
                     : _speechAvailable
-                    ? Color(AppColors.numberColor)
-                    : Color(AppColors.disabledColor),
+                        ? Color(AppColors.numberIcon)
+                        : Color(AppColors.disabledColor),
                 width: 4,
               ),
             ),
@@ -454,8 +526,8 @@ class _SayActivityScreenState extends State<SayActivityScreen>
               color: isActive
                   ? Color(AppColors.successColor)
                   : _speechAvailable
-                  ? Color(AppColors.numberColor)
-                  : Color(AppColors.disabledColor),
+                      ? Color(AppColors.numberIcon)
+                      : Color(AppColors.disabledColor),
             ),
           );
         },
@@ -467,12 +539,12 @@ class _SayActivityScreenState extends State<SayActivityScreen>
     if (_isListening) {
       // Provide haptic feedback when stopping microphone
       HapticFeedback.heavyImpact();
-      
+
       await _speech.stop();
       setState(() {
         _isListening = false;
       });
-      
+
       // Check result if we have recognized text
       if (_recognizedText.isNotEmpty && _result == null) {
         Future.delayed(const Duration(milliseconds: 300), () {
@@ -486,14 +558,14 @@ class _SayActivityScreenState extends State<SayActivityScreen>
         _recognizedText = '';
         _result = null;
       });
-      
+
       // Provide haptic feedback when starting microphone
       HapticFeedback.heavyImpact();
-      
+
       await _speech.listen(
         onResult: _onSpeechResult,
         listenFor: const Duration(seconds: 10),
-        pauseFor: const Duration(milliseconds: 2000),
+        pauseFor: const Duration(milliseconds: 2500),
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
           cancelOnError: true,
@@ -508,9 +580,13 @@ class _SayActivityScreenState extends State<SayActivityScreen>
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
+    debugPrint('Speech result: ${result.recognizedWords}');
     setState(() {
       _recognizedText = result.recognizedWords.toLowerCase();
-      _isListening = false;
+      // Only stop the "listening" UI when the engine says it is actually done
+      if (result.finalResult) {
+        _isListening = false;
+      }
     });
 
     if (result.finalResult) {
@@ -520,19 +596,69 @@ class _SayActivityScreenState extends State<SayActivityScreen>
 
   void _checkResult() {
     final targetWord = NumberWords.getWord(widget.currentNumber).toLowerCase();
+    final targetNumStr = widget.currentNumber.toString();
 
-    // Normalize: speech engines often return digits ("7") instead of words
-    // ("seven"). Convert digit strings to their word equivalent before comparing.
-    String recognizedWord = _recognizedText.toLowerCase().trim();
-    final asInt = int.tryParse(recognizedWord);
-    if (asInt != null) {
-      final asWord = NumberWords.getWord(asInt);
-      if (asWord.isNotEmpty) recognizedWord = asWord;
+    // Mapping of common phonetically similar words for single digits
+    const soundsLike = {
+      'won': 'one',
+      'to': 'two',
+      'too': 'two',
+      'tree': 'three',
+      'free': 'three',
+      'for': 'four',
+      'fore': 'four',
+      'ate': 'eight',
+    };
+
+    String recognizedText = _recognizedText.toLowerCase().trim();
+    if (recognizedText.isEmpty) return;
+
+    // Split into words to catch the target number inside a phrase (e.g., "it is five")
+    final words = recognizedText.split(RegExp(r'\s+'));
+    
+    bool isMatch = false;
+
+    for (var word in words) {
+      // 1. Direct word match (e.g., "five")
+      if (word == targetWord) {
+        isMatch = true;
+        break;
+      }
+
+      // 2. Direct digit string match (e.g., "5")
+      if (word == targetNumStr) {
+        isMatch = true;
+        break;
+      }
+
+      // 3. Phonetic/Sounds-like match
+      if (soundsLike[word] == targetWord) {
+        isMatch = true;
+        break;
+      }
+
+      // 4. Try parsing as integer and converting to word
+      final asInt = int.tryParse(word);
+      if (asInt != null) {
+        if (asInt == widget.currentNumber) {
+          isMatch = true;
+          break;
+        }
+      }
     }
 
-    // Check similarity
-    final similarity = _calculateSimilarity(targetWord, recognizedWord);
-    final passed = similarity >= AppConstants.speechRecognitionThreshold;
+    // Similarity check as fallback for slight variations
+    double similarity = 0.0;
+    if (isMatch) {
+      similarity = 1.0;
+    } else {
+      similarity = _calculateSimilarity(targetWord, recognizedText);
+      // Also check similarity with numeric string just in case
+      double numStrSimilarity = _calculateSimilarity(targetNumStr, recognizedText);
+      if (numStrSimilarity > similarity) similarity = numStrSimilarity;
+    }
+
+    final passed = isMatch || similarity >= AppConstants.speechRecognitionThreshold;
 
     if (passed) {
       // Save progress
@@ -553,22 +679,21 @@ class _SayActivityScreenState extends State<SayActivityScreen>
       // Submit to backend (non-blocking with proper error handling)
       _apiService
           .submitActivityScore(
-            activityId: widget.activity.id,
-            score: progress.score,
-            isCompleted: true,
-            additionalData: progress.additionalData,
-          )
+        activityId: widget.activity.id,
+        score: progress.score,
+        isCompleted: true,
+        additionalData: progress.additionalData,
+      )
           .timeout(
-            Duration(seconds: AppConstants.apiTimeout),
-            onTimeout: () {
-              debugPrint('Score submission timed out - will retry later');
-              return <String, dynamic>{'status': 'timeout'};
-            },
-          )
-          .catchError((e) {
-            debugPrint('Error submitting score: $e');
-            return <String, dynamic>{'status': 'error', 'error': e.toString()};
-          });
+        Duration(seconds: AppConstants.apiTimeout),
+        onTimeout: () {
+          debugPrint('Score submission timed out - will retry later');
+          return <String, dynamic>{'status': 'timeout'};
+        },
+      ).catchError((e) {
+        debugPrint('Error submitting score: $e');
+        return <String, dynamic>{'status': 'error', 'error': e.toString()};
+      });
     }
 
     setState(() {

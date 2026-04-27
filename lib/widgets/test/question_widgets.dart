@@ -96,7 +96,8 @@ class _SelectQuestionWidgetState extends State<SelectQuestionWidget> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: InkWell(
-              onTap: _selectedAnswer == null ? () => _selectAnswer(option) : null,
+              onTap:
+                  _selectedAnswer == null ? () => _selectAnswer(option) : null,
               borderRadius: BorderRadius.circular(14),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
@@ -534,7 +535,9 @@ class _MatchingQuestionWidgetState extends State<MatchingQuestionWidget> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _isCorrect! ? 'All matched correctly!' : 'Some pairs are wrong',
+                  _isCorrect!
+                      ? 'All matched correctly!'
+                      : 'Some pairs are wrong',
                   style: TextStyle(
                     color: _isCorrect! ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
@@ -1196,8 +1199,7 @@ class _PatternFillWidgetState extends State<PatternFillWidget> {
           physics: const NeverScrollableScrollPhysics(),
           children: widget.question.options?.map((option) {
                 final isSelected = _selectedAnswer == option;
-                final isCorrectOption =
-                    option == widget.question.correctAnswer;
+                final isCorrectOption = option == widget.question.correctAnswer;
                 Color bgColor = Colors.white;
                 Color borderColor = Colors.grey.shade300;
 
@@ -1295,6 +1297,7 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
       }
 
       final size = renderBox.size;
+      debugPrint('Canvas size: ${size.width} x ${size.height}');
 
       // Create a custom painter with BLACK background and WHITE strokes
       final recorder = ui.PictureRecorder();
@@ -1310,7 +1313,7 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
       // Draw strokes in WHITE
       final strokePaint = Paint()
         ..color = Colors.white
-        ..strokeWidth = 8.0
+        ..strokeWidth = 28.0
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
@@ -1369,11 +1372,13 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
 
       if (imageBytes != null) {
         // Send to digit recognition API
-        final result = await _apiService.recognizeDigit(
-          imageBytes: imageBytes,
-          expectedDigit: widget.question.expectedNumber,
-          confidenceThreshold: 0.5,
-        ).timeout(const Duration(seconds: 15));
+        final result = await _apiService
+            .recognizeDigit(
+              imageBytes: imageBytes,
+              expectedDigit: widget.question.expectedNumber,
+              confidenceThreshold: 0.5,
+            )
+            .timeout(const Duration(seconds: 3));
 
         final correct = result.isCorrect ?? false;
 
@@ -1382,34 +1387,41 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
           _isRecognizing = false;
           _isCorrect = correct;
           _predictedDigit = result.predictedDigit;
-          _feedback = result.feedback ?? (correct
-              ? 'Great drawing!'
-              : 'That looks like ${result.predictedDigit}. Expected ${widget.question.expectedNumber}.');
+          _feedback = result.feedback ??
+              (correct
+                  ? 'Great drawing!'
+                  : 'That looks like ${result.predictedDigit}. Expected ${widget.question.expectedNumber}.');
         });
 
-        widget.onAnswered(correct,
-            widget.question.expectedNumber?.toString() ?? '');
+        widget.onAnswered(
+            correct, widget.question.expectedNumber?.toString() ?? '');
       } else {
-        // Fallback: accept drawing if capture failed
-        _fallbackSubmit();
+        setState(() {
+          _isRecognizing = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to capture drawing. Please try again.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Digit recognition error: $e');
-      // Fallback: accept drawing attempt on API error
-      _fallbackSubmit();
+      setState(() {
+        _isRecognizing = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recognition failed. Please try again.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
-  }
-
-  void _fallbackSubmit() {
-    final hasDrawn = _strokes.isNotEmpty || _currentStroke.isNotEmpty;
-    setState(() {
-      _submitted = true;
-      _isRecognizing = false;
-      _isCorrect = hasDrawn;
-      _feedback = hasDrawn ? 'Nice drawing!' : 'Try drawing something first';
-    });
-    widget.onAnswered(
-        hasDrawn, widget.question.expectedNumber?.toString() ?? '');
   }
 
   void _clear() {
@@ -1472,50 +1484,56 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
 
         // Drawing canvas with RepaintBoundary for capture
         Expanded(
-          child: RepaintBoundary(
-            key: _canvasKey,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _submitted
-                      ? (_isCorrect! ? Colors.green : Colors.red)
-                      : Colors.grey.shade300,
-                  width: 2,
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: GestureDetector(
-                  onPanStart: _submitted
-                      ? null
-                      : (details) {
-                          setState(() {
-                            _currentStroke = [details.localPosition];
-                          });
-                        },
-                  onPanUpdate: _submitted
-                      ? null
-                      : (details) {
-                          setState(() {
-                            _currentStroke.add(details.localPosition);
-                          });
-                        },
-                  onPanEnd: _submitted
-                      ? null
-                      : (details) {
-                          setState(() {
-                            _strokes.add(List.from(_currentStroke));
-                            _currentStroke = [];
-                          });
-                        },
-                  child: CustomPaint(
-                    painter: _DrawingPainter(
-                      strokes: _strokes,
-                      currentStroke: _currentStroke,
+          child: Center(
+            child: SizedBox(
+              width: 350,
+              height: 350,
+              child: RepaintBoundary(
+                key: _canvasKey,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _submitted
+                          ? (_isCorrect! ? Colors.green : Colors.red)
+                          : Colors.grey.shade300,
+                      width: 2,
                     ),
-                    size: Size.infinite,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: GestureDetector(
+                      onPanStart: _submitted
+                          ? null
+                          : (details) {
+                              setState(() {
+                                _currentStroke = [details.localPosition];
+                              });
+                            },
+                      onPanUpdate: _submitted
+                          ? null
+                          : (details) {
+                              setState(() {
+                                _currentStroke.add(details.localPosition);
+                              });
+                            },
+                      onPanEnd: _submitted
+                          ? null
+                          : (details) {
+                              setState(() {
+                                _strokes.add(List.from(_currentStroke));
+                                _currentStroke = [];
+                              });
+                            },
+                      child: CustomPaint(
+                        painter: _DrawingPainter(
+                          strokes: _strokes,
+                          currentStroke: _currentStroke,
+                        ),
+                        size: Size.infinite,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1545,10 +1563,9 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
               Expanded(
                 flex: 2,
                 child: ElevatedButton.icon(
-                  onPressed:
-                      _strokes.isNotEmpty || _currentStroke.isNotEmpty
-                          ? _submit
-                          : null,
+                  onPressed: _strokes.isNotEmpty || _currentStroke.isNotEmpty
+                      ? _submit
+                      : null,
                   icon: const Icon(Icons.check, color: Colors.white),
                   label: const Text(
                     'Submit Drawing',
@@ -1574,7 +1591,8 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 12),
@@ -1616,7 +1634,7 @@ class _TraceQuestionWidgetState extends State<TraceQuestionWidget> {
                     ),
                   ],
                 ),
-                if (_predictedDigit != null && !_isCorrect!) ...[  
+                if (_predictedDigit != null && !_isCorrect!) ...[
                   const SizedBox(height: 4),
                   Text(
                     'AI detected: $_predictedDigit',
@@ -1761,15 +1779,18 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
       onResult: (result) {
         if (result.recognizedWords.isNotEmpty) {
           setState(() {
-            _recognizedText = result.recognizedWords;
+            _recognizedText = result.recognizedWords.toLowerCase();
           });
         }
         if (result.finalResult) {
+          setState(() {
+            _isListening = false;
+          });
           _stopListeningAndCheck();
         }
       },
       listenFor: const Duration(seconds: 10),
-      pauseFor: const Duration(milliseconds: 2000),
+      pauseFor: const Duration(milliseconds: 2500),
       listenOptions: stt.SpeechListenOptions(
         partialResults: true,
         cancelOnError: true,
@@ -1779,62 +1800,107 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
   }
 
   void _stopListeningAndCheck() async {
-    if (!_isListening || _submitted) return; // guard against double-invocation
-    
+    if (_submitted) return; // guard against double-invocation
+
     // Provide haptic feedback when stopping microphone
     HapticFeedback.heavyImpact();
-    
+
     await _speech.stop();
     setState(() {
       _isListening = false;
     });
 
     if (_recognizedText.isNotEmpty && !_submitted) {
-      _checkAnswer(_recognizedText.toLowerCase().trim());
+      _checkAnswer(_recognizedText.trim());
     }
   }
 
-  void _checkAnswer(String answer) {
-    final alternatives = widget.question.alternatives ?? [];
-    final correctAnswer = widget.question.correctAnswer ?? '';
+  void _checkAnswer(String recognizedText) {
+    final alternatives = (widget.question.alternatives ?? []).map((a) => a.toLowerCase()).toList();
+    final correctAnswer = (widget.question.correctAnswer ?? '').toLowerCase();
+    
+    // Mapping of common phonetically similar words for single digits
+    const soundsLike = {
+      'won': 'one',
+      'to': 'two',
+      'too': 'two',
+      'tree': 'three',
+      'free': 'three',
+      'for': 'four',
+      'fore': 'four',
+      'ate': 'eight',
+    };
 
-    // Normalize: speech engines often return digits ("7") instead of words
-    // ("seven"). Convert digit strings to their word equivalent before comparing.
-    final asInt = int.tryParse(answer);
-    if (asInt != null) {
-      final asWord = NumberWords.getWord(asInt);
-      if (asWord.isNotEmpty) answer = asWord;
+    if (recognizedText.isEmpty) return;
+
+    // Split into words to catch the target number inside a phrase
+    final words = recognizedText.toLowerCase().split(RegExp(r'\s+'));
+    
+    bool isMatch = false;
+    String matchedWord = recognizedText;
+
+    for (var word in words) {
+      // 1. Direct word match
+      if (word == correctAnswer || alternatives.contains(word)) {
+        isMatch = true;
+        matchedWord = word;
+        break;
+      }
+
+      // 2. Phonetic/Sounds-like match
+      if (soundsLike[word] != null) {
+        final phonelike = soundsLike[word]!;
+        if (phonelike == correctAnswer || alternatives.contains(phonelike)) {
+          isMatch = true;
+          matchedWord = phonelike;
+          break;
+        }
+      }
+
+      // 3. Try parsing as integer and converting to word
+      final asInt = int.tryParse(word);
+      if (asInt != null) {
+        final asWord = NumberWords.getWord(asInt).toLowerCase();
+        if (asWord == correctAnswer || alternatives.contains(asWord)) {
+          isMatch = true;
+          matchedWord = asWord;
+          break;
+        }
+        
+        // Also check if the raw digit matches (e.g. "5" matches "5")
+        if (word == correctAnswer || alternatives.contains(word)) {
+          isMatch = true;
+          matchedWord = word;
+          break;
+        }
+      }
     }
-
-    final isCorrect = answer == correctAnswer ||
-        alternatives.any(
-            (alt) => alt.toLowerCase() == answer);
 
     setState(() {
       _submitted = true;
-      _isCorrect = isCorrect;
+      _isCorrect = isMatch;
     });
 
-    widget.onAnswered(isCorrect, answer);
+    widget.onAnswered(isMatch, matchedWord);
   }
 
   Future<void> _resetSpeech() async {
     try {
       // Cancel current session
       await _speech.cancel();
-      
+
       // Reset state
       setState(() {
         _isListening = false;
         _recognizedText = '';
       });
-      
+
       // Wait a bit before reinitializing
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       // Reinitialize speech
       await _initSpeech();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -2002,9 +2068,7 @@ class _SayQuestionWidgetState extends State<SayQuestionWidget> {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _isListening
-                        ? Colors.red
-                        : const Color(0xFF6B7FFF),
+                    color: _isListening ? Colors.red : const Color(0xFF6B7FFF),
                     boxShadow: _isListening
                         ? [
                             BoxShadow(
@@ -2147,7 +2211,8 @@ class _ObjectDetectionQuestionWidgetState
     });
 
     try {
-      final imageBytes = await _cameraService.captureCompressedFrame(quality: 85);
+      final imageBytes =
+          await _cameraService.captureCompressedFrame(quality: 85);
       if (imageBytes == null) {
         setState(() {
           _isDetecting = false;
@@ -2158,12 +2223,14 @@ class _ObjectDetectionQuestionWidgetState
       final targetObject = widget.question.objectName ?? 'any';
       final expectedCount = widget.question.objectCount ?? 1;
 
-      final result = await _apiService.detectObjects(
-        imageBytes: imageBytes,
-        targetObject: targetObject,
-        expectedCount: expectedCount,
-        confidenceThreshold: 0.4,
-      ).timeout(const Duration(seconds: 20));
+      final result = await _apiService
+          .detectObjects(
+            imageBytes: imageBytes,
+            targetObject: targetObject,
+            expectedCount: expectedCount,
+            confidenceThreshold: 0.4,
+          )
+          .timeout(const Duration(seconds: 20));
 
       // Check if validated correctly
       final isCorrect = result.validation?.isCorrect ?? false;
@@ -2197,6 +2264,7 @@ class _ObjectDetectionQuestionWidgetState
   void dispose() {
     _cameraService.dispose();
     super.dispose();
+    _submitted = false;
   }
 
   @override
@@ -2302,7 +2370,8 @@ class _ObjectDetectionQuestionWidgetState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 12),
@@ -2364,7 +2433,8 @@ class _ObjectDetectionQuestionWidgetState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.camera_alt_outlined, color: Colors.white54, size: 48),
+            const Icon(Icons.camera_alt_outlined,
+                color: Colors.white54, size: 48),
             const SizedBox(height: 12),
             Text(
               _errorMessage,
