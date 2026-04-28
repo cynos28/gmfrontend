@@ -9,7 +9,7 @@
 
 class BackendConfig {
   /// Update this when your WiFi network changes
-  static const String CURRENT_WIFI_IP = '192.168.1.64';
+  static const String CURRENT_WIFI_IP = '192.168.8.167';
   
   /// All possible backend URLs (tried in order)
   static List<String> get backendUrls => [

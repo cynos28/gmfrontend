@@ -21,11 +21,9 @@ void main() async {
   // Initialize storage service
   StorageService.instance.init();
 
-  // Register URL refresh listener — any service caches are cleared on each Gist pull
-  AppConstants.registerUrlRefreshListener(UnitApiService.invalidateCache);
-
-  // Load dynamic server URLs from GitHub Gist on startup
-  await AppConstants.loadDynamicUrls();
+  // Dynamic URL loading disabled — using local URLs from constants.dart
+  // AppConstants.registerUrlRefreshListener(UnitApiService.invalidateCache);
+  // await AppConstants.loadDynamicUrls();
   
   runApp(const GanithamithuraApp());
 }
@@ -46,10 +44,10 @@ class _GanithamithuraAppState extends State<GanithamithuraApp> with WidgetsBindi
     // Observe app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
     
-    // Also refresh every 5 minutes in the background while running
-    _urlRefreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      AppConstants.loadDynamicUrls();
-    });
+    // URL refresh timer disabled — using local URLs
+    // _urlRefreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    //   AppConstants.loadDynamicUrls();
+    // });
   }
 
   @override
@@ -63,10 +61,10 @@ class _GanithamithuraAppState extends State<GanithamithuraApp> with WidgetsBindi
   /// Refresh backend URLs when the app comes back to the foreground.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      print("📱 App resumed — refreshing backend URLs...");
-      AppConstants.loadDynamicUrls();
-    }
+    // URL refresh on resume disabled — using local URLs
+    // if (state == AppLifecycleState.resumed) {
+    //   AppConstants.loadDynamicUrls();
+    // }
   }
 
   @override

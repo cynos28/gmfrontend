@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
-
+import 'package:ganithamithura/services/api/shapes_api_service.dart';
+import 'package:ganithamithura/models/shape_models.dart';
 /// Match3DShapesScreen - Drag and drop 3D shape matching game
 class Match3DShapesScreen extends StatefulWidget {
   const Match3DShapesScreen({super.key});
@@ -74,11 +75,39 @@ class _Match3DShapesScreenState extends State<Match3DShapesScreen> {
       );
       return;
     }
-    
+
     setState(() {
       _isGameComplete = true;
     });
-    
+
+    _submitToBackend();
+  }
+
+  Future<void> _submitToBackend() async {
+    try {
+      // Backend level3 correct_answers = {shape_id: shape_name}
+      // shape_ids match the order: Sphere=2, Cube=1, Cone=3, Cylinder=4
+      const shapeIdMap = {
+        'Sphere': '2',
+        'Cube': '1',
+        'Cone': '3',
+        'Cylinder': '4',
+      };
+
+      final answersMap = <String, String>{};
+      for (final slot in _shapeSlots) {
+        final shapeName = slot['correctAnswer'] as String;
+        final id = shapeIdMap[shapeName] ?? shapeName;
+        answersMap[id] = slot['answer'] as String? ?? '';
+      }
+
+      await ShapesApiService.instance.checkAnswers(
+        GameAnswer(gameId: 'level3', answers: answersMap),
+      );
+    } catch (e) {
+      print('Level 3 score submission error: $e');
+    }
+
     _signalGameCompleted();
   }
 

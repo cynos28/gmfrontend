@@ -62,24 +62,22 @@ class _PatternMatchingAPIScreenState extends State<PatternMatchingAPIScreen> {
     }
   }
 
-  /// Helper method to extract correct asset path
+  /// Maps backend image paths to real local asset paths.
+  /// The patterns/3d_shapes folder contains stub files — redirect to the
+  /// real 3D images in assets/images/3d_shapes/ instead.
   String _getAssetPath(String backendPath) {
     if (backendPath.isEmpty) return '';
-    
-    // If it's already a full assets path, return it
-    if (backendPath.startsWith('assets/')) {
-      return backendPath;
+
+    // For level6 (3D pattern matching), always use the real 3D shape images
+    if (widget.gameId == 'level6') {
+      final filename = backendPath.split('/').last; // e.g. "cube.png"
+      return 'assets/images/3d_shapes/$filename';
     }
-    
-    // Otherwise, try to determine if it's 2D or 3D based on the current level
-    final is3D = widget.gameId == 'level6';
-    final subDir = is3D ? '3d_shapes' : '2d_shapes';
-    
-    // Extract filename
+
+    // For level5 (2D pattern matching), use the 2D pattern images
+    if (backendPath.startsWith('assets/')) return backendPath;
     final filename = backendPath.split('/').last;
-    
-    // Check if it's one of the known pattern images
-    return 'assets/images/patterns/$subDir/$filename';
+    return 'assets/images/patterns/2d_shapes/$filename';
   }
 
   PatternData get _currentPattern => _gameData!.patterns[_currentPatternIndex];
@@ -468,7 +466,12 @@ class _PatternMatchingAPIScreenState extends State<PatternMatchingAPIScreen> {
                   _getAssetPath(shape.imageUrl),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image_not_supported, size: 30, color: Colors.grey);
+                    return Center(
+                      child: Text(
+                        shape.name[0],
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.blueGrey),
+                      ),
+                    );
                   },
                 ),
               );
@@ -553,7 +556,13 @@ class _PatternMatchingAPIScreenState extends State<PatternMatchingAPIScreen> {
               child: Image.asset(
                 _getAssetPath(option.imageUrl),
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported),
+                errorBuilder: (context, error, stackTrace) => Center(
+                  child: Text(
+                    option.name,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ),
             if (isCorrect)

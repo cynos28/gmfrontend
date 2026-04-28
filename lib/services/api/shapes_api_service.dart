@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:ganithamithura/models/shape_models.dart';
 import 'package:ganithamithura/models/shape_model.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
 
 /// Shapes API Service - Handles all shapes game backend API calls
 class ShapesApiService {
@@ -19,9 +20,14 @@ class ShapesApiService {
   
   String get baseUrl => AppConstants.shapeBaseUrl;
   
-  /// Helper method to create headers
+  /// Helper method to create headers — includes auth token if available
   Map<String, String> _getHeaders() {
-    return AppConstants.headers;
+    final headers = Map<String, String>.from(AppConstants.headers);
+    final token = StorageService.instance.getAuthToken();
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
   }
   
   // ==================== Health Check ====================

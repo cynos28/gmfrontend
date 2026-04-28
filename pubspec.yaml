@@ -104,11 +104,7 @@ flutter:
     - assets/images/number/
     - assets/videos/
     - assets/animations/
-    - assets/numbers/
-    - assets/data/
     - assets/vectors/
-    - assets/images/number/
-    - assets/images/patterns/3d_shapes/
     - assets/symbols/
     - assets/symbols/game/
     - assets/symbols/sounds/
@@ -118,4 +114,5 @@ flutter:
     - assets/models/cone.glb
     - assets/models/cylinder.glb
     - assets/models/pyramid.glb
+    - assets/models/cube.glb
     - .env
