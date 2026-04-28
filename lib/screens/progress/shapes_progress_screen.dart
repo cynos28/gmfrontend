@@ -199,12 +199,168 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 28),
+
+                    // ── Game Guidelines ─────────────────────────────
+                    _buildGuidelinesSection(),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Game Guidelines section ───────────────────────────────────────────────
+
+  Widget _buildGuidelinesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section title
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF9800),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Game Guidelines',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        const Padding(
+          padding: EdgeInsets.only(left: 4),
+          child: Text(
+            'The game section has 6 game levels.',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF888888),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Level 01 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 01',
+          topic: '2D Shapes',
+          color: const Color(0xFF4CAF50),
+          bgColor: const Color(0xFFE8F5E9),
+          icon: Icons.crop_square_rounded,
+          games: const ['Game Level 1', 'Game Level 2'],
+        ),
+        const SizedBox(height: 12),
+
+        // Level 02 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 02',
+          topic: '3D Shapes',
+          color: const Color(0xFF2196F3),
+          bgColor: const Color(0xFFE3F2FD),
+          icon: Icons.view_in_ar_rounded,
+          games: const ['Game Level 3', 'Game Level 4'],
+        ),
+        const SizedBox(height: 12),
+
+        // Level 03 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 03',
+          topic: 'Shape Practice & Building',
+          color: const Color(0xFF9C27B0),
+          bgColor: const Color(0xFFF3E5F5),
+          icon: Icons.extension_rounded,
+          games: const ['Game Level 5', 'Game Level 6', 'Build & Match'],
+        ),
+        const SizedBox(height: 20),
+
+        // Tips card
+        _buildTipsCard(),
+      ],
+    );
+  }
+
+  Widget _buildTipsCard() {
+    const tips = [
+      ('👀', 'Look carefully at each shape.'),
+      ('✅', 'Choose the correct answer.'),
+      ('📶', 'Complete levels step by step.'),
+      ('🔄', 'Try again if you make a mistake.'),
+      ('😄', 'Have fun learning shapes!'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('💡', style: TextStyle(fontSize: 22)),
+              SizedBox(width: 8),
+              Text(
+                'Tips for You!',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...tips.map(
+            (t) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.$1, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      t.$2,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -753,3 +909,123 @@ class _LevelInfoDialog extends StatelessWidget {
   }
 }
 
+
+// ── Guideline Card ────────────────────────────────────────────────────────
+
+class _GuidelineCard extends StatelessWidget {
+  final String levelLabel;
+  final String topic;
+  final Color color;
+  final Color bgColor;
+  final IconData icon;
+  final List<String> games;
+
+  const _GuidelineCard({
+    required this.levelLabel,
+    required this.topic,
+    required this.color,
+    required this.bgColor,
+    required this.icon,
+    required this.games,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.25), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(19),
+                topRight: Radius.circular(19),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  levelLabel,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    topic,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Game entries
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              children: games
+                  .map(
+                    (g) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.sports_esports_rounded,
+                                color: color, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            g,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
