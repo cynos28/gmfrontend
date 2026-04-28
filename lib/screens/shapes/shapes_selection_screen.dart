@@ -273,6 +273,7 @@ class _ShapeCard extends StatelessWidget {
     required this.index,
   });
 
+
   @override
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
@@ -285,9 +286,10 @@ class _ShapeCard extends StatelessWidget {
       ),
       child: GestureDetector(
         onTap: () {
+          debugPrint('Tapped shape: ${shapeData.name}');
           Get.to(
             () => LearnShapesScreen(
-              initialIndex: shapeData.shapeIndex,
+              initialShapeName: shapeData.name,
               shapeType: is2D ? '2d' : '3d',
             ),
             transition: Transition.circularReveal,

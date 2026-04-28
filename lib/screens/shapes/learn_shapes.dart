@@ -9,12 +9,12 @@ import 'dart:math';
 
 /// Kid-Friendly LearnShapesScreen - Interactive shape learning with real-world examples
 class LearnShapesScreen extends StatefulWidget {
-  final int initialIndex;
+  final String? initialShapeName;
   final String shapeType; // "2d" or "3d"
   
   const LearnShapesScreen({
     super.key, 
-    this.initialIndex = 0,
+    this.initialShapeName,
     this.shapeType = "2d",
   });
 
@@ -35,7 +35,7 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
   @override
   void initState() {
     super.initState();
-    currentShapeIndex = widget.initialIndex;
+    currentShapeIndex = 0; // will be resolved by name after load
     _loadShapes();
     _initializeTts();
   }
@@ -75,7 +75,15 @@ class _LearnShapesScreenState extends State<LearnShapesScreen> {
         _shapes = shapes;
         _isLoading = false;
         
-        if (currentShapeIndex >= shapes.length) {
+        // Resolve index by name to avoid API ordering mismatches
+        if (widget.initialShapeName != null) {
+          final nameIndex = shapes.indexWhere(
+            (s) => s.name.toLowerCase() == widget.initialShapeName!.toLowerCase(),
+          );
+          currentShapeIndex = nameIndex >= 0 ? nameIndex : 0;
+          // DEBUG: confirm correct shape is resolved
+          debugPrint('Tapped shape: ${shapes[currentShapeIndex].id} ${shapes[currentShapeIndex].name}');
+        } else if (currentShapeIndex >= shapes.length) {
           currentShapeIndex = 0;
         }
         _selectRandomExamples();
