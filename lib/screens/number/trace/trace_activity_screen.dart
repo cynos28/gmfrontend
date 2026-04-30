@@ -11,7 +11,6 @@ import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/services/api/number_api_service.dart';
 import 'package:ganithamithura/services/learning_flow_manager.dart';
-import 'package:ganithamithura/utils/kids_theme.dart';
 
 /// TraceActivityScreen - Trace numbers with drawing canvas
 class TraceActivityScreen extends StatefulWidget {
@@ -57,11 +56,8 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
     return Scaffold(
       backgroundColor: Color(AppColors.backgroundColor),
       appBar: AppBar(
-        title: Text(
-          'Trace ${widget.currentNumber}',
-          style: KidsTypography.buttonLarge.copyWith(color: Colors.white),
-        ),
-        backgroundColor: KidsColors.primaryAccent,
+        title: Text('Trace ${widget.currentNumber}'),
+        backgroundColor: Color(AppColors.numberColor),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _clearDrawing),
@@ -72,77 +68,109 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
           children: [
             // Instructions
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: KidsSpacing.screenPadding,
-                vertical: KidsSpacing.md,
-              ),
-              color: KidsColors.primaryBackground,
+              padding: const EdgeInsets.all(AppConstants.standardPadding),
+              color: Color(AppColors.numberColor).withOpacity(0.1),
               child: Row(
                 children: [
-                  const Icon(Icons.touch_app, color: KidsColors.primaryAccent, size: 28),
+                  Icon(Icons.touch_app, color: Color(AppColors.numberColor)),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Trace the number with your finger',
-                      style: KidsTypography.label,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Drawing canvas
-            Expanded(
-              child: Stack(
-                children: [
-                  // Background with dotted number outline
-                  Center(child: _buildDottedNumberOutline()),
-
-                  // Drawing canvas
-                  GestureDetector(
-                    onPanStart: _onPanStart,
-                    onPanUpdate: _onPanUpdate,
-                    onPanEnd: _onPanEnd,
-                    child: RepaintBoundary(
-                      key: _canvasKey,
-                      child: CustomPaint(
-                        painter: _DrawingPainter(
-                          _points,
-                          includeBackground: false,
-                        ),
-                        size: Size.infinite,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-
-                  // Result overlay
-                  if (_result != null)
-                    _result!
-                        ? SuccessAnimation(
-                            message: _feedbackMessage ?? 'Great job!',
-                            onComplete: _onSuccess,
-                          )
-                        : FailureAnimation(
-                            message: _feedbackMessage ?? 'Try again!',
-                            onRetry: _clearDrawing,
-                            onGoBack: _goBackToLearning,
-                          ),
                 ],
               ),
             ),
 
-            // Check button
-            Container(
-              padding: const EdgeInsets.all(AppConstants.standardPadding),
-              child: ActionButton(
-                text: _isChecking ? 'Recognizing...' : 'Check My Digit',
-                icon: _isChecking ? Icons.hourglass_empty : Icons.check_circle,
-                isEnabled: !_isChecking && _points.length > 10,
-                onPressed: _checkTrace,
-              ),
+                    // Drawing canvas
+                    Expanded(
+                      child: Center(
+                        child: Container(
+                          width: 350,
+                          height: 350,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color:
+                                  Color(AppColors.numberIcon).withOpacity(0.3),
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(AppColors.numberIcon)
+                                    .withOpacity(0.15),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(28),
+                            child: Stack(
+                              children: [
+                                // Background with dotted number outline
+                                Center(child: _buildDottedNumberOutline()),
+
+                                // Drawing canvas
+                                GestureDetector(
+                                  onPanStart: _onPanStart,
+                                  onPanUpdate: _onPanUpdate,
+                                  onPanEnd: _onPanEnd,
+                                  child: RepaintBoundary(
+                                    key: _canvasKey,
+                                    child: CustomPaint(
+                                      painter: _DrawingPainter(
+                                        _points,
+                                        includeBackground: false,
+                                      ),
+                                      size: Size.infinite,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Check button
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: ActionButton(
+                        text: _isChecking ? 'Recognizing...' : 'Check My Digit',
+                        icon: _isChecking
+                            ? Icons.hourglass_empty
+                            : Icons.check_circle,
+                        isEnabled: !_isChecking && _points.length > 10,
+                        onPressed: _checkTrace,
+                      ),
+                    ),
+                  ],
+                ),
+                // Result overlay
+                if (_result != null)
+                  _result!
+                      ? SuccessAnimation(
+                          message: _feedbackMessage ?? 'Great job!',
+                          onComplete: _onSuccess,
+                        )
+                      : FailureAnimation(
+                          message: _feedbackMessage ?? 'Try again!',
+                          onRetry: _clearDrawing,
+                          onGoBack: _goBackToLearning,
+                        ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -152,12 +180,8 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
     return Container(
       key: _outlineKey,
       padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Color(AppColors.numberColor).withOpacity(0.3),
-          width: 4,
-          style: BorderStyle.none, // We'll use CustomPaint for dots
-        ),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: CustomPaint(
         painter: _DottedNumberPainter(widget.currentNumber),
@@ -231,7 +255,7 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
       // Draw strokes in WHITE
       final strokePaint = Paint()
         ..color = Colors.white
-        ..strokeWidth = 8.0
+        ..strokeWidth = 28.0
         ..strokeCap = StrokeCap.round;
 
       for (int i = 0; i < _points.length - 1; i++) {
@@ -329,25 +353,24 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
         // Submit to backend (non-blocking)
         _apiService
             .submitActivityScore(
-              activityId: widget.activity.id,
-              score: progress.score,
-              isCompleted: true,
-              additionalData: progress.additionalData,
-            )
+          activityId: widget.activity.id,
+          score: progress.score,
+          isCompleted: true,
+          additionalData: progress.additionalData,
+        )
             .timeout(
-              Duration(seconds: AppConstants.apiTimeout),
-              onTimeout: () {
-                debugPrint('Score submission timed out');
-                return <String, dynamic>{'status': 'timeout'};
-              },
-            )
-            .catchError((e) {
-              debugPrint('Error submitting score: $e');
-              return <String, dynamic>{
-                'status': 'error',
-                'error': e.toString(),
-              };
-            });
+          Duration(seconds: AppConstants.apiTimeout),
+          onTimeout: () {
+            debugPrint('Score submission timed out');
+            return <String, dynamic>{'status': 'timeout'};
+          },
+        ).catchError((e) {
+          debugPrint('Error submitting score: $e');
+          return <String, dynamic>{
+            'status': 'error',
+            'error': e.toString(),
+          };
+        });
       }
 
       setState(() {
@@ -434,7 +457,7 @@ class _DrawingPainter extends CustomPainter {
     }
 
     final paint = Paint()
-      ..color = KidsColors.primaryAccent
+      ..color = Color(AppColors.numberColor)
       ..strokeWidth = 8.0
       ..strokeCap = StrokeCap.round;
 
@@ -460,7 +483,7 @@ class _DottedNumberPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = KidsColors.primaryAccent.withOpacity(0.15)
+      ..color = Color(AppColors.numberColor).withOpacity(0.3)
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
@@ -469,7 +492,7 @@ class _DottedNumberPainter extends CustomPainter {
       text: TextSpan(
         text: '$number',
         style: TextStyle(
-          fontSize: 500,
+          fontSize: 400,
           fontFamily: 'Staatliches',
           foreground: paint,
         ),

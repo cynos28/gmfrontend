@@ -3,6 +3,7 @@ library;
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 class AppConstants {
   // API Configuration
   static String authBaseUrl = 'http://192.168.8.167:8001';
@@ -164,7 +165,7 @@ class AppConstants {
   };
 
   static const int apiTimeout = 30; // seconds
-  
+
   // UI Constants
   static const double buttonBorderRadius = 16.0;
   static const double cardElevation = 4.0;
@@ -242,7 +243,96 @@ class NumberWords {
     8: 'eight',
     9: 'nine',
     10: 'ten',
-    // TODO: Phase 2 - Add numbers 11-100
+    11: 'eleven',
+    12: 'twelve',
+    13: 'thirteen',
+    14: 'fourteen',
+    15: 'fifteen',
+    16: 'sixteen',
+    17: 'seventeen',
+    18: 'eighteen',
+    19: 'nineteen',
+    20: 'twenty',
+    21: 'twenty-one',
+    22: 'twenty-two',
+    23: 'twenty-three',
+    24: 'twenty-four',
+    25: 'twenty-five',
+    26: 'twenty-six',
+    27: 'twenty-seven',
+    28: 'twenty-eight',
+    29: 'twenty-nine',
+    30: 'thirty',
+    31: 'thirty-one',
+    32: 'thirty-two',
+    33: 'thirty-three',
+    34: 'thirty-four',
+    35: 'thirty-five',
+    36: 'thirty-six',
+    37: 'thirty-seven',
+    38: 'thirty-eight',
+    39: 'thirty-nine',
+    40: 'forty',
+    41: 'forty-one',
+    42: 'forty-two',
+    43: 'forty-three',
+    44: 'forty-four',
+    45: 'forty-five',
+    46: 'forty-six',
+    47: 'forty-seven',
+    48: 'forty-eight',
+    49: 'forty-nine',
+    50: 'fifty',
+    51: 'fifty-one',
+    52: 'fifty-two',
+    53: 'fifty-three',
+    54: 'fifty-four',
+    55: 'fifty-five',
+    56: 'fifty-six',
+    57: 'fifty-seven',
+    58: 'fifty-eight',
+    59: 'fifty-nine',
+    60: 'sixty',
+    61: 'sixty-one',
+    62: 'sixty-two',
+    63: 'sixty-three',
+    64: 'sixty-four',
+    65: 'sixty-five',
+    66: 'sixty-six',
+    67: 'sixty-seven',
+    68: 'sixty-eight',
+    69: 'sixty-nine',
+    70: 'seventy',
+    71: 'seventy-one',
+    72: 'seventy-two',
+    73: 'seventy-three',
+    74: 'seventy-four',
+    75: 'seventy-five',
+    76: 'seventy-six',
+    77: 'seventy-seven',
+    78: 'seventy-eight',
+    79: 'seventy-nine',
+    80: 'eighty',
+    81: 'eighty-one',
+    82: 'eighty-two',
+    83: 'eighty-three',
+    84: 'eighty-four',
+    85: 'eighty-five',
+    86: 'eighty-six',
+    87: 'eighty-seven',
+    88: 'eighty-eight',
+    89: 'eighty-nine',
+    90: 'ninety',
+    91: 'ninety-one',
+    92: 'ninety-two',
+    93: 'ninety-three',
+    94: 'ninety-four',
+    95: 'ninety-five',
+    96: 'ninety-six',
+    97: 'ninety-seven',
+    98: 'ninety-eight',
+    99: 'ninety-nine',
+    100: 'one hundred',
   };
 
   static String getWord(int number) => numberToWord[number] ?? '';
@@ -263,8 +353,8 @@ class AppColors {
   static const int measurementColor = 0xFFFFF3E0; // Bright orange background
   static const int measurementBorder = 0xFFFFE0B2; // Bright orange border
   static const int measurementIcon = 0xFFFF9500; // Bright orange icon
-  static const int numberColor = 0xFFE8F4FF; // Bright blue background
-  static const int numberBorder = 0xFFB3D7FF; // Bright blue border
+  static const int numberColor = 0xFFB3D7FF; // Bright blue background
+  static const int numberBorder = 0xFFE8F4FF; // Bright blue border
   static const int numberIcon = 0xFF4285F4; // Bright blue icon
   static const int shapeColor = 0xFFE6F9EC; // Bright green background
   static const int shapeBorder = 0xFFB2F5D6; // Bright green border
@@ -272,7 +362,7 @@ class AppColors {
   static const int symbolColor = 0xFFFCE4EC; // Bright pink background
   static const int symbolBorder = 0xFFF8BBD0; // Bright pink border
   static const int symbolIcon = 0xFFFF4081; // Bright pink icon
-  
+
   // Text Colors
   static const int textBlack = 0xFF273444;
   static const int subText1 = 0xFF334156;
@@ -281,32 +371,33 @@ class AppColors {
   // Background Colors
   static const int white = 0xFFFFFFFF;
   static const int backgroundColor = 0xFFFAFBFF; // Very light blue-purple tint
-  static const int splashBackground = 0xFFF6F7FF; // Light purple-blue for splash screen
-  
+  static const int splashBackground =
+      0xFFF6F7FF; // Light purple-blue for splash screen
+
   // Activity Card Colors - Updated for Kids-Friendly UI
   static const int timeCardBg = 0xFFE8EEFF; // Soft purple-blue
   static const int completedCardBg = 0xFFE8F8F0; // Soft green
   static const int progressBadgeBg = 0xFFFFEDE4; // Soft orange
   static const int progressBadgeText = 0xFFFF8C52; // Orange text
-  
+
   // Navigation & UI
   static const int navActiveColor = 0xFF6B7FFF; // Primary accent
   static const int navInactiveColor = 0x7F49596E; // rgba(73,89,110,0.5)
   static const int dailyTipBg = 0xFF6B7FFF; // Primary accent
-  
+
   // Border Colors
   static const int borderLight = 0xFFE8EEFF; // Very light purple-blue
-  
+
   // Status Colors - Kids-Friendly
   static const int successColor = 0xFF2EB872; // Soft green
   static const int errorColor = 0xFFFF6B6B; // Soft red
   static const int warningColor = 0xFFFFC107; // Yellow
   static const int infoColor = 0xFF6B7FFF; // Primary accent
-  
+
   // Star/Achievement Colors
   static const int starGold = 0xFFFFD700; // Gold
   static const int starBackground = 0xFFFFF9E6; // Very light yellow
-  
+
   // Legacy colors for backward compatibility
   static const int primaryColor = 0xFF6B7FFF; // Primary accent
   static const int disabledColor = 0xFFBDBDBD; // Gray for disabled state

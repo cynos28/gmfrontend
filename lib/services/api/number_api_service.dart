@@ -576,7 +576,7 @@ class TestResponse {
 class AdditionalQuestion {
   final String id;
   final String
-  type; // sequencing, comparison, missing_number, pattern, word_problem, estimation
+      type; // sequencing, comparison, missing_number, pattern, word_problem, estimation
   final String difficulty;
   final int points;
   final String question;
