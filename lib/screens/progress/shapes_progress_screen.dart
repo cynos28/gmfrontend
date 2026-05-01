@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/services/api/shapes_api_service.dart';
 
-/// Shapes progress screen — Dynamically loads progress from API
+/// Shapes progress screen — redesigned with 3 level sections
 class ShapesProgressScreen extends StatefulWidget {
   const ShapesProgressScreen({super.key});
 
@@ -27,31 +27,19 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
 
   Future<void> _loadUserProgress() async {
     try {
-      // Fetch both regular level progress and build challenge progress
       final progressData = await _apiService.getUserProgress();
       final buildMatchData = await _apiService.getBuildMatchProgress();
-      
       final levels = progressData['levels'] as List<dynamic>? ?? [];
-      
-      // Extract highest_build_challenge from build match API
-      final highestBuildChallenge = buildMatchData['highest_build_challenge'] as int? ?? 0;
-      
-      // Calculate 2D shapes (Circle) mastery based on level 1 and 2
-      bool level1Passed = false;
-      bool level2Passed = false;
-      
-      // Calculate 3D shapes (Cube) mastery based on level 3 and 4
-      bool level3Passed = false;
-      bool level4Passed = false;
-      
-      // Calculate Pattern Match progress based on level 5 and 6
-      bool level5Passed = false;
-      bool level6Passed = false;
-      
+      final highestBuildChallenge =
+          buildMatchData['highest_build_challenge'] as int? ?? 0;
+
+      bool level1Passed = false, level2Passed = false;
+      bool level3Passed = false, level4Passed = false;
+      bool level5Passed = false, level6Passed = false;
+
       for (var levelData in levels) {
         final levelNum = levelData['level'] as int;
         final isPassed = levelData['is_passed'] as bool? ?? false;
-        
         if (levelNum == 1) level1Passed = isPassed;
         if (levelNum == 2) level2Passed = isPassed;
         if (levelNum == 3) level3Passed = isPassed;
@@ -59,36 +47,26 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
         if (levelNum == 5) level5Passed = isPassed;
         if (levelNum == 6) level6Passed = isPassed;
       }
-      
-      // Calculate mastery percentages
-      double circle2D = 0.0;
-      if (level1Passed && level2Passed) {
-        circle2D = 1.0; // 100%
-      } else if (level1Passed) {
-        circle2D = 0.5; // 50%
-      }
-      
-      double cube3D = 0.0;
-      if (level3Passed && level4Passed) {
-        cube3D = 1.0; // 100%
-      } else if (level3Passed) {
-        cube3D = 0.5; // 50%
-      }
-      
-      double patternMatch = 0.0;
-      if (level5Passed && level6Passed) {
-        patternMatch = 1.0; // 100%
-      } else if (level5Passed) {
-        patternMatch = 0.5; // 50%
-      }
-      
-      // Calculate Build & Match progress as percentage
-      // There are 7 total build challenges (levels 7-13)
+
+      double circle2D = level1Passed && level2Passed
+          ? 1.0
+          : level1Passed
+              ? 0.5
+              : 0.0;
+      double cube3D = level3Passed && level4Passed
+          ? 1.0
+          : level3Passed
+              ? 0.5
+              : 0.0;
+      double patternMatch = level5Passed && level6Passed
+          ? 1.0
+          : level5Passed
+              ? 0.5
+              : 0.0;
       const totalBuildChallenges = 7;
-      double buildMatch = highestBuildChallenge / totalBuildChallenges;
-      // Clamp to 1.0 maximum
-      buildMatch = buildMatch > 1.0 ? 1.0 : buildMatch;
-      
+      double buildMatch =
+          (highestBuildChallenge / totalBuildChallenges).clamp(0.0, 1.0);
+
       if (mounted) {
         setState(() {
           _circle2DMastery = circle2D;
@@ -99,96 +77,132 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
         });
       }
     } catch (e) {
-      print('Error loading user progress: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          // Keep default values on error
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Create dynamic shape info lists
+  double get _overallMastery =>
+      (_circle2DMastery + _cube3DMastery) / 2;
 
-  // Create dynamic shape info lists
-  List<_ShapeInfo> get _shapes2D => [
-    _ShapeInfo('Circle', '⭕', 'assets/images/2d_shapes/circle.png', _circle2DMastery,
-        const Color(0xFF4285F4)),
-  ];
+  // ── Level info dialog ─────────────────────────────────────────────────────
 
-  List<_ShapeInfo> get _shapes3D => [
-    _ShapeInfo(
-        'Cube', '🧊', 'assets/images/3d_shapes/cube.png', _cube3DMastery, const Color(0xFF00BCD4)),
-  ];
+  void _showLevelInfoDialog(BuildContext context, int level) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (_) => _LevelInfoDialog(
+        level: level,
+        circle2DMastery: _circle2DMastery,
+        cube3DMastery: _cube3DMastery,
+        patternMatchProgress: _patternMatchProgress,
+        buildMatchProgress: _buildMatchProgress,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: KidsColors.backgroundLight,
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: KidsColors.backgroundLight,
+      backgroundColor: const Color(0xFFF4F6FB),
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
-            const SizedBox(height: KidsSpacing.sm),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: KidsSpacing.screenPadding),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Overall banner
+                    // ── Summary banner ──────────────────────────────
                     _buildBanner(),
-                    const SizedBox(height: KidsSpacing.xl),
+                    const SizedBox(height: 24),
 
-                    // 2D Shapes section
-                    Text('2D Shapes ',
-                        style:
-                            KidsTypography.subtitle.copyWith(fontSize: 20)),
-                    const SizedBox(height: KidsSpacing.md),
-                    _buildShapesGrid(context, _shapes2D),
-                    const SizedBox(height: KidsSpacing.xl),
-
-                    // 3D Shapes section
-                    Text('3D Shapes',
-                        style:
-                            KidsTypography.subtitle.copyWith(fontSize: 20)),
-                    const SizedBox(height: KidsSpacing.md),
-                    _buildShapesGrid(context, _shapes3D),
-                    const SizedBox(height: KidsSpacing.xl),
-
-                    // Game activities
-                    Text('Shape Games',
-                        style:
-                            KidsTypography.subtitle.copyWith(fontSize: 20)),
-                    const SizedBox(height: KidsSpacing.md),
-
-                    _ShapeGameCard(
-                      title: 'Build & Match',
-                      emoji: '🏗️',
-                      desc: 'Build the right shape',
-                      accuracy: _buildMatchProgress,
-                      color: const Color(0xFF4CAF50),
+                    // ── Level 01 ────────────────────────────────────
+                    _LevelSection(
+                      levelLabel: 'Level 01',
+                      levelColor: const Color(0xFF4CAF50),
+                      bgColor: const Color(0xFFE8F5E9),
+                      icon: Icons.crop_square_rounded,
+                      onTap: () => _showLevelInfoDialog(context, 1),
+                      child: Column(
+                        children: [
+                          _ProgressItemCard(
+                            title: '2D Shapes',
+                            subtitle: 'Match & answer 2D shape games',
+                            emoji: '⭕',
+                            assetPath: 'assets/images/2d_shapes/circle.png',
+                            progress: _circle2DMastery,
+                            color: const Color(0xFF4CAF50),
+                            bgColor: const Color(0xFFC8E6C9),
+                          ),
+                        ],
+                      ),
                     ),
-                    _ShapeGameCard(
-                      title: 'Pattern Match',
-                      emoji: '🧩',
-                      desc: 'Complete the pattern',
-                      accuracy: _patternMatchProgress,
-                      color: const Color(0xFF9C27B0),
-                    ),
+                    const SizedBox(height: 16),
 
-                    const SizedBox(height: KidsSpacing.xxl),
+                    // ── Level 02 ────────────────────────────────────
+                    _LevelSection(
+                      levelLabel: 'Level 02',
+                      levelColor: const Color(0xFF2196F3),
+                      bgColor: const Color(0xFFE3F2FD),
+                      icon: Icons.view_in_ar_rounded,
+                      onTap: () => _showLevelInfoDialog(context, 2),
+                      child: Column(
+                        children: [
+                          _ProgressItemCard(
+                            title: '3D Shapes',
+                            subtitle: 'Match & answer 3D shape games',
+                            emoji: '🧊',
+                            assetPath: 'assets/images/3d_shapes/cube.png',
+                            progress: _cube3DMastery,
+                            color: const Color(0xFF2196F3),
+                            bgColor: const Color(0xFFBBDEFB),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Level 03 ────────────────────────────────────
+                    _LevelSection(
+                      levelLabel: 'Level 03',
+                      levelColor: const Color(0xFF9C27B0),
+                      bgColor: const Color(0xFFF3E5F5),
+                      icon: Icons.extension_rounded,
+                      onTap: () => _showLevelInfoDialog(context, 3),
+                      child: Column(
+                        children: [
+                          _ProgressItemCard(
+                            title: 'Build & Match',
+                            subtitle: 'Build the right shape',
+                            emoji: '🏗️',
+                            progress: _buildMatchProgress,
+                            color: const Color(0xFF9C27B0),
+                            bgColor: const Color(0xFFE1BEE7),
+                          ),
+                          const SizedBox(height: 12),
+                          _ProgressItemCard(
+                            title: 'Pattern Match',
+                            subtitle: 'Complete the pattern',
+                            emoji: '🧩',
+                            progress: _patternMatchProgress,
+                            color: const Color(0xFFE91E63),
+                            bgColor: const Color(0xFFF8BBD0),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Game Guidelines ─────────────────────────────
+                    _buildGuidelinesSection(),
                   ],
                 ),
               ),
@@ -199,42 +213,151 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        KidsSpacing.screenPadding,
-        KidsSpacing.lg,
-        KidsSpacing.screenPadding,
-        KidsSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Container(
-              width: 48,
-              height: 48,
+  // ── Game Guidelines section ───────────────────────────────────────────────
+
+  Widget _buildGuidelinesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section title
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    BorderRadius.circular(KidsSpacing.radiusMedium),
-                boxShadow: KidsShadows.soft,
+                color: const Color(0xFFFF9800),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.arrow_back_rounded,
-                  color: KidsColors.textPrimary, size: 24),
+              child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Game Guidelines',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        const Padding(
+          padding: EdgeInsets.only(left: 4),
+          child: Text(
+            'The game section has 6 game levels.',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF888888),
             ),
           ),
-          const SizedBox(width: KidsSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Shapes 🔷',
-                    style: KidsTypography.title.copyWith(fontSize: 24)),
-                const SizedBox(height: 2),
-                Text('2D & 3D shape mastery',
-                    style: KidsTypography.helper),
-              ],
+        ),
+        const SizedBox(height: 16),
+
+        // Level 01 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 01',
+          topic: '2D Shapes',
+          color: const Color(0xFF4CAF50),
+          bgColor: const Color(0xFFE8F5E9),
+          icon: Icons.crop_square_rounded,
+          games: const ['Game Level 1', 'Game Level 2'],
+        ),
+        const SizedBox(height: 12),
+
+        // Level 02 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 02',
+          topic: '3D Shapes',
+          color: const Color(0xFF2196F3),
+          bgColor: const Color(0xFFE3F2FD),
+          icon: Icons.view_in_ar_rounded,
+          games: const ['Game Level 3', 'Game Level 4'],
+        ),
+        const SizedBox(height: 12),
+
+        // Level 03 guideline card
+        _GuidelineCard(
+          levelLabel: 'Level 03',
+          topic: 'Shape Practice & Building',
+          color: const Color(0xFF9C27B0),
+          bgColor: const Color(0xFFF3E5F5),
+          icon: Icons.extension_rounded,
+          games: const ['Game Level 5', 'Game Level 6', 'Build & Match'],
+        ),
+        const SizedBox(height: 20),
+
+        // Tips card
+        _buildTipsCard(),
+      ],
+    );
+  }
+
+  Widget _buildTipsCard() {
+    const tips = [
+      ('👀', 'Look carefully at each shape.'),
+      ('✅', 'Choose the correct answer.'),
+      ('📶', 'Complete levels step by step.'),
+      ('🔄', 'Try again if you make a mistake.'),
+      ('😄', 'Have fun learning shapes!'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('💡', style: TextStyle(fontSize: 22)),
+              SizedBox(width: 8),
+              Text(
+                'Tips for You!',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...tips.map(
+            (t) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.$1, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      t.$2,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -242,25 +365,58 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
     );
   }
 
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: KidsShadows.soft,
+              ),
+              child: const Icon(Icons.arrow_back_rounded,
+                  color: KidsColors.textPrimary, size: 22),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Shapes 🔷',
+                  style: KidsTypography.title.copyWith(fontSize: 22)),
+              Text('2D & 3D shape mastery',
+                  style: KidsTypography.helper),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Summary banner ────────────────────────────────────────────────────────
+
   Widget _buildBanner() {
     const color = KidsColors.highlightAccent;
-    // Calculate overall mastery as average of both shapes
-    final overallMastery = (_circle2DMastery + _cube3DMastery) / 2;
-    final masteryPercent = (overallMastery * 100).toInt();
-    
+    final masteryPercent = (_overallMastery * 100).toInt();
+
     return Container(
-      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.15),
-            KidsColors.highlightBackground
-          ],
+          colors: [color.withOpacity(0.18), KidsColors.highlightBackground],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-        border: Border.all(color: color.withOpacity(0.2), width: 2),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.25), width: 2),
         boxShadow: KidsShadows.soft,
       ),
       child: Row(
@@ -271,50 +427,38 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                SizedBox(
-                  width: 72,
-                  height: 72,
-                  child: CircularProgressIndicator(
-                    value: overallMastery,
-                    strokeWidth: 6,
-                    backgroundColor: color.withOpacity(0.15),
-                    color: color,
-                    strokeCap: StrokeCap.round,
-                  ),
+                CircularProgressIndicator(
+                  value: _overallMastery,
+                  strokeWidth: 6,
+                  backgroundColor: color.withOpacity(0.15),
+                  color: color,
+                  strokeCap: StrokeCap.round,
                 ),
-                const Text('🔷', style: TextStyle(fontSize: 30)),
+                const Text('🔷', style: TextStyle(fontSize: 28)),
               ],
             ),
           ),
-          const SizedBox(width: KidsSpacing.lg),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Shapes',
-                  style: KidsTypography.subtitle
-                      .copyWith(color: color, fontWeight: FontWeight.w800),
-                ),
+                Text('Shapes',
+                    style: KidsTypography.subtitle.copyWith(
+                        color: color, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                Text(
-                  '$masteryPercent% Mastered',
-                  style: KidsTypography.label
-                      .copyWith(color: KidsColors.textSecondary),
-                ),
+                Text('$masteryPercent% Mastered',
+                    style: KidsTypography.label
+                        .copyWith(color: KidsColors.textSecondary)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(Icons.category_rounded,
-                        color: color, size: 18),
+                        color: color, size: 16),
                     const SizedBox(width: 4),
-                    Text(
-                      '2 Shapes Learning',
-                      style: KidsTypography.body.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text('2 Shapes Learning',
+                        style: KidsTypography.body.copyWith(
+                            color: color, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ],
@@ -324,222 +468,561 @@ class _ShapesProgressScreenState extends State<ShapesProgressScreen> {
       ),
     );
   }
-
-  Widget _buildShapesGrid(BuildContext context, List<_ShapeInfo> shapes) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: KidsSpacing.md,
-      crossAxisSpacing: KidsSpacing.md,
-      childAspectRatio: 1.4,
-      children: shapes.map((s) => _ShapeTile(shape: s)).toList(),
-    );
-  }
 }
 
-// ─── Data class ─────────────────────────────────────────────────────────────
+// ── Level Section wrapper ─────────────────────────────────────────────────
 
-class _ShapeInfo {
-  final String name;
-  final String emoji;
-  final String asset;
-  final double mastery;
-  final Color color;
+class _LevelSection extends StatelessWidget {
+  final String levelLabel;
+  final Color levelColor;
+  final Color bgColor;
+  final IconData icon;
+  final Widget child;
+  final VoidCallback? onTap;
 
-  const _ShapeInfo(this.name, this.emoji, this.asset, this.mastery, this.color);
-}
-
-// ─── Shape Tile ─────────────────────────────────────────────────────────────
-
-class _ShapeTile extends StatelessWidget {
-  final _ShapeInfo shape;
-
-  const _ShapeTile({required this.shape});
+  const _LevelSection({
+    required this.levelLabel,
+    required this.levelColor,
+    required this.bgColor,
+    required this.icon,
+    required this.child,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-        boxShadow: KidsShadows.soft,
-        border:
-            Border.all(color: shape.color.withOpacity(0.15), width: 1.5),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: levelColor.withOpacity(0.25), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: levelColor.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // Shape image or emoji
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: shape.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          // Level header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: levelColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
-                child: Center(
-                  child: Image.asset(
-                    shape.asset,
-                    width: 24,
-                    height: 24,
-                    errorBuilder: (_, __, ___) => Text(
-                      shape.emoji,
-                      style: const TextStyle(fontSize: 20),
-                    ),
+                const SizedBox(width: 12),
+                Text(
+                  levelLabel,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: levelColor,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  shape.name,
-                  style: KidsTypography.label.copyWith(
-                    color: shape.color,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
-          // Mastery bar
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: shape.mastery,
-                    minHeight: 6,
-                    backgroundColor: shape.color.withOpacity(0.1),
-                    color: shape.color,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${(shape.mastery * 100).toInt()}%',
-                style: KidsTypography.small.copyWith(
-                  color: shape.color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+          // Content
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+            child: child,
           ),
         ],
       ),
-    );
+    ), // Container
+    ); // GestureDetector
   }
 }
 
-// ─── Shape Game Card ────────────────────────────────────────────────────────
+// ── Progress item card ────────────────────────────────────────────────────
 
-class _ShapeGameCard extends StatelessWidget {
+class _ProgressItemCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final String emoji;
-  final String desc;
-  final int? played;
-  final double accuracy;
+  final String? assetPath;
+  final double progress;
   final Color color;
+  final Color bgColor;
 
-  const _ShapeGameCard({
+  const _ProgressItemCard({
     required this.title,
+    required this.subtitle,
     required this.emoji,
-    required this.desc,
-    this.played,
-    required this.accuracy,
+    this.assetPath,
+    required this.progress,
     required this.color,
+    required this.bgColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: KidsSpacing.md),
-      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-        boxShadow: KidsShadows.soft,
-        border: Border.all(color: color.withOpacity(0.12), width: 1.5),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          // Icon
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: bgColor,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-                child:
-                    Text(emoji, style: const TextStyle(fontSize: 24))),
+              child: assetPath != null
+                  ? Image.asset(assetPath!,
+                      width: 32,
+                      height: 32,
+                      errorBuilder: (_, __, ___) =>
+                          Text(emoji, style: const TextStyle(fontSize: 26)))
+                  : Text(emoji, style: const TextStyle(fontSize: 26)),
+            ),
           ),
-          const SizedBox(width: KidsSpacing.md),
+          const SizedBox(width: 14),
+          // Text + progress
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: KidsTypography.label.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(desc,
-                    style: KidsTypography.small.copyWith(
-                        color: KidsColors.textTertiary, fontSize: 12)),
-              ],
-            ),
-          ),
-          // Stats column
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (played != null) ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.sports_esports_rounded,
-                        color: color.withOpacity(0.6), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$played',
-                      style: KidsTypography.small.copyWith(
-                        color: color,
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
+                        color: color)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 8,
+                          backgroundColor: color.withOpacity(0.12),
+                          color: color,
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${(progress * 100).toInt()}%',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: color),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
               ],
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${(accuracy * 100).toInt()}%',
-                  style: KidsTypography.small.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Level Info Dialog — simple & child-friendly ───────────────────────────
+
+class _LevelInfoDialog extends StatelessWidget {
+  final int level;
+  final double circle2DMastery;
+  final double cube3DMastery;
+  final double patternMatchProgress;
+  final double buildMatchProgress;
+
+  const _LevelInfoDialog({
+    required this.level,
+    required this.circle2DMastery,
+    required this.cube3DMastery,
+    required this.patternMatchProgress,
+    required this.buildMatchProgress,
+  });
+
+  // ── Per-level content ───────────────────────────────────────────────────
+
+  String get _emoji => level == 1 ? '⭕' : level == 2 ? '🧊' : '🎮';
+
+  String get _title =>
+      level == 1 ? 'Level 01' : level == 2 ? 'Level 02' : 'Level 03';
+
+  Color get _color => level == 1
+      ? const Color(0xFF4CAF50)
+      : level == 2
+          ? const Color(0xFF2196F3)
+          : const Color(0xFF9C27B0);
+
+  Color get _bgColor => level == 1
+      ? const Color(0xFFE8F5E9)
+      : level == 2
+          ? const Color(0xFFE3F2FD)
+          : const Color(0xFFF3E5F5);
+
+  String get _mainIdea => level == 1
+      ? 'Learn flat shapes! 🟦🔴🔺'
+      : level == 2
+          ? 'Learn solid shapes! 📦🌐'
+          : 'Play shape games! 🎉';
+
+  List<String> get _points => level == 1
+      ? ['👀  Look at shapes', '🗣️  Say the shape name', '🔗  Match the shape', '🔢  Count sides and corners']
+      : level == 2
+          ? ['👀  Look at 3D shapes', '🗣️  Say the shape name', '🔍  Find shapes around you', '📐  Learn faces and corners']
+          : ['🏗️  Build shapes', '🔗  Match shapes', '🧩  Find patterns', '⭐  Win stars'];
+
+  String? get _nextText => level == 1
+      ? '➡️  Next you will learn 3D shapes!'
+      : level == 2
+          ? '➡️  Next you will play shape games!'
+          : null;
+
+  double get _progress => level == 1
+      ? circle2DMastery
+      : level == 2
+          ? cube3DMastery
+          : (buildMatchProgress + patternMatchProgress) / 2;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _bgColor,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: _color.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Header ──────────────────────────────────────────
+            Row(
+              children: [
+                Text(_emoji, style: const TextStyle(fontSize: 40)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _title,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: _color,
+                    ),
                   ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _color.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close_rounded, color: _color, size: 20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Main idea ────────────────────────────────────────
+            Text(
+              _mainIdea,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _color,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Points ───────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _points
+                    .map((p) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            p,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.4,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Progress bar ─────────────────────────────────────
+            Row(
+              children: [
+                Text('⭐ My Progress',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _color)),
+                const Spacer(),
+                Text(
+                  '${(_progress * 100).toInt()}%',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: _color),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: _progress,
+                minHeight: 12,
+                backgroundColor: _color.withOpacity(0.15),
+                color: _color,
+              ),
+            ),
+
+            // ── Level 03 "You learned" summary ───────────────────
+            if (level == 3) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('🏆  You learned!',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF9C27B0))),
+                    const SizedBox(height: 10),
+                    Text('⭕  2D shapes',
+                        style: TextStyle(
+                            fontSize: 15, color: Colors.grey.shade700)),
+                    const SizedBox(height: 6),
+                    Text('🧊  3D shapes',
+                        style: TextStyle(
+                            fontSize: 15, color: Colors.grey.shade700)),
+                    const SizedBox(height: 6),
+                    Text('🎮  Shape games',
+                        style: TextStyle(
+                            fontSize: 15, color: Colors.grey.shade700)),
+                  ],
                 ),
               ),
             ],
+
+            // ── Next level hint ───────────────────────────────────
+            if (_nextText != null) ...[
+              const SizedBox(height: 14),
+              Text(
+                _nextText!,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.deepOrange.shade400,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 22),
+
+            // ── OK button ────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _color,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'OK 👍',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// ── Guideline Card ────────────────────────────────────────────────────────
+
+class _GuidelineCard extends StatelessWidget {
+  final String levelLabel;
+  final String topic;
+  final Color color;
+  final Color bgColor;
+  final IconData icon;
+  final List<String> games;
+
+  const _GuidelineCard({
+    required this.levelLabel,
+    required this.topic,
+    required this.color,
+    required this.bgColor,
+    required this.icon,
+    required this.games,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.25), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(19),
+                topRight: Radius.circular(19),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  levelLabel,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    topic,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Game entries
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              children: games
+                  .map(
+                    (g) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.sports_esports_rounded,
+                                color: color, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            g,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
         ],
       ),

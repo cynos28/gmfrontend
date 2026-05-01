@@ -16,17 +16,17 @@ class _PatternMatchingL5ScreenState extends State<PatternMatchingL5Screen> {
   // API Service
   final _apiService = ShapesApiService.instance;
   
-  // Simple pattern: 6 slots with one missing
+  // Simple pattern: 6 slots with one missing — uses 3D shapes
   final List<_Tile?> _patternSlots = [
-    const _Tile(shape: _Shape.circle, color: Color(0xFFFF6B6B)),
-    const _Tile(shape: _Shape.square, color: Color(0xFF4ECDC4)),
-    const _Tile(shape: _Shape.triangle, color: Color(0xFFFFE66D)),
-    const _Tile(shape: _Shape.circle, color: Color(0xFFFF6B6B)),
-    null, 
-    const _Tile(shape: _Shape.triangle, color: Color(0xFFFFE66D)),
+    const _Tile(shape: _Shape.cube, color: Color(0xFF2196F3)),
+    const _Tile(shape: _Shape.sphere, color: Color(0xFFE91E63)),
+    const _Tile(shape: _Shape.cone, color: Color(0xFFFF9800)),
+    const _Tile(shape: _Shape.cube, color: Color(0xFF2196F3)),
+    null,
+    const _Tile(shape: _Shape.cone, color: Color(0xFFFF9800)),
   ];
 
-  final _Tile _correct = const _Tile(shape: _Shape.square, color: Color(0xFF4ECDC4));
+  final _Tile _correct = const _Tile(shape: _Shape.sphere, color: Color(0xFFE91E63));
   late List<_Tile> _options;
   _Tile? _selected;
   bool _revealed = false;
@@ -46,8 +46,8 @@ class _PatternMatchingL5ScreenState extends State<PatternMatchingL5Screen> {
     super.initState();
     _options = [
       _correct,
-      const _Tile(shape: _Shape.square, color: Color(0xFFFF6B6B)),
-      const _Tile(shape: _Shape.circle, color: Color(0xFF4ECDC4)),
+      const _Tile(shape: _Shape.cube, color: Color(0xFF2196F3)),
+      const _Tile(shape: _Shape.cylinder, color: Color(0xFF00BCD4)),
     ];
     _options.shuffle();
   }
@@ -513,67 +513,47 @@ class _PatternMatchingL5ScreenState extends State<PatternMatchingL5Screen> {
       ],
     );
   }
- }
 
   Widget _buildTileWidget(_Tile tile, {double size = 40}) {
     String assetPath;
     switch (tile.shape) {
-      case _Shape.circle:
-        assetPath = 'assets/images/patterns/2d_shapes/circle.png';
+      case _Shape.cube:
+        assetPath = 'assets/images/3d_shapes/cube.png';
         break;
-      case _Shape.square:
-        assetPath = 'assets/images/patterns/2d_shapes/square.png';
+      case _Shape.sphere:
+        assetPath = 'assets/images/3d_shapes/sphere.png';
         break;
-      case _Shape.triangle:
-        assetPath = 'assets/images/patterns/2d_shapes/triangle.png';
+      case _Shape.cone:
+        assetPath = 'assets/images/3d_shapes/cone.png';
         break;
-      case _Shape.rectangle:
-        assetPath = 'assets/images/patterns/2d_shapes/rectangle.png';
+      case _Shape.cylinder:
+        assetPath = 'assets/images/3d_shapes/cylinder.png';
         break;
     }
-    
+
     return Image.asset(
       assetPath,
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        // Fallback to manual drawings if assets still fail
-        return _buildFallbackTile(tile, size);
-      },
+      errorBuilder: (context, error, stackTrace) =>
+          _buildFallbackTile(tile, size),
     );
   }
 
   Widget _buildFallbackTile(_Tile tile, double size) {
-    switch (tile.shape) {
-      case _Shape.circle:
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(color: tile.color, shape: BoxShape.circle),
-        );
-      case _Shape.square:
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(color: tile.color, borderRadius: BorderRadius.circular(6)),
-        );
-      case _Shape.triangle:
-        return CustomPaint(
-          size: Size(size, size),
-          painter: _TrianglePainter(color: tile.color),
-        );
-      case _Shape.rectangle:
-        return Container(
-          width: size,
-          height: size * 0.6,
-          decoration: BoxDecoration(color: tile.color, borderRadius: BorderRadius.circular(6)),
-        );
-    }
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: tile.color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
   }
 }
 
-enum _Shape { circle, square, triangle, rectangle }
+enum _Shape { cube, sphere, cone, cylinder }
 
 class _Tile {
   final _Shape shape;
@@ -589,26 +569,6 @@ class _Tile {
 
   @override
   int get hashCode => shape.hashCode ^ color.value.hashCode;
-}
-
-class _TrianglePainter extends CustomPainter {
-  final Color color;
-  _TrianglePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _TrianglePainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
   // Completion Screen (Unified)
