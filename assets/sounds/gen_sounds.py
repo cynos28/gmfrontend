@@ -1,3 +1,4 @@
+import lib.session
 import wave, struct, math, os
 
 def write_wav(path, samples, rate=22050):

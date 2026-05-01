@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart' hide Progress;
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/models/models.dart';
 import 'package:ganithamithura/widgets/common/buttons_and_cards.dart';
@@ -64,116 +63,116 @@ class _TraceActivityScreenState extends State<TraceActivityScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Instructions
-            Container(
-              padding: const EdgeInsets.all(AppConstants.standardPadding),
-              color: Color(AppColors.numberColor).withOpacity(0.1),
-              child: Row(
-                children: [
-                  Icon(Icons.touch_app, color: Color(AppColors.numberColor)),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Trace the number with your finger',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+            Column(
+              children: [
+                // Instructions
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.standardPadding),
+                  color: Color(AppColors.numberColor).withOpacity(0.1),
+                  child: Row(
+                    children: [
+                      Icon(Icons.touch_app, color: Color(AppColors.numberColor)),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Trace the number with your finger',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Drawing canvas
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: 350,
+                      height: 350,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(
+                          color: Color(AppColors.numberIcon).withOpacity(0.3),
+                          width: 4,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(AppColors.numberIcon).withOpacity(0.15),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Stack(
+                          children: [
+                            // Background with dotted number outline
+                            Center(child: _buildDottedNumberOutline()),
+
+                            // Drawing canvas
+                            GestureDetector(
+                              onPanStart: _onPanStart,
+                              onPanUpdate: _onPanUpdate,
+                              onPanEnd: _onPanEnd,
+                              child: RepaintBoundary(
+                                key: _canvasKey,
+                                child: CustomPaint(
+                                  painter: _DrawingPainter(
+                                    _points,
+                                    includeBackground: false,
+                                  ),
+                                  size: Size.infinite,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-                    // Drawing canvas
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          width: 350,
-                          height: 350,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(
-                              color:
-                                  Color(AppColors.numberIcon).withOpacity(0.3),
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(AppColors.numberIcon)
-                                    .withOpacity(0.15),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: Stack(
-                              children: [
-                                // Background with dotted number outline
-                                Center(child: _buildDottedNumberOutline()),
-
-                                // Drawing canvas
-                                GestureDetector(
-                                  onPanStart: _onPanStart,
-                                  onPanUpdate: _onPanUpdate,
-                                  onPanEnd: _onPanEnd,
-                                  child: RepaintBoundary(
-                                    key: _canvasKey,
-                                    child: CustomPaint(
-                                      painter: _DrawingPainter(
-                                        _points,
-                                        includeBackground: false,
-                                      ),
-                                      size: Size.infinite,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Check button
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: ActionButton(
-                        text: _isChecking ? 'Recognizing...' : 'Check My Digit',
-                        icon: _isChecking
-                            ? Icons.hourglass_empty
-                            : Icons.check_circle,
-                        isEnabled: !_isChecking && _points.length > 10,
-                        onPressed: _checkTrace,
-                      ),
-                    ),
-                  ],
                 ),
-                // Result overlay
-                if (_result != null)
-                  _result!
-                      ? SuccessAnimation(
-                          message: _feedbackMessage ?? 'Great job!',
-                          onComplete: _onSuccess,
-                        )
-                      : FailureAnimation(
-                          message: _feedbackMessage ?? 'Try again!',
-                          onRetry: _clearDrawing,
-                          onGoBack: _goBackToLearning,
-                        ),
+
+                // Check button
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: ActionButton(
+                    text: _isChecking ? 'Recognizing...' : 'Check My Digit',
+                    icon: _isChecking
+                        ? Icons.hourglass_empty
+                        : Icons.check_circle,
+                    isEnabled: !_isChecking && _points.length > 10,
+                    onPressed: _checkTrace,
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+
+            // Result overlay
+            if (_result != null)
+              _result!
+                  ? SuccessAnimation(
+                      message: _feedbackMessage ?? 'Great job!',
+                      onComplete: _onSuccess,
+                    )
+                  : FailureAnimation(
+                      message: _feedbackMessage ?? 'Try again!',
+                      onRetry: _clearDrawing,
+                      onGoBack: _goBackToLearning,
+                    ),
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _buildDottedNumberOutline() {
     // For now, show large number
