@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,8 +19,8 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
   bool _isCorrect = false;
   int _score = 0;
 
-  // Quiz questions for 3D shapes
-  final List<Map<String, dynamic>> _questions = [
+  // All available quiz questions for 3D shapes - randomly select 5 from this pool
+  static final List<Map<String, dynamic>> _allQuestions = [
     {
       'question': 'Which object is a Sphere?',
       'correctAnswer': 'Ball',
@@ -51,6 +52,17 @@ class _Answer3DQuestionsScreenState extends State<Answer3DQuestionsScreen> {
       'shape': 'prism',
     },
   ];
+
+  late final List<Map<String, dynamic>> _questions;
+
+  @override
+  void initState() {
+    super.initState();
+    // Randomly select 5 questions from all available questions
+    final random = Random();
+    final shuffled = List<Map<String, dynamic>>.from(_allQuestions)..shuffle(random);
+    _questions = shuffled.take(5).toList();
+  }
 
   Map<String, dynamic> get _currentQuestionData =>
       _questions[(_currentQuestion - 1) % _questions.length];

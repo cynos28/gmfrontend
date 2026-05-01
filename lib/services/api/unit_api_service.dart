@@ -3,15 +3,45 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:ganithamithura/models/unit_models.dart';
+import 'package:ganithamithura/utils/constants.dart';
 
 /// API Service for Unit-based Learning
-/// Base URL should be configured in production
+/// Uses dynamic URLs from AppConstants (updated from GitHub Gist)
 class UnitApiService {
-  // Using WiFi IP - works on any device without ADB setup
-  // Make sure phone and Mac are on same WiFi network
-  static const String baseUrl = 'http://192.168.1.18:8000/api';
-  static const String ragBaseUrl = 'http://192.168.1.18:8000'; // RAG Service
+  static List<String> get _possibleBaseUrls => [
+    AppConstants.measurementBaseUrl,  // Always try Gist-loaded URL first
+    'http://localhost:8002',          // Works on iOS simulator / desktop
+    'http://10.0.2.2:8002',           // Android emulator
+  ];
   
+  // Cached working URL - cleared automatically when AppConstants is refreshed
+  static String? _cachedWorkingUrl;
+  static String? _lastKnownGistUrl;  // Track if Gist URL changed
+  
+  /// Clear the URL cache (called when AppConstants.measurementBaseUrl is refreshed)
+  static void invalidateCache() {
+    _cachedWorkingUrl = null;
+    _lastKnownGistUrl = null;
+  }
+  
+  /// Get the current cached working URL (or first fallback)
+  static String get cachedBaseUrl => _cachedWorkingUrl ?? AppConstants.measurementBaseUrl;
+
+  /// Resolve an image URL: handles relative paths and rewrites localhost URLs
+  static String resolveImageUrl(String rawUrl) {
+    final base = cachedBaseUrl;
+    // Relative path like /static/images/xxx.png
+    if (rawUrl.startsWith('/')) {
+      return '$base$rawUrl';
+    }
+    // Already absolute but pointing to localhost — rewrite to working base
+    if (rawUrl.contains('localhost:8002') || rawUrl.contains('127.0.0.1:8002') || rawUrl.contains(':8000')) {
+      final path = Uri.parse(rawUrl).path;
+      return '$base$path';
+    }
+    return rawUrl;
+  }
+
   // Singleton pattern
   static final UnitApiService _instance = UnitApiService._internal();
   factory UnitApiService() => _instance;
@@ -26,13 +56,82 @@ class UnitApiService {
   
   String get studentId => _currentStudentId ?? 'student_default';
   
+  /// Discover which backend URL is currently working
+  /// Tries each URL with a quick health check
+  Future<String> _getWorkingBaseUrl() async {
+    // If the Gist URL changed (backend restarted), clear old cache
+    final currentGistUrl = AppConstants.measurementBaseUrl;
+    if (_lastKnownGistUrl != currentGistUrl) {
+      debugPrint('🔄 Gist URL changed, clearing URL cache...');
+      _cachedWorkingUrl = null;
+      _lastKnownGistUrl = currentGistUrl;
+    }
+    
+    // Return cached URL if still healthy
+    if (_cachedWorkingUrl != null) {
+      try {
+        final response = await http.get(
+          Uri.parse('$_cachedWorkingUrl/health'),
+          headers: AppConstants.headers,
+        ).timeout(const Duration(seconds: 2));
+        if (response.statusCode == 200) {
+          return _cachedWorkingUrl!;
+        }
+      } catch (e) {
+        // Cached URL failed, clear it
+        debugPrint('⚠️ Cached backend URL failed, searching for new connection...');
+        _cachedWorkingUrl = null;
+      }
+    }
+    
+    // Try each URL with health check
+    debugPrint('🔍 Searching for backend server...');
+    for (final url in _possibleBaseUrls) {
+      try {
+        debugPrint('   Trying: $url/health');
+        final response = await http.get(
+          Uri.parse('$url/health'),
+          headers: AppConstants.headers,
+        ).timeout(const Duration(seconds: 3));
+        if (response.statusCode == 200) {
+          debugPrint('   ✅ Success: $url');
+          debugPrint('');
+          debugPrint('╔════════════════════════════════════════════════════════╗');
+          debugPrint('║  ✅ BACKEND CONNECTION ESTABLISHED                    ║');
+          debugPrint('╠════════════════════════════════════════════════════════╣');
+          debugPrint('║  📡 URL: $url'.padRight(58) + '║');
+          debugPrint('║  🔗 Status: Connected & Healthy                       ║');
+          debugPrint('╚════════════════════════════════════════════════════════╝');
+          debugPrint('');
+          _cachedWorkingUrl = url;
+          return url;
+        }
+      } catch (e) {
+        debugPrint('   ❌ Error ($url): ${e.runtimeType}');
+        continue;
+      }
+    }
+    
+    // No URL worked, use first as fallback and log warning
+    debugPrint('');
+    debugPrint('╔════════════════════════════════════════════════════════╗');
+    debugPrint('║  ⚠️  BACKEND CONNECTION FAILED                        ║');
+    debugPrint('╠════════════════════════════════════════════════════════╣');
+    debugPrint('║  All backend URLs unreachable                          ║');
+    debugPrint('║  Using fallback (app may not work correctly)           ║');
+    debugPrint('╚════════════════════════════════════════════════════════╝');
+    debugPrint('');
+    return _possibleBaseUrls.first;
+  }
+  
   /// GET /api/units?grade=3
   /// Fetch all units for a specific grade
   Future<List<Unit>> getUnits(int grade) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$baseUrl/units?grade=$grade'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/api/units?grade=$grade'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -55,9 +154,10 @@ class UnitApiService {
     List<Map<String, dynamic>>? conversationHistory,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/chat'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/chat'),
+        headers: AppConstants.headers,
         body: json.encode({
           'studentId': studentId,
           'unitId': unitId,
@@ -83,9 +183,10 @@ class UnitApiService {
     required String unitId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -108,9 +209,10 @@ class UnitApiService {
     required String unitId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       await http.delete(
-        Uri.parse('$ragBaseUrl/chat/history/$studentId/$unitId'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/chat/history/$studentId/$unitId'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('Error clearing chat history: $e');
@@ -128,10 +230,12 @@ class UnitApiService {
     String? teacherId,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$ragBaseUrl/upload/document'),
+        Uri.parse('$baseUrl/upload/document'),
       );
+      request.headers.addAll(AppConstants.headers);
       
       // Add file
       request.files.add(
@@ -168,9 +272,10 @@ class UnitApiService {
     List<int>? difficultyLevels,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/questions/generate/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/questions/generate/$documentId'),
+        headers: AppConstants.headers,
         body: json.encode({
           'num_questions': numQuestions,
           'grade_level': gradeLevel,
@@ -195,7 +300,8 @@ class UnitApiService {
     int? gradeLevel,
   }) async {
     try {
-      var uri = '$ragBaseUrl/documents';
+      final baseUrl = await _getWorkingBaseUrl();
+      var uri = '$baseUrl/documents';
       final queryParams = <String>[];
       if (topic != null) queryParams.add('topic=$topic');
       if (gradeLevel != null) queryParams.add('grade_level=$gradeLevel');
@@ -205,7 +311,7 @@ class UnitApiService {
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -223,9 +329,10 @@ class UnitApiService {
   /// Get document details
   Future<DocumentInfo> getDocumentDetails(String documentId) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/documents/$documentId'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/documents/$documentId'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -256,9 +363,10 @@ class UnitApiService {
       if (gradeLevel != null) queryParams.add('grade_level=$gradeLevel');
       if (difficultyLevel != null) queryParams.add('difficulty_level=$difficultyLevel');
       
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/questions/?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/questions/?${queryParams.join('&')}'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -281,9 +389,10 @@ class UnitApiService {
     int? timeTaken,
   }) async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
-        Uri.parse('$ragBaseUrl/api/v1/adaptive/submit-answer'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/api/v1/adaptive/submit-answer'),
+        headers: AppConstants.headers,
         body: json.encode({
           'student_id': studentId,
           'question_id': questionId,
@@ -322,9 +431,10 @@ class UnitApiService {
         queryParams.add('grade_level=$gradeLevel');
       }
       
+      final baseUrl = await _getWorkingBaseUrl();
       final response = await http.get(
-        Uri.parse('$ragBaseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/api/v1/adaptive/next-question?${queryParams.join('&')}'),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -341,14 +451,15 @@ class UnitApiService {
   /// Get student analytics and ability metrics
   Future<StudentAnalytics> getStudentAnalytics({String? unitId}) async {
     try {
-      var uri = '$ragBaseUrl/api/v1/adaptive/analytics/$studentId';
+      final baseUrl = await _getWorkingBaseUrl();
+      var uri = '$baseUrl/api/v1/adaptive/analytics/$studentId';
       if (unitId != null) {
         uri += '?unit_id=$unitId';
       }
       
       final response = await http.get(
         Uri.parse(uri),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
@@ -382,11 +493,11 @@ class UnitApiService {
         iconName: 'crop_square',
       ),
       Unit(
-        id: 'unit_capacity_$grade',
-        name: 'Capacity – ml and l',
-        topic: 'Capacity',
+        id: 'unit_volume_$grade',
+        name: 'Volume – ml and l',
+        topic: 'Volume',
         grade: grade,
-        description: 'Learn about volume and capacity measurements',
+        description: 'Learn about volume and liquid measurements',
         iconName: 'local_drink',
       ),
       Unit(

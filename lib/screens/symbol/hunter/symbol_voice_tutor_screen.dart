@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'package:ganithamithura/utils/constants.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:ganithamithura/screens/symbol/hunter/symbol_voice_success_screen.dart';
@@ -123,7 +125,10 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
 
     try {
       print('Connecting to $url');
-      _channel = WebSocketChannel.connect(Uri.parse(url));
+      _channel = IOWebSocketChannel.connect(
+        Uri.parse(url),
+        headers: AppConstants.headers,
+      );
 
       _channel!.stream.listen((message) {
         final data = jsonDecode(message);
@@ -256,8 +261,7 @@ class _SymbolVoiceTutorScreenState extends State<SymbolVoiceTutorScreen> with Si
     } else if (data['type'] == 'image') {
        String rawUrl = data['url'];
        // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1").replaceFirst("192.168.8.118", "127.0.0.1");
-       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
-       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
+       String fixedUrl = rawUrl.replaceAll(RegExp(r'http://(?:localhost|127\.0\.0\.1):\d+'), AppConfig.baseUrl);
        
        print("Loading image: $fixedUrl");
        setState(() {

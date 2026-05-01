@@ -9,7 +9,7 @@ import 'package:ganithamithura/screens/measurements/units/unit_home_screen.dart'
 
 class UnitsListScreen extends StatefulWidget {
   final int grade;
-  final String topic; // Length, Area, Capacity, Weight
+  final String topic; // Length, Area, Volume, Weight
 
   const UnitsListScreen({
     super.key,
@@ -100,7 +100,7 @@ class _UnitsListScreenState extends State<UnitsListScreen> {
         return const Color(AppColors.measurementColor);
       case 'area':
         return const Color(AppColors.measurementColor);
-      case 'capacity':
+      case 'volume':
         return const Color(AppColors.measurementColor);
       case 'weight':
         return const Color(AppColors.measurementColor);
@@ -119,7 +119,7 @@ class _UnitsListScreenState extends State<UnitsListScreen> {
         return Icons.straighten;
       case 'area':
         return Icons.crop_square;
-      case 'capacity':
+      case 'volume':
         return Icons.local_drink;
       case 'weight':
         return Icons.fitness_center;

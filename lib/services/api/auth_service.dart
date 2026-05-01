@@ -8,23 +8,19 @@ import 'package:ganithamithura/utils/constants.dart';
 /// Authentication Service - Handles user authentication with MongoDB backend
 class AuthService {
   static AuthService? _instance;
-  final String baseUrl;
   
-  AuthService._({required this.baseUrl});
+  String get baseUrl => dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl;
+  
+  AuthService._();
   
   static AuthService get instance {
-    _instance ??= AuthService._(
-      baseUrl: dotenv.env['AUTH_BACKEND_URL'] ?? AppConstants.authBaseUrl,
-    );
+    _instance ??= AuthService._();
     return _instance!;
   }
   
   /// Helper method to create headers
   Map<String, String> _getHeaders({String? token}) {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    final headers = Map<String, String>.from(AppConstants.headers);
     
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';

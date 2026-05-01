@@ -5,25 +5,29 @@ import 'package:http/http.dart' as http;
 import 'package:ganithamithura/models/shape_models.dart';
 import 'package:ganithamithura/models/shape_model.dart';
 import 'package:ganithamithura/utils/constants.dart';
+import 'package:ganithamithura/services/local_storage/storage_service.dart';
 
 /// Shapes API Service - Handles all shapes game backend API calls
 class ShapesApiService {
   static ShapesApiService? _instance;
-  final String baseUrl;
   
-  ShapesApiService._({required this.baseUrl});
+  ShapesApiService._();
   
   static ShapesApiService get instance {
-    _instance ??= ShapesApiService._(baseUrl: '${AppConstants.baseUrl}/shapes-patterns');
+    _instance ??= ShapesApiService._();
     return _instance!;
   }
   
-  /// Helper method to create headers
+  String get baseUrl => AppConstants.shapeBaseUrl;
+  
+  /// Helper method to create headers — includes auth token if available
   Map<String, String> _getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    final headers = Map<String, String>.from(AppConstants.headers);
+    final token = StorageService.instance.getAuthToken();
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
   }
   
   // ==================== Health Check ====================
@@ -32,7 +36,7 @@ class ShapesApiService {
   Future<bool> checkBackendHealth() async {
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       return response.statusCode == 200;
@@ -51,7 +55,7 @@ class ShapesApiService {
     
     try {
       final url = Uri.parse('$baseUrl/');
-      final response = await http.get(url).timeout(
+      final response = await http.get(url, headers: _getHeaders()).timeout(
         const Duration(seconds: 5),
       );
       status['isReachable'] = response.statusCode == 200;
@@ -295,6 +299,34 @@ class ShapesApiService {
     }
   }
   
+  /// Get user's game progress (simplified version)
+  /// Returns raw user progress data from the backend
+  Future<Map<String, dynamic>> getUserProgress() async {
+    try {
+      final headers = _getHeaders();
+      final url = Uri.parse('$baseUrl/game/user-progress');
+      
+      final response = await http.get(
+        url,
+        headers: headers,
+      ).timeout(
+        Duration(seconds: AppConstants.apiTimeout),
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get user progress: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return default empty progress on error
+      return {
+        'highest_passed_level': 0,
+        'levels': [],
+      };
+    }
+  }
+
   /// Get Build & Match challenge progress
   /// 
   /// Returns:

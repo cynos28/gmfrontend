@@ -136,7 +136,7 @@ class _LearningPoolLevelScreenState extends State<LearningPoolLevelScreen> {
                         buttonText: "Watch",
                         badgeText: "4/12",
                         color: const Color(0xFF9CCC9C), // Muted Green/Teal
-                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        imageAsset: 'assets/symbols/leaningCurveGradenew.png',
                         onTap: () {
                           // Navigate to video list
                           Get.to(() => const SymbolVideoListScreen(grade: "01"));
@@ -149,7 +149,7 @@ class _LearningPoolLevelScreenState extends State<LearningPoolLevelScreen> {
                         buttonText: "Watch",
                         badgeText: "0/12",
                         color: const Color(0xFF9CCC9C), // Muted Green/Teal
-                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        imageAsset: 'assets/symbols/leaningCurveGradenew.png',
                         onTap: () {
                           _showSnackbar("Grade 02", "Coming Soon!");
                         },
@@ -161,7 +161,7 @@ class _LearningPoolLevelScreenState extends State<LearningPoolLevelScreen> {
                         buttonText: "Watch",
                         badgeText: "0/12",
                         color: const Color(0xFF9CCC9C), // Muted Green/Teal
-                        imageAsset: 'assets/symbols/leaningCurveGrade.png',
+                        imageAsset: 'assets/symbols/leaningCurveGradenew.png',
                         onTap: () {
                            _showSnackbar("Grade 03", "Coming Soon!");
                         },

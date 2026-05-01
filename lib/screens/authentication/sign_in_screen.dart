@@ -35,6 +35,10 @@ class _SignInScreenState extends State<SignInScreen> {
       });
 
       try {
+        // Always fetch the latest backend URL before signing in.
+        // This ensures we use the correct Ngrok URL even after a backend restart.
+        await AppConstants.loadDynamicUrls();
+
         final response = await AuthService.instance.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text,

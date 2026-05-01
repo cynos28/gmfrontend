@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'package:ganithamithura/utils/constants.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async'; // Added for Timer
 import 'dart:io' show Platform;
@@ -89,7 +91,10 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
 
     try {
       print('Connecting to $url');
-      _channel = WebSocketChannel.connect(Uri.parse(url));
+      _channel = IOWebSocketChannel.connect(
+        Uri.parse(url),
+        headers: AppConstants.headers,
+      );
 
       _channel!.stream.listen((message) {
         final data = jsonDecode(message);
@@ -232,8 +237,7 @@ class _SymbolLearningScreenState extends State<SymbolLearningScreen> {
        // Use '10.0.2.2' for Emulator, '127.0.0.1' for ADB Reverse
        // String fixedUrl = rawUrl.replaceFirst("localhost", "127.0.0.1");
        // fixedUrl = fixedUrl.replaceFirst("192.168.8.118", "127.0.0.1"); // Also fix stuck IP if any
-       String fixedUrl = rawUrl.replaceFirst("localhost", AppConfig.serverIp);
-       fixedUrl = fixedUrl.replaceFirst("127.0.0.1", AppConfig.serverIp);
+       String fixedUrl = rawUrl.replaceAll(RegExp(r'http://(?:localhost|127\.0\.0\.1):\d+'), AppConfig.baseUrl);
 
        print("Loading image: $fixedUrl"); // Debug log
 

@@ -56,8 +56,8 @@ class _AiTutorChatScreenState extends State<AiTutorChatScreen> {
         'What does square meter mean?',
         'Why do we measure area?',
       ],
-      'unit_capacity_1': [
-        'What is capacity?',
+      'unit_volume_1': [
+        'What is volume?',
         'What does liter mean?',
         'How much water fits in a bottle?',
         'What\'s the difference between ml and liters?',

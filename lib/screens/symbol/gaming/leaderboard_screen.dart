@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
 import 'package:ganithamithura/services/api/symbol_service.dart';
 import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -15,11 +16,19 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   bool _isLoading = true;
   List<dynamic> _leaderboard = [];
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    _audioPlayer.play(AssetSource('symbols/sounds/congratulations.mp3.mpeg'));
     _fetchLeaderboard();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchLeaderboard() async {
@@ -118,7 +127,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 24),
-                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
+                          onPressed: () => Get.offAllNamed('/home'),
                         ),
                       ),
                       

@@ -1,11 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:ganithamithura/config.dart';
+import 'package:ganithamithura/screens/symbol/hunter/symbol_video_player_screen.dart';
 
-class SymbolVideoListScreen extends StatelessWidget {
+class SymbolVideoListScreen extends StatefulWidget {
   final String grade;
 
   const SymbolVideoListScreen({super.key, required this.grade});
+
+  @override
+  State<SymbolVideoListScreen> createState() => _SymbolVideoListScreenState();
+}
+
+class _SymbolVideoListScreenState extends State<SymbolVideoListScreen> {
+  List<dynamic> videos = [];
+  bool isLoading = true;
+  bool hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVideos();
+  }
+
+  Future<void> _fetchVideos() async {
+    try {
+      final response = await http.get(Uri.parse('${AppConfig.baseUrl}/api/videos/${widget.grade}'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          videos = data['videos'] ?? [];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching videos: $e');
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,43 +174,46 @@ class SymbolVideoListScreen extends StatelessWidget {
                         
                         // Video List
                         Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.zero,
-                            children: [
-                              _buildVideoCard(
-                                title: "Learn Grade 01 Mathematics",
-                                subtitle: "Mini Math Movies - Scratch Garden",
-                                color: const Color(0xFF5C6BC0), // Blue
-                                icon: Icons.looks_one_outlined,
-                                progress: 0.7,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildVideoCard(
-                                title: "Learn Grade 01 Mathematics",
-                                subtitle: "Addition - Level 1 - Number blocks",
-                                color: const Color(0xFFFFAB91), // Salmon/Orange
-                                icon: Icons.science_outlined,
-                                progress: 0.4,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildVideoCard(
-                                title: "Learn Grade 01 Mathematics",
-                                subtitle: "Fun 1st Grade Math Lessons",
-                                color: const Color(0xFFD81B60), // Pink/Red
-                                icon: Icons.music_note,
-                                progress: 0.6,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildVideoCard(
-                                title: "Learn Grade 01 Mathematics",
-                                subtitle: "Game based Grade 1 Math Lessons",
-                                color: const Color(0xFF4CAF50), // Green
-                                icon: Icons.games,
-                                progress: 0.5,
-                              ),
-                              const SizedBox(height: 90), // Bottom nav padding
-                            ],
-                          ),
+                          child: isLoading 
+                            ? const Center(child: CircularProgressIndicator())
+                            : hasError 
+                              ? const Center(child: Text("Failed to load videos"))
+                              : videos.isEmpty
+                                ? const Center(child: Text("No videos found."))
+                                : ListView.builder(
+                                    padding: EdgeInsets.zero,
+                                    itemCount: videos.length,
+                                    itemBuilder: (context, index) {
+                                      final video = videos[index];
+                                      final colors = [
+                                        const Color(0xFF5C6BC0), // Blue
+                                        const Color(0xFFFFAB91), // Salmon/Orange
+                                        const Color(0xFFD81B60), // Pink/Red
+                                        const Color(0xFF4CAF50), // Green
+                                      ];
+                                      final icons = [
+                                        Icons.looks_one_outlined,
+                                        Icons.science_outlined,
+                                        Icons.music_note,
+                                        Icons.games,
+                                      ];
+                                      
+                                      final color = colors[index % colors.length];
+                                      final icon = icons[index % icons.length];
+                                      
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 16),
+                                        child: _buildVideoCard(
+                                          title: video['title'] ?? 'Mathematics Lesson',
+                                          subtitle: video['subtitle'] ?? 'Video Lesson',
+                                          color: color,
+                                          icon: icon,
+                                          progress: (video['progress'] ?? 0.0).toDouble(),
+                                          videoUrl: '${AppConfig.baseUrl}${video['url']}',
+                                        ),
+                                      );
+                                    },
+                                  ),
                         ),
                       ],
                     ),
@@ -231,85 +277,91 @@ class SymbolVideoListScreen extends StatelessWidget {
     required Color color,
     required IconData icon,
     required double progress,
+    required String videoUrl,
   }) {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icon Box
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5)
-              ),
-              child: Icon(icon, color: Colors.white, size: 30),
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => SymbolVideoPlayerScreen(videoUrl: videoUrl, title: title));
+      },
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon Box
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5)
+                ),
+                child: Icon(icon, color: Colors.white, size: 30),
+              ),
+            ),
 
-          // Text Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 12, right: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+            // Text Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 12, right: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: Colors.white.withOpacity(0.8),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Progress Bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.white.withOpacity(0.3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                      minHeight: 4,
+                    const SizedBox(height: 8),
+                    // Progress Bar
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white.withOpacity(0.3),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          
-          // Arrow Icon
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.8), size: 16),
-          ),
-        ],
+            
+            // Arrow Icon
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.8), size: 16),
+            ),
+          ],
+        ),
       ),
     );
   }

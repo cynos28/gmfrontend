@@ -14,30 +14,30 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
   // Shape slots with their correct answers
   final List<Map<String, dynamic>> _shapeSlots = [
     {
-      'color': const Color(0x3DCB45D0),
-      'borderColor': const Color(0xFFBF41CB),
-      'icon': Icons.circle,
+      'color': const Color(0xFFC8E6C9), // Green BG
+      'borderColor': const Color(0xFF4CAF50), // Green border/icon
+      'image': 'assets/images/2d_shapes/circle.png',
       'correctAnswer': 'Circle',
       'answer': null,
     },
     {
-      'color': const Color(0x3D5B96E5),
-      'borderColor': const Color(0xFF5690E1),
-      'icon': Icons.square_rounded,
+      'color': const Color(0xFFBBDEFB), // Blue BG
+      'borderColor': const Color(0xFF2196F3), // Blue border/icon
+      'image': 'assets/images/2d_shapes/square.png',
       'correctAnswer': 'Square',
       'answer': null,
     },
     {
-      'color': const Color(0x3DBCA43E),
-      'borderColor': const Color(0xFFCDAF42),
-      'icon': Icons.change_history,
+      'color': const Color(0xFFFFE0B2), // Orange BG
+      'borderColor': const Color(0xFFFF9800), // Orange border/icon
+      'image': 'assets/images/2d_shapes/triangle.png',
       'correctAnswer': 'Triangle',
       'answer': null,
     },
     {
-      'color': const Color(0x3D22B941),
-      'borderColor': const Color(0xFF37D55D),
-      'icon': Icons.rectangle_rounded,
+      'color': const Color(0xFFF8BBD0), // Pink BG
+      'borderColor': const Color(0xFFE91E63), // Pink border/icon
+      'image': 'assets/images/2d_shapes/rectangle.png',
       'correctAnswer': 'Rectangle',
       'answer': null,
     },
@@ -325,7 +325,7 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
         child: SizedBox(
           width: double.infinity,
@@ -372,36 +372,59 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
   // App bar with back button and title
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Get.back(),
             child: Container(
-              width: 31,
-              height: 31,
-              decoration: ShapeDecoration(
-                color: const Color(0x7FD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 16,
-                color: Colors.black,
-              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
             ),
           ),
-          const SizedBox(width: 14),
-          const Text(
-            'Level 1 - Match Shapes',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              height: 1.10,
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Level 1',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    height: 1.1,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Match the 2D shapes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -449,226 +472,194 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
       builder: (context, candidateData, rejectedData) {
         final isDraggingOver = candidateData.isNotEmpty;
         
-        return Container(
-          height: 200,
-          decoration: ShapeDecoration(
-            color: isDraggingOver 
-                ? (slot['color'] as Color).withOpacity(0.7)
-                : slot['color'] as Color,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: isDraggingOver ? 2.5 : 1.5,
-                color: slot['borderColor'] as Color,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 6,
-              children: [
-                // Shape icon
-                Icon(
-                  slot['icon'] as IconData,
-                  size: 100,
-                  color: (slot['borderColor'] as Color).withOpacity(0.8),
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1.0, end: isDraggingOver ? 1.05 : 1.0),
+          duration: const Duration(milliseconds: 200),
+          builder: (context, scale, child) => Transform.scale(
+            scale: scale,
+            child: Container(
+              height: 220,
+              decoration: BoxDecoration(
+                color: slot['color'] as Color,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  width: isDraggingOver ? 3.0 : 2.0,
+                  color: (slot['borderColor'] as Color).withOpacity(isDraggingOver ? 1.0 : 0.5),
                 ),
-                
-                // Answer box
-                GestureDetector(
-                  onTap: hasAnswer ? () {
-                    setState(() {
-                      _usedWords.remove(slot['answer']);
-                      slot['answer'] = null;
-                    });
-                  } : null,
-                  child: Container(
-                    width: 107,
-                    height: 26,
-                    decoration: ShapeDecoration(
-                      color: hasAnswer 
-                          ? (isCorrect 
-                              ? const Color(0xFF36D399) 
-                              : const Color(0xFFA6ADED))
-                          : const Color(0xFFD9D9D9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Shape icon
+                    Expanded(
+                      child: Center(
+                        child: Image.asset(
+                          slot['image'] as String,
+                          height: 120,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.image_not_supported_rounded,
+                            size: 100,
+                            color: (slot['borderColor'] as Color).withOpacity(0.5),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Center(
-                      child: hasAnswer
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  slot['answer'],
-                                  style: TextStyle(
-                                    color: isCorrect ? Colors.white : Colors.black,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (isCorrect) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.check_circle,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ],
+                    const SizedBox(height: 12),
+                    
+                    // Answer box
+                    GestureDetector(
+                      onTap: hasAnswer ? () {
+                        setState(() {
+                          _usedWords.remove(slot['answer']);
+                          slot['answer'] = null;
+                        });
+                      } : null,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: hasAnswer 
+                              ? (isCorrect 
+                                  ? const Color(0xFF4CAF50) 
+                                  : const Color(0xFFE91E63))
+                              : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: hasAnswer ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             )
-                          : null,
+                          ] : [],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              hasAnswer ? slot['answer'] : 'Drop here',
+                              style: TextStyle(
+                                color: hasAnswer ? Colors.white : Colors.black45,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (hasAnswer) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                isCorrect ? Icons.check_circle : Icons.cancel,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      hasAnswer ? 'Tap to remove' : 'Drag name here',
+                      style: TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                
-                // Drop here text
-                Text(
-                  isDraggingOver ? 'Drop here!' : (hasAnswer ? 'Tap to remove' : 'Drop here'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(hasAnswer ? 0.3 : 0.5),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
       },
     );
   }
-
   // Word pool section with draggable words
   Widget _buildWordPool() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 22),
-      padding: const EdgeInsets.all(20),
-      decoration: ShapeDecoration(
-        color: const Color(0xFFFEFFFF),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        shadows: const [
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x3F000000),
-            blurRadius: 7,
-            offset: Offset(0, 3),
-            spreadRadius: 4,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         children: [
           const Text(
-            'Word Pool',
+            'Names of Shapes',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              height: 1.29,
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 20),
           
-          // Word buttons in 2x2 grid - First row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 16,
-            children: [
-              _buildWordButton(_wordPool[0]),
-              _buildWordButton(_wordPool[1]),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Second row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 16,
-            children: [
-              _buildWordButton(_wordPool[2]),
-              _buildWordButton(_wordPool[3]),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Buttons row - Reset and Submit
-          Row(
+          Wrap(
             spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: _wordPool.map((word) => _buildWordButton(word)).toList(),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          Row(
             children: [
-              // Reset/Clear button
-              if (_usedWords.isNotEmpty)
+              if (_usedWords.isNotEmpty) ...[
                 Expanded(
-                  child: GestureDetector(
-                    onTap: _resetGame,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          side: const BorderSide(
-                            width: 2,
-                            color: Color(0xFFFF6B6B),
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 6,
-                        children: [
-                          const Icon(
-                            Icons.refresh,
-                            color: Color(0xFFFF6B6B),
-                            size: 18,
-                          ),
-                          const Text(
-                            'Clear All',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFFFF6B6B),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              height: 1.57,
-                            ),
-                          ),
-                        ],
+                  child: ElevatedButton.icon(
+                    onPressed: _resetGame,
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    label: const Text('Reset'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFE91E63),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Color(0xFFE91E63), width: 2),
                       ),
                     ),
                   ),
                 ),
-              
-              // Submit button
+                const SizedBox(width: 12),
+              ],
               Expanded(
-                child: GestureDetector(
-                  onTap: _submitAnswers,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: ShapeDecoration(
-                      color: _usedWords.length == 4
-                          ? const Color(0xFFF1AD7F)
-                          : const Color(0xFFCCCCCC),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _usedWords.length == _shapeSlots.length ? _submitAnswers : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    elevation: 4,
+                    shadowColor: const Color(0xFF2196F3).withOpacity(0.4),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
-                      'Submit Answers',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        height: 1.57,
-                      ),
-                    ),
+                  ),
+                  child: const Text(
+                    'Submit Answers',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -684,91 +675,67 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
     final isUsed = _usedWords.contains(word);
     
     return Draggable<String>(
-                data: word,
-                feedback: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    width: 120,
-                    height: 39,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFF8A38F5).withOpacity(0.9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        word,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          height: 1.57,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                childWhenDragging: Container(
-                  width: 120,
-                  height: 39,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFE0E0E0).withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      word,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black.withOpacity(0.2),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        height: 1.57,
-                      ),
-                    ),
-                  ),
-                ),
-                child: Container(
-                  width: 120,
-                  height: 39,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: ShapeDecoration(
-                    color: isUsed 
-                        ? const Color(0xFFE0E0E0).withOpacity(0.5)
-                        : const Color(0xFFA6ADED),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      word,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isUsed 
-                            ? Colors.black.withOpacity(0.3)
-                            : const Color(0xFF111213),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        height: 1.57,
-                      ),
-                    ),
-                  ),
-                ),
-              );
+      data: word,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF9C27B0).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Text(
+            word,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+      childWhenDragging: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          word,
+          style: TextStyle(
+            color: Colors.grey.shade400,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isUsed ? Colors.grey.shade100 : const Color(0xFFE1BEE7),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isUsed ? Colors.grey.shade300 : const Color(0xFF9C27B0).withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: Text(
+          word,
+          style: TextStyle(
+            color: isUsed ? Colors.grey.shade400 : const Color(0xFF9C27B0),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
   }
 
 
@@ -842,47 +809,108 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
     final wrongCount = _getWrongCount();
     
     return Scaffold(
-      backgroundColor: const Color(0xFFE5ECF0),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            children: [
-              // Main Content
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 100, top: 20),
+        child: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Header with back button and title
-                    _buildAppBar(),
-                    
+                    const SizedBox(height: 10),
+                    _buildResultsSummary(correctCount, totalCount: _shapeSlots.length),
                     const SizedBox(height: 30),
-                    
-                    // Results Grid
                     _buildResultsGrid(),
-                    
                     const SizedBox(height: 40),
-                    
-                    // Results Card
-                    _buildResultsCard(correctCount, wrongCount),
-                    
-                    const SizedBox(height: 20),
+                    _buildResultsActions(),
                   ],
                 ),
               ),
-              
-              // Bottom Navigation Bar
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildBottomNav(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildResultsSummary(int correctCount, {required int totalCount}) {
+    final bool isPerfect = correctCount == totalCount;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isPerfect ? const Color(0xFFC8E6C9) : const Color(0xFFFFE0B2),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            isPerfect ? '🎉 Amazing! 🎉' : '😊 Good Effort! 😊',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'You got $correctCount out of $totalCount shapes correct!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultsActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _resetGame,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF2196F3),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: Color(0xFF2196F3), width: 2),
+              ),
+            ),
+            child: const Text('Try Again', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Get.back(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2196F3),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text('Go Back', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -925,96 +953,58 @@ class _Match2DShapesScreenState extends State<Match2DShapesScreen> {
     
     return Container(
       width: 160,
-      height: 167,
-      decoration: ShapeDecoration(
-        color: isCorrect ? Colors.white : const Color(0xFFF5E5E7),
-        shape: RoundedRectangleBorder(
-          side: BorderSide(
-            width: 2,
-            strokeAlign: BorderSide.strokeAlignCenter,
-            color: isCorrect 
-                ? const Color(0xFF36D399) 
-                : const Color(0xFFD33636),
-          ),
-          borderRadius: BorderRadius.circular(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: slot['color'] as Color,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
+          width: 3,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Shape Icon
-          Positioned(
-            left: 49,
-            top: 12,
-            child: _buildResultShapeIcon(slot['icon'] as IconData, isCorrect),
-          ),
-          
-          // Answer Label
-          Positioned(
-            left: 28,
-            top: 101,
-            child: Container(
-              width: 121,
-              height: 26,
-              decoration: ShapeDecoration(
-                color: const Color(0xFF36D399),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  answer ?? '',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    height: 1.57,
-                  ),
-                ),
+          SizedBox(
+            height: 60,
+            child: Image.asset(
+              slot['image'] as String,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.image_not_supported_rounded,
+                size: 40,
+                color: (slot['borderColor'] as Color).withOpacity(0.5),
               ),
             ),
           ),
-          
-          // Checkmark icon
-          if (isCorrect)
-            Positioned(
-              left: 81,
-              top: 131,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF36D399),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  size: 12,
-                  color: Colors.white,
-                ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              answer ?? 'None',
+              style: TextStyle(
+                color: isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
               ),
             ),
-            
-          // X icon for wrong answers
-          if (!isCorrect)
-            Positioned(
-              left: 81,
-              top: 131,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFD33636),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  size: 12,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+          ),
+          const SizedBox(height: 8),
+          Icon(
+            isCorrect ? Icons.check_circle : Icons.cancel,
+            color: isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
+            size: 24,
+          ),
         ],
       ),
     );

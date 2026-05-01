@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
 import 'package:ganithamithura/models/unit_models.dart';
 
+import 'package:ganithamithura/utils/constants.dart';
+
 /// Service to track student progress for measurement units
 class UnitProgressService {
   static final UnitProgressService _instance = UnitProgressService._();
@@ -12,11 +14,9 @@ class UnitProgressService {
   
   final StorageService _storage = StorageService.instance;
   
-  // WiFi IP - works without ADB, just need same WiFi network
-  final List<String> _baseUrls = [
-    'http://192.168.1.18:8000/api/v1/progress',       // WiFi IP (PRIMARY)
-    'http://localhost:8000/api/v1/progress',          // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/progress',           // Android Emulator fallback
+  // Use dynamically loaded URLs from AppConstants
+  List<String> get _baseUrls => [
+    '${AppConstants.measurementBaseUrl}/api/v1/progress'
   ];
   
   static const String _progressKey = 'unit_progress_data';
