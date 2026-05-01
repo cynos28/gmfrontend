@@ -21,9 +21,11 @@ void main() async {
   // Initialize storage service
   StorageService.instance.init();
 
-  // Dynamic URL loading disabled — using local URLs from constants.dart
-  // AppConstants.registerUrlRefreshListener(UnitApiService.invalidateCache);
-  // await AppConstants.loadDynamicUrls();
+  // Register URL refresh listener — any service caches are cleared on each Gist pull
+  AppConstants.registerUrlRefreshListener(UnitApiService.invalidateCache);
+
+  // Load dynamic server URLs from GitHub Gist on startup
+  await AppConstants.loadDynamicUrls();
   
   runApp(const GanithamithuraApp());
 }
@@ -62,9 +64,9 @@ class _GanithamithuraAppState extends State<GanithamithuraApp> with WidgetsBindi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // URL refresh on resume disabled — using local URLs
-    // if (state == AppLifecycleState.resumed) {
-    //   AppConstants.loadDynamicUrls();
-    // }
+     if (state == AppLifecycleState.resumed) {
+       AppConstants.loadDynamicUrls();
+     }
   }
 
   @override

@@ -6,11 +6,11 @@ import 'package:http/http.dart' as http;
 
 class AppConstants {
   // API Configuration
-  static String authBaseUrl = 'http://192.168.8.167:8001';
-  static String symbolBaseUrl = 'http://192.168.8.167:8000';
-  static String measurementBaseUrl = 'http://192.168.8.167:8002'; // New API
-  static String shapeBaseUrl = 'http://192.168.8.167:8003/shapes-patterns';
-  static String numBaseUrl = 'http://192.168.8.167:8004';
+  static String authBaseUrl = 'http://10.227.52.168:8001';
+  static String symbolBaseUrl = 'http://10.227.52.168:8000';
+  static String measurementBaseUrl = 'http://10.227.52.168:8002'; // New API
+  static String shapeBaseUrl = 'http://10.227.52.168:8003/shapes-patterns';
+  static String numBaseUrl = 'http://10.227.52.168:8004';
 
   static String get baseUrl => authBaseUrl;
   
@@ -21,7 +21,7 @@ class AppConstants {
     _onUrlsRefreshed = listener;
   }
   
-  static const String _gistApiUrl = "https://api.github.com/gists/a03d59a6c3a4e84f0688591151f6fd30";
+  static const String _gistApiUrl = "https://api.github.com/gists/f0456a96afbd26dd4e65059c3e88a129";
   
   static Future<void> loadDynamicUrls() async {
     int retryCount = 0;
