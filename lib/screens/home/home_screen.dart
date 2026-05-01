@@ -9,6 +9,7 @@ import 'package:ganithamithura/screens/measurements/learn/learn_screen.dart';
 import 'package:ganithamithura/screens/profile/profile_screen.dart';
 import '../shapes/welcome_screen.dart';
 import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
+import 'package:ganithamithura/screens/progress/progress_screen.dart';
 import 'package:ganithamithura/models/user.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 
@@ -22,36 +23,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
-  Key _tipCardKey = UniqueKey();
-  User? _currentUser;
-  bool _isLoadingUser = true;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUser();
-  }
-
-  Future<void> _loadCurrentUser() async {
-    try {
-      final user = await AuthService.instance.getCurrentUser();
-      setState(() {
-        _currentUser = user;
-        _isLoadingUser = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoadingUser = false;
-      });
-    }
   }
 
   void _onNavTap(int index) {
     if (index == 0) {
-      // Already on home, refresh tip card
-      setState(() {
-        _tipCardKey = UniqueKey();
-      });
       return;
     }
 
@@ -65,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
         // Reset nav index when coming back
         setState(() {
           _currentNavIndex = 0;
-          _tipCardKey = UniqueKey(); // Refresh tip when returning
         });
       });
       return;
@@ -75,19 +53,20 @@ class _HomeScreenState extends State<HomeScreen> {
       Get.to(() => const ProfileScreen())?.then((_) {
         setState(() {
           _currentNavIndex = 0;
-          _tipCardKey = UniqueKey();
         });
       });
       return;
     }
 
-    // TODO: Navigate to other screens when ready
-    Get.snackbar(
-      'Coming Soon',
-      'This feature will be available soon',
-      backgroundColor: const Color(AppColors.infoColor),
-      colorText: Colors.white,
-    );
+    if (index == 2) {
+      // Navigate to Progress screen
+      Get.to(() => const ProgressScreen())?.then((_) {
+        setState(() {
+          _currentNavIndex = 0;
+        });
+      });
+      return;
+    }
 
     // Reset index since navigation didn't happen
     setState(() {
@@ -113,9 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Greeting section
-                  _buildGreeting(),
-                  const SizedBox(height: KidsSpacing.xl),
 
                   // Today's Activity Card
                   const TodayActivityCard(
@@ -156,37 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Resource Cards Grid
                   _buildResourceGrid(),
-                  const SizedBox(height: KidsSpacing.xxxl),
-
-                  // Learning Tips Section
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: KidsColors.starBackground,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          '💡',
-                          style: TextStyle(fontSize: 24),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Today\'s Tip',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: KidsColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: KidsSpacing.cardMarginLarge),
-
-                  // Daily Tip Card
-                  _buildDailyTipCard(),
                 ],
               ),
             ),
@@ -207,89 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGreeting() {
-    final userName = _currentUser?.name ?? 'Friend';
-    final firstName = userName.split(' ').first;
-    
-    return Container(
-      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            KidsColors.primaryAccent.withOpacity(0.1),
-            KidsColors.secondaryAccent.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _isLoadingUser
-              ? const Text(
-                  '👋 Hi!',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: KidsColors.textPrimary,
-                    height: 1.2,
-                    letterSpacing: -0.5,
-                  ),
-                )
-              : Text(
-                  '👋 Hi, $firstName!',
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: KidsColors.textPrimary,
-                    height: 1.2,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: KidsColors.highlightBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: KidsColors.highlightAccent,
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.local_fire_department_rounded,
-                      size: 20,
-                      color: KidsColors.highlightAccent,
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      '5 days!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: KidsColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildResourceGrid() {
     return Column(
@@ -302,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Numbers',
                 subtitle: 'Trace, read & say',
                 icon: Icons.looks_one_rounded,
+                imagePath: 'assets/vectors/kid1.png',
                 backgroundColor: const Color(AppColors.numberColor),
                 borderColor: const Color(AppColors.numberBorder),
                 iconColor: const Color(AppColors.numberIcon),
@@ -315,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Symbols',
                 subtitle: '+ − × ÷',
                 icon: Icons.calculate_rounded,
+                imagePath: 'assets/vectors/kid2.png',
                 backgroundColor: const Color(AppColors.symbolColor),
                 borderColor: const Color(AppColors.symbolBorder),
                 iconColor: const Color(AppColors.symbolIcon),
@@ -333,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Measurement',
                 subtitle: 'Length, area & more',
                 icon: Icons.straighten_rounded,
+                imagePath: 'assets/vectors/kid3.png',
                 backgroundColor: const Color(AppColors.measurementColor),
                 borderColor: const Color(AppColors.measurementBorder),
                 iconColor: const Color(AppColors.measurementIcon),
@@ -346,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Shapes',
                 subtitle: 'Hunt & build 2D/3D',
                 icon: Icons.category_rounded,
+                imagePath: 'assets/vectors/kid4.png',
                 backgroundColor: const Color(AppColors.shapeColor),
                 borderColor: const Color(AppColors.shapeBorder),
                 iconColor: const Color(AppColors.shapeIcon),
@@ -356,71 +222,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildDailyTipCard() {
-    return Container(
-      key: _tipCardKey,
-      padding: const EdgeInsets.all(KidsSpacing.cardPadding),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            KidsColors.success.withOpacity(0.1),
-            KidsColors.primaryAccent.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusLarge),
-        border: Border.all(
-          color: KidsColors.success.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: KidsColors.success.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-            ),
-            child: const Icon(
-              Icons.lightbulb_rounded,
-              size: 32,
-              color: KidsColors.success,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '💡 Daily Tip',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: KidsColors.success,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Practice counting for 10 minutes every day!',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: KidsColors.textPrimary,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

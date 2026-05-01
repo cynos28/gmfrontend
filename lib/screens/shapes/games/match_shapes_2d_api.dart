@@ -92,20 +92,20 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
 
   Color _getColorForIndex(int index) {
     final colors = [
-      const Color(0x3DCB45D0),
-      const Color(0x3D5B96E5),
-      const Color(0x3DBCA43E),
-      const Color(0x3D22B941),
+      const Color(0xFFC8E6C9), // Green
+      const Color(0xFFBBDEFB), // Blue
+      const Color(0xFFFFE0B2), // Orange
+      const Color(0xFFF8BBD0), // Pink
     ];
     return colors[index % colors.length];
   }
 
   Color _getBorderColorForIndex(int index) {
     final colors = [
-      const Color(0xFFBF41CB),
-      const Color(0xFF5690E1),
-      const Color(0xFFCDAF42),
-      const Color(0xFF37D55D),
+      const Color(0xFF4CAF50),
+      const Color(0xFF2196F3),
+      const Color(0xFFFF9800),
+      const Color(0xFFE91E63),
     ];
     return colors[index % colors.length];
   }
@@ -297,7 +297,7 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
 
   Widget _buildGameScreen() {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
         child: SizedBox(
           width: double.infinity,
@@ -332,37 +332,59 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
 
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Get.back(),
             child: Container(
-              width: 31,
-              height: 31,
-              decoration: ShapeDecoration(
-                color: const Color(0x7FD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 16,
-                color: Colors.black,
-              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              _gameData?.title ?? 'Match Shapes',
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                height: 1.10,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _gameData?.title ?? 'Match Shapes',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Match the 2D shapes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -394,7 +416,6 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
   Widget _buildShapeSlot(int index) {
     final slot = _shapeSlots[index];
     final hasAnswer = slot['answer'] != null;
-    final isCorrect = hasAnswer && slot['answer'] == slot['correctAnswer'];
     
     return DragTarget<String>(
       onWillAccept: (data) => true,
@@ -402,86 +423,94 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
       builder: (context, candidateData, rejectedData) {
         final isDraggingOver = candidateData.isNotEmpty;
         
-        return Container(
-          height: 200,
-          decoration: ShapeDecoration(
-            color: isDraggingOver 
-                ? (slot['color'] as Color).withOpacity(0.7)
-                : slot['color'] as Color,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: isDraggingOver ? 2.5 : 1.5,
-                color: slot['borderColor'] as Color,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 6,
-              children: [
-                // Shape image from backend
-                Expanded(
-                  child: Image.asset(
-                    _getAssetPath(slot['imageUrl'] as String),
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      print('Failed to load image: ${slot['imageUrl']}');
-                      return Icon(
-                        Icons.image_not_supported,
-                        size: 80,
-                        color: (slot['borderColor'] as Color).withOpacity(0.5),
-                      );
-                    },
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1.0, end: isDraggingOver ? 1.05 : 1.0),
+          duration: const Duration(milliseconds: 200),
+          builder: (context, scale, child) => Transform.scale(
+            scale: scale,
+            child: Container(
+              height: 220,
+              decoration: BoxDecoration(
+                color: slot['color'] as Color,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+                border: Border.all(
+                  width: isDraggingOver ? 3.0 : 2.0,
+                  color: (slot['borderColor'] as Color).withOpacity(isDraggingOver ? 1.0 : 0.5),
                 ),
-                
-                // Answer box
-                GestureDetector(
-                  onTap: hasAnswer ? () {
-                    setState(() {
-                      _usedWords.remove(slot['answer']);
-                      slot['answer'] = null;
-                    });
-                  } : null,
-                  child: Container(
-                    width: 107,
-                    height: 26,
-                    decoration: ShapeDecoration(
-                      color: hasAnswer 
-                          ? const Color(0xFFA6ADED)
-                          : const Color(0xFFD9D9D9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Shape image from backend
+                    Expanded(
+                      child: Image.asset(
+                        _getAssetPath(slot['imageUrl'] as String),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.image_not_supported,
+                            size: 80,
+                            color: (slot['borderColor'] as Color).withOpacity(0.5),
+                          );
+                        },
                       ),
                     ),
-                    child: Center(
-                      child: hasAnswer
-                          ? Text(
-                              slot['answer'],
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
+                    const SizedBox(height: 12),
+                    
+                    // Answer box
+                    GestureDetector(
+                      onTap: hasAnswer ? () {
+                        setState(() {
+                          _usedWords.remove(slot['answer']);
+                          slot['answer'] = null;
+                        });
+                      } : null,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: hasAnswer 
+                              ? const Color(0xFF2196F3) 
+                              : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: hasAnswer ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             )
-                          : null,
+                          ] : [],
+                        ),
+                        child: Text(
+                          hasAnswer ? slot['answer'] : 'Drop here',
+                          style: TextStyle(
+                            color: hasAnswer ? Colors.white : Colors.black45,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      hasAnswer ? 'Tap to remove' : 'Drag name here',
+                      style: const TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                
-                Text(
-                  isDraggingOver ? 'Drop here!' : (hasAnswer ? 'Tap to remove' : 'Drop here'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(hasAnswer ? 0.3 : 0.5),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -491,122 +520,79 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
 
   Widget _buildWordPool() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 22),
-      padding: const EdgeInsets.all(20),
-      decoration: ShapeDecoration(
-        color: const Color(0xFFFEFFFF),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        shadows: const [
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x3F000000),
-            blurRadius: 7,
-            offset: Offset(0, 3),
-            spreadRadius: 4,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         children: [
           const Text(
-            'Word Pool',
-            textAlign: TextAlign.center,
+            'Names of Shapes',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              height: 1.29,
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 20),
-          
-          // Word buttons in grid
           Wrap(
-            spacing: 16,
-            runSpacing: 16,
+            spacing: 12,
+            runSpacing: 12,
             alignment: WrapAlignment.center,
             children: _wordPool.map((word) => _buildWordButton(word)).toList(),
           ),
-          
-          const SizedBox(height: 24),
-          
-          // Buttons row - Reset and Submit
+          const SizedBox(height: 32),
           Row(
-            spacing: 12,
             children: [
-              if (_usedWords.isNotEmpty)
+              if (_usedWords.isNotEmpty) ...[
                 Expanded(
-                  child: GestureDetector(
-                    onTap: _resetGame,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          side: const BorderSide(
-                            width: 2,
-                            color: Color(0xFFFF6B6B),
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 6,
-                        children: [
-                          Icon(Icons.refresh, color: Color(0xFFFF6B6B), size: 18),
-                          Text(
-                            'Clear All',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFFFF6B6B),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              height: 1.57,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              
-              Expanded(
-                child: GestureDetector(
-                  onTap: _isSubmitting ? null : _submitAnswers,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: ShapeDecoration(
-                      color: _usedWords.length == _shapeSlots.length
-                          ? const Color(0xFFF1AD7F)
-                          : const Color(0xFFCCCCCC),
+                  child: ElevatedButton(
+                    onPressed: _resetGame,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFE91E63),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Color(0xFFE91E63), width: 2),
                       ),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Submit Answers',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              height: 1.57,
-                            ),
-                          ),
+                    child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.w800)),
                   ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _usedWords.length == _shapeSlots.length ? _submitAnswers : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Submit Answers', style: TextStyle(fontWeight: FontWeight.w800)),
                 ),
               ),
             ],
@@ -624,83 +610,61 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          width: 120,
-          height: 39,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          decoration: ShapeDecoration(
-            color: const Color(0xFF8A38F5).withOpacity(0.9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            shadows: [
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF9C27B0).withOpacity(0.9),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              word,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.57,
-              ),
+          child: Text(
+            word,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
       ),
       childWhenDragging: Container(
-        width: 120,
-        height: 39,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: ShapeDecoration(
-          color: const Color(0xFFE0E0E0).withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Center(
-          child: Text(
-            word,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.2),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.57,
-            ),
+        child: Text(
+          word,
+          style: TextStyle(
+            color: Colors.grey.shade400,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
       child: Container(
-        width: 120,
-        height: 39,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: ShapeDecoration(
-          color: isUsed 
-              ? const Color(0xFFE0E0E0).withOpacity(0.5)
-              : const Color(0xFFA6ADED),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isUsed ? Colors.grey.shade100 : const Color(0xFFF3E5F5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isUsed 
+                ? Colors.grey.shade300 
+                : const Color(0xFF9C27B0).withOpacity(0.3),
+            width: 2,
           ),
         ),
-        child: Center(
-          child: Text(
-            word,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isUsed 
-                  ? Colors.black.withOpacity(0.3)
-                  : const Color(0xFF111213),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.57,
-            ),
+        child: Text(
+          word,
+          style: TextStyle(
+            color: isUsed ? Colors.grey.shade400 : const Color(0xFF9C27B0),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -773,36 +737,145 @@ class _Match2DShapesAPIScreenState extends State<Match2DShapesAPIScreen> {
     if (_gameResult == null) return const SizedBox();
     
     return Scaffold(
-      backgroundColor: const Color(0xFFE5ECF0),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 100, top: 20),
+        child: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    _buildAppBar(),
+                    _buildResultsSummary(),
                     const SizedBox(height: 30),
                     _buildResultsGrid(),
                     const SizedBox(height: 40),
-                    _buildResultsCard(),
-                    const SizedBox(height: 20),
+                    _buildResultsActions(),
                   ],
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildBottomNav(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildResultsSummary() {
+    final result = _gameResult!;
+    final isPassed = result.isPassed;
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isPassed ? const Color(0xFFC8E6C9) : const Color(0xFFFFE0B2),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            isPassed ? '🎉 Amazing! 🎉' : '😊 Good Effort! 😊',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isPassed ? 'You matched all shapes correctly!' : 'Keep practicing to match them all.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildStatItem('${result.correctAnswers}', 'Correct', const Color(0xFF4CAF50)),
+              const SizedBox(width: 40),
+              _buildStatItem('${result.wrongAnswers}', 'Wrong', const Color(0xFFE91E63)),
+              const SizedBox(width: 40),
+              _buildStatItem('${result.score}', 'Score', const Color(0xFF2196F3)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultsActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _resetGame,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF2196F3),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: Color(0xFF2196F3), width: 2),
+              ),
+            ),
+            child: const Text(
+              'Try Again',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Get.back(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2196F3),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text(
+              'Go Back',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

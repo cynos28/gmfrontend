@@ -18,6 +18,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = true;
   User? _currentUser;
 
+  // Grade-specific information
+  final Map<int, Map<String, dynamic>> _gradeInfo = {
+    1: {
+      'color': const Color(0xFF4CAF50),
+      'image': 'assets/vectors/stitch1.png',
+      'title': 'Grade 1',
+      'subtitle': 'Beginner',
+      'description': 'Simple counting, comparing, and basic identification',
+      'ageRange': 'Ages 6-7',
+      'difficulty': 'Very Simple',
+    },
+    2: {
+      'color': const Color(0xFF2196F3),
+      'image': 'assets/vectors/stitch2.png',
+      'title': 'Grade 2',
+      'subtitle': 'Elementary',
+      'description': 'Basic calculations, simple measurements, and comparisons',
+      'ageRange': 'Ages 7-8',
+      'difficulty': 'Simple',
+    },
+    3: {
+      'color': const Color(0xFF9C27B0),
+      'image': 'assets/vectors/stitch3.png',
+      'title': 'Grade 3',
+      'subtitle': 'Intermediate',
+      'description': 'Multi-step problems, conversions, and reasoning',
+      'ageRange': 'Ages 8-9',
+      'difficulty': 'Moderate',
+    },
+    4: {
+      'color': const Color(0xFFFF5722),
+      'image': 'assets/vectors/stitch4.png',
+      'title': 'Grade 4',
+      'subtitle': 'Advanced',
+      'description': 'Complex word problems with critical thinking',
+      'ageRange': 'Ages 9-10',
+      'difficulty': 'Challenging',
+    },
+  };
+
   @override
   void initState() {
     super.initState();
@@ -36,11 +76,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _saveGrade() async {
     await UserService.saveGrade(_selectedGrade);
+    final gradeInfo = _gradeInfo[_selectedGrade]!;
     Get.snackbar(
-      'Saved',
-      'Grade set to $_selectedGrade',
-      backgroundColor: const Color(AppColors.infoColor),
+      'Grade Updated!',
+      'Now set to ${gradeInfo['title']} (${gradeInfo['subtitle']})',
+      backgroundColor: (gradeInfo['color'] as Color).withOpacity(0.9),
       colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -66,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: const Color(0xFFF7FAFA),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,154 +119,234 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Text(
                     'Student Settings',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 24, // Increased
+                      fontWeight: FontWeight.w800,
                       color: Color(AppColors.textBlack),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select your grade level to get questions matched to your learning stage.',
+                    style: TextStyle(
+                      fontSize: 16, // Increased
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-                  // User Details
-                  if (_currentUser != null)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
+                  // Grade selection cards
+                  ...List.generate(4, (i) {
+                    final grade = i + 1;
+                    final info = _gradeInfo[grade]!;
+                    final isSelected = _selectedGrade == grade;
+                    final color = info['color'] as Color;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedGrade = grade),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(20), // Increased
+                          decoration: BoxDecoration(
+                            color: isSelected ? color.withOpacity(0.08) : Colors.white,
+                            borderRadius: BorderRadius.circular(20), // Increased
+                            border: Border.all(
+                              color: isSelected ? color : Colors.grey.withOpacity(0.2),
+                              width: isSelected ? 3 : 2, // Increased
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: color.withOpacity(0.3),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ]
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Profile Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(AppColors.textBlack))),
-                          const SizedBox(height: 12),
-                          Row(
+                          child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 30,
-                                backgroundColor: Color(AppColors.primaryColor).withOpacity(0.1),
-                                child: Text(
-                                  _currentUser!.name.isNotEmpty ? _currentUser!.name[0].toUpperCase() : 'U',
-                                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(AppColors.primaryColor)),
+                              // Grade vector character
+                              AnimatedScale(
+                                scale: isSelected ? 1.2 : 0.9,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.elasticOut,
+                                child: Container(
+                                  width: 70, // Increased
+                                  height: 70, // Increased
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: Image.asset(
+                                    info['image'] as String,
+                                    colorBlendMode: isSelected ? null : BlendMode.saturation,
+                                    color: isSelected ? null : Colors.grey,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 20),
+                              // Grade info
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(_currentUser!.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 4),
-                                    Text(_currentUser!.email, style: const TextStyle(fontSize: 14, color: Color(AppColors.subText2))),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          info['title'] as String,
+                                          style: TextStyle(
+                                            fontSize: 22, // Increased
+                                            fontWeight: FontWeight.w800,
+                                            color: isSelected ? color : const Color(AppColors.textBlack),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            info['ageRange'] as String,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected ? color : Colors.grey[700],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      info['description'] as String,
+                                      style: TextStyle(
+                                        fontSize: 14, // Increased
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.speed_rounded,
+                                          size: 16,
+                                          color: isSelected ? color : Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          info['difficulty'] as String,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: isSelected ? color : Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
+                              // Checkmark
+                              if (isSelected)
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.withOpacity(0.3), width: 2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                             ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _saveGrade,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _gradeInfo[_selectedGrade]!['color'] as Color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.save_rounded, size: 24),
+                          SizedBox(width: 12),
+                          Text(
+                            'Save Grade Level',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  ),
 
-                  // Grade selector
+                  const SizedBox(height: 24),
+
+                  // Info card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.blue.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        const Text(
-                          'Grade Level',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(AppColors.textBlack),
-                          ),
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: Colors.blue[700],
+                          size: 24,
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Select the student\'s grade (1-4).',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(AppColors.subText2),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: List.generate(4, (i) {
-                            final grade = i + 1;
-                            final isSelected = _selectedGrade == grade;
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedGrade = grade),
-                              child: Container(
-                                width: 72,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(AppColors.measurementColor).withOpacity(0.12)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(AppColors.measurementBorder)
-                                        : const Color(AppColors.subText2).withOpacity(0.3),
-                                    width: isSelected ? 2 : 1.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'G$grade',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected
-                                          ? const Color(AppColors.measurementBorder)
-                                          : const Color(AppColors.textBlack),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _saveGrade,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(AppColors.measurementBorder),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Save',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Questions will be generated based on your grade level. '
+                            'Higher grades have more challenging problems!',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue[800],
                             ),
                           ),
                         ),

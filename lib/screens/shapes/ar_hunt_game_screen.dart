@@ -27,30 +27,35 @@ class _ArHuntGameScreenState extends State<ArHuntGameScreen> {
       'name': 'Cube',
       'description': 'A cube has 6 flat faces and 8 corners!',
       'color': Colors.blue,
-      'modelUrl': 'https://modelviewer.dev/shared-assets/models/cube.gltf',
+      'borderColor': Colors.black,
+      'modelUrl': 'assets/models/cube.glb',
     },
     {
       'name': 'Sphere',
       'description': 'A sphere is perfectly round like a ball!',
       'color': Colors.red,
+      'borderColor': Colors.black,
       'modelUrl': 'https://modelviewer.dev/shared-assets/models/reflective-sphere.gltf',
     },
     {
       'name': 'Cone',
       'description': 'A cone has a circular base and comes to a point!',
       'color': Colors.orange,
+      'borderColor': Colors.black,
       'modelUrl': 'assets/models/cone.glb',
     },
     {
       'name': 'Cylinder',
       'description': 'A cylinder has 2 circular ends and a curved surface!',
       'color': Colors.cyan,
+      'borderColor': Colors.black,
       'modelUrl': 'assets/models/cylinder.glb',
-    }, 
+    },
     {
       'name': 'Pyramid',
       'description': 'A pyramid has a square base and 4 triangular faces!',
       'color': Colors.yellow,
+      'borderColor': Colors.black,
       'modelUrl': 'assets/models/pyramid.glb',
     },
   ];
@@ -511,7 +516,7 @@ class _ArHuntGameScreenState extends State<ArHuntGameScreen> {
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: const Color(0xFFF0F0F0),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: ModelViewer(

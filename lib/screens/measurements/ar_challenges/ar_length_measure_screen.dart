@@ -205,9 +205,10 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
               ),
               child: Column(
                 children: [
-                  CuteCharacter(
-                    size: 60,
-                    color: const Color(0xFF4ECDC4),
+                  Image.asset(
+                    'assets/vectors/kid2.png',
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -215,9 +216,9 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Color(0xFF2C3E50),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      height: 1.3,
                     ),
                   ),
                   if (startPoint != null || endPoint != null) ...[
@@ -331,28 +332,9 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
                         "${(lengthMeters! * 100).toStringAsFixed(1)} cm",
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 48,
+                          fontSize: 56,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -1,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4ECDC4).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        "That's ${lengthMeters!.toStringAsFixed(3)} meters!",
-                        style: const TextStyle(
-                          color: Color(0xFF4ECDC4),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -499,11 +481,11 @@ class _ARLengthMeasureScreenState extends State<ARLengthMeasureScreen> with Sing
 
   String _getInstructionText() {
     if (startPoint == null) {
-      return "Hi! Let's measure something!\nPoint the blue circle at where you want to START\nThen tap the screen!";
+      return "Point circle at START\nThen tap the screen!";
     } else if (endPoint == null) {
-      return "Great job!\nNow point the pink circle where you want to END\nThen tap the screen!";
+      return "Point circle at END\nThen tap the screen!";
     } else {
-      return "Awesome!\nYou can move the points using buttons below\nor tap the confirm button to save!";
+      return "Awesome!\nTap confirm to save!";
     }
   }
 

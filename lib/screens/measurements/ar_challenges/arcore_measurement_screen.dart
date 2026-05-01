@@ -59,7 +59,7 @@ class _ARCoreMeasurementScreenState extends State<ARCoreMeasurementScreen> {
     switch (_measurementType) {
       case MeasurementType.length:
         return Colors.blue;
-      case MeasurementType.capacity:
+      case MeasurementType.volume:
         return Colors.orange;
       case MeasurementType.weight:
         return Colors.green;
@@ -72,8 +72,8 @@ class _ARCoreMeasurementScreenState extends State<ARCoreMeasurementScreen> {
     switch (type.toLowerCase()) {
       case 'length':
         return MeasurementType.length;
-      case 'capacity':
-        return MeasurementType.capacity;
+      case 'volume':
+        return MeasurementType.volume;
       case 'weight':
         return MeasurementType.weight;
       case 'area':

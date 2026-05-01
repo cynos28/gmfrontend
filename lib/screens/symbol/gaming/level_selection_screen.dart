@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:math' as math;
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,6 +25,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   int _unlockedLevels = 1;
   int _score = 0;
   bool _isLoading = true;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   
   AnimationController? _playTextController;
   Animation<double>? _playTextBounce;
@@ -91,10 +93,14 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
   @override
   void dispose() {
     _playTextController?.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   } 
 
-  void _onLevelTap(int level) {
+  void _onLevelTap(int level) async {
+    // Play level selection sound
+    await _audioPlayer.play(AssetSource('symbols/sounds/select_level.mp3'));
+    
     // Navigate to balloon math game
     Get.to(() => BalloonGameScreen(
       grade: 1,

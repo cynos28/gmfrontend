@@ -6,19 +6,21 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ar_measurement.dart';
 
+import '../../utils/constants.dart';
+
 class ContextualQuestionService {
-  // WiFi IP - works without ADB, just need same WiFi network
-  static const List<String> _baseUrls = [
-    'http://192.168.1.18:8000/api/v1/contextual',     // WiFi IP (PRIMARY)
-    'http://localhost:8000/api/v1/contextual',        // ADB reverse fallback
-    'http://10.0.2.2:8000/api/v1/contextual',         // Android Emulator fallback
+  // Use dynamically loaded URL from AppConstants
+  static List<String> get _baseUrls => [
+    '${AppConstants.measurementBaseUrl}/api/v1/contextual',
+    'http://localhost:8002/api/v1/contextual',
+    'http://10.0.2.2:8002/api/v1/contextual',
   ];
   
   static Future<String> _getWorkingBaseUrl() async {
     for (final url in _baseUrls) {
       try {
         final healthUrl = url.replaceAll('/api/v1/contextual', '/health');
-        final response = await http.get(Uri.parse(healthUrl))
+        final response = await http.get(Uri.parse(healthUrl), headers: AppConstants.headers)
             .timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
           print('✅ Connected to RAG service: $url');
@@ -61,7 +63,7 @@ class ContextualQuestionService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/generate-questions'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: jsonEncode(request.toJson()),
       ).timeout(const Duration(seconds: 30));
       
@@ -121,7 +123,7 @@ class ContextualQuestionService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/adaptive-measurement-question'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
         body: jsonEncode(request.toJson()),
       ).timeout(const Duration(seconds: 30));
       
@@ -162,7 +164,7 @@ class ContextualQuestionService {
       final baseUrl = await _getWorkingBaseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/submit-measurement-answer?student_id=$studentId&question_id=$questionId&answer=${Uri.encodeComponent(answer)}&measurement_type=$measurementType&grade=$grade'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 30));
       
       if (response.statusCode == 200) {
@@ -199,7 +201,7 @@ class ContextualQuestionService {
         queryParameters: queryParams,
       );
       
-      final response = await http.get(uri);
+      final response = await http.get(uri, headers: AppConstants.headers);
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -223,8 +225,11 @@ class ContextualQuestionService {
   /// Check if RAG service is available
   Future<bool> checkHealth() async {
     try {
+      final baseUrl = await _getWorkingBaseUrl();
+      final healthUrl = baseUrl.replaceAll('/api/v1/contextual', '/health');
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/health'),
+        Uri.parse(healthUrl),
+        headers: AppConstants.headers,
       ).timeout(const Duration(seconds: 3));
       
       return response.statusCode == 200;

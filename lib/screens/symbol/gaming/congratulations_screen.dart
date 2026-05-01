@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/screens/symbol/gaming/widgets/gaming_parallax_background.dart';
-import 'package:ganithamithura/screens/symbol/gaming/leaderboard_screen.dart';
-import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
 
-class CongratulationsScreen extends StatelessWidget {
+import 'package:ganithamithura/screens/symbol/gaming/symbol_dashboard_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class CongratulationsScreen extends StatefulWidget {
   final int score;
   final int level;
 
@@ -14,6 +16,35 @@ class CongratulationsScreen extends StatelessWidget {
     required this.score, 
     required this.level,
   });
+
+  @override
+  State<CongratulationsScreen> createState() => _CongratulationsScreenState();
+}
+
+class _CongratulationsScreenState extends State<CongratulationsScreen> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    _playCongratsSound();
+  }
+
+  Future<void> _playCongratsSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool('audio_enabled') ?? true;
+    final volume = prefs.getDouble('audio_volume') ?? 0.7;
+    if (isEnabled && mounted) {
+      _audioPlayer.setVolume(volume);
+      _audioPlayer.play(AssetSource('symbols/sounds/congratulations.mp3.mpeg'));
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +82,7 @@ class CongratulationsScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.home_outlined, color: Colors.black, size: 40),
-                          onPressed: () => Get.offAll(() => const SymbolDashboardScreen()),
+                          onPressed: () => Get.offAllNamed('/home'),
                         ),
                       ),
                       
@@ -75,7 +106,7 @@ class CongratulationsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              '$score',
+                              '${widget.score}',
                               style: GoogleFonts.poppins(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -143,7 +174,7 @@ class CongratulationsScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 60),
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.off(() => const LeaderboardScreen());
+                      Get.off(() => const SymbolDashboardScreen(initialTabIndex: 2));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD4A33C), // Gold Button

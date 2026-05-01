@@ -6,8 +6,8 @@ import 'package:ganithamithura/models/models.dart';
 import 'package:ganithamithura/widgets/common/buttons_and_cards.dart';
 import 'package:ganithamithura/widgets/common/feedback_widgets.dart';
 import 'package:ganithamithura/services/local_storage/storage_service.dart';
-import 'package:ganithamithura/services/api/api_service.dart';
-import 'package:ganithamithura/screens/number/say/say_activity_screen.dart';
+import 'package:ganithamithura/services/api/number_api_service.dart';
+import 'package:ganithamithura/services/learning_flow_manager.dart';
 
 /// ReadActivityScreen - Read and recognize numbers
 /// Mode 1: Show digit → select correct word
@@ -32,7 +32,7 @@ class ReadActivityScreen extends StatefulWidget {
 
 class _ReadActivityScreenState extends State<ReadActivityScreen> {
   final _storageService = StorageService.instance;
-  final _apiService = ApiService.instance;
+  final _apiService = NumApiService.instance;
   final _random = Random();
   
   late bool _isMode1; // true = digit→word, false = word→digit
@@ -98,26 +98,27 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(AppConstants.standardPadding * 2),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Instructions
-                  Text(
-                    _isMode1 
-                        ? 'Which word matches this number?'
-                        : 'Which number matches this word?',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.standardPadding * 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Instructions
+                    Text(
+                      _isMode1 
+                          ? 'Which word matches this number?'
+                          : 'Which number matches this word?',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
+                    
+                    const SizedBox(height: 32),
+                    
                   // Question display
                   _buildQuestionDisplay(),
                   
@@ -144,17 +145,19 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
                 ],
               ),
             ),
+            ),
             
             // Result overlay
             if (_result != null)
               _result!
                   ? SuccessAnimation(
-                      message: 'Correct!',
+                      message: 'Great job! That is correct!',
                       onComplete: _onSuccess,
                     )
                   : FailureAnimation(
-                      message: 'Not quite right!',
+                      message: 'Not quite right! Try again.',
                       onRetry: _resetQuestion,
+                      onGoBack: _goBackToLearning,
                     ),
           ],
         ),
@@ -259,16 +262,25 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
       
       await _storageService.saveCompletedActivity(progress);
       
-      // Submit to backend
-      _apiService.submitActivityScore(
-        activityId: widget.activity.id,
-        score: 100,
-        isCompleted: true,
-        additionalData: progress.additionalData,
-      ).catchError((e) {
-        debugPrint('Error submitting score: $e');
-        return <String, dynamic>{};
-      });
+      // Submit to backend (non-blocking with proper error handling)
+      _apiService
+          .submitActivityScore(
+            activityId: widget.activity.id,
+            score: progress.score,
+            isCompleted: true,
+            additionalData: progress.additionalData,
+          )
+          .timeout(
+            Duration(seconds: AppConstants.apiTimeout),
+            onTimeout: () {
+              debugPrint('Score submission timed out - will retry later');
+              return <String, dynamic>{'status': 'timeout'};
+            },
+          )
+          .catchError((e) {
+            debugPrint('Error submitting score: $e');
+            return <String, dynamic>{'status': 'error', 'error': e.toString()};
+          });
     }
     
     setState(() {
@@ -285,26 +297,46 @@ class _ReadActivityScreenState extends State<ReadActivityScreen> {
     });
   }
   
-  void _onSuccess() {
-    // Navigate to next activity
-    final numberActivities = widget.allActivities
-        .where((a) => a.number == widget.currentNumber)
-        .toList();
+  void _onSuccess() async {
+    // Use LearningFlowManager to move to next activity
+    final learningFlowManager = LearningFlowManager.instance;
     
-    numberActivities.sort((a, b) => a.order.compareTo(b.order));
-    
-    final currentIndex = numberActivities.indexWhere((a) => a.id == widget.activity.id);
-    
-    if (currentIndex >= 0 && currentIndex < numberActivities.length - 1) {
-      final nextActivity = numberActivities[currentIndex + 1];
-      
-      // Navigate to Say activity
-      Get.off(() => SayActivityScreen(
-        activity: nextActivity,
-        allActivities: widget.allActivities,
+    try {
+      await learningFlowManager.moveToNextActivity(
+        currentActivity: widget.activity,
         currentNumber: widget.currentNumber,
         level: widget.level,
-      ));
+        isTutorial: true,
+      );
+    } catch (e) {
+      debugPrint('❌ Error in moveToNextActivity: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Completed! Error navigating: $e'),
+            backgroundColor: Color(AppColors.errorColor),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Navigate back to the first activity for this number (learning restart)
+  void _goBackToLearning() async {
+    setState(() {
+      _result = null;
+      _selectedAnswer = null;
+    });
+    final learningFlowManager = LearningFlowManager.instance;
+    try {
+      await learningFlowManager.startLearningFromNumber(
+        level: widget.level.levelNumber,
+        startNumber: widget.currentNumber,
+        levelData: widget.level,
+        isTutorial: true,
+      );
+    } catch (e) {
+      debugPrint('❌ Error going back to learning: $e');
     }
   }
 }

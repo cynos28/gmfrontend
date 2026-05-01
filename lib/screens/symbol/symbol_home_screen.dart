@@ -4,7 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/screens/symbol/quiz/symbol_quiz_intro_screen.dart';
 import 'package:ganithamithura/screens/symbol/widgets/floating_symbols_background.dart';
+import 'package:ganithamithura/screens/symbol/symbol_performance_screen.dart';
+import 'package:ganithamithura/screens/symbol/symbol_activity_screen.dart';
 import 'package:ganithamithura/screens/symbol/gaming/gaming_intro_screen.dart';
+import 'package:ganithamithura/screens/symbol/hunter/learning_pool_level_screen.dart';
 import 'package:ganithamithura/services/api/auth_service.dart';
 import 'package:ganithamithura/models/user.dart';
 
@@ -53,18 +56,7 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   // Back Button
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Get.back(),
-                        icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // 1. Header
+                  // 1. Header (back button is inside)
                   _buildHeader(),
                   const SizedBox(height: 24),
 
@@ -97,7 +89,7 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
                     icon: Icons.games_rounded,
                     color: const Color(0xFFF3E5F5), // Light Purple
                     iconColor: const Color(0xFF9C27B0),
-                    imageAsset: null, 
+                    imageAsset: 'assets/symbols/gamesnew.png', 
                     isLarge: false,
                     onTap: () {
                       Get.to(() => const GamingIntroScreen());
@@ -114,58 +106,61 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
 
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.grey[200],
-              child: const Icon(Icons.person, color: Colors.grey),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hello, $_userName',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+        // Back button — sits inline with the greeting
+        GestureDetector(
+          onTap: () => Get.back(),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time_filled, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Progress 10%',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
+              ],
+            ),
+            child: const Icon(Icons.arrow_back_ios_new, size: 17, color: Colors.black54),
+          ),
+        ),
+        const SizedBox(width: 14),
+        // Avatar
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.grey[200],
+          child: const Icon(Icons.person, color: Colors.grey),
+        ),
+        const SizedBox(width: 12),
+        // Name & progress
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hello, $_userName',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            Row(
+              children: [
+                const Icon(Icons.access_time_filled, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  'Progress 10%',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),
           ],
-        ),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.notifications_none_rounded, color: Colors.black87),
         ),
       ],
     );
@@ -248,11 +243,10 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
 
   Widget _buildCategories() {
     final categories = [
-      {'name': 'Lessons', 'icon': Icons.menu_book_rounded, 'color': 0xFF9575CD},
+      {'name': 'Performance', 'icon': Icons.bar_chart_rounded, 'color': 0xFF9575CD},
       {'name': 'Games', 'icon': Icons.sports_esports_rounded, 'color': 0xFF64B5F6},
       {'name': 'Stories', 'icon': Icons.auto_stories_rounded, 'color': 0xFFE57373},
       {'name': 'Activities', 'icon': Icons.brush_rounded, 'color': 0xFFFFB74D},
-      {'name': 'Discover', 'icon': Icons.public_rounded, 'color': 0xFF4DB6AC},
     ];
 
     return SingleChildScrollView(
@@ -263,16 +257,40 @@ class _SymbolHomeScreenState extends State<SymbolHomeScreen> {
             padding: const EdgeInsets.only(right: 20.0),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(cat['color'] as int).withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    color: Color(cat['color'] as int),
-                    size: 28,
+                GestureDetector(
+                  onTap: () {
+                    final name = cat['name'] as String;
+                    if (name == 'Performance') {
+                      Get.to(() => const SymbolPerformanceScreen());
+                    } else if (name == 'Games') {
+                      Get.to(() => const GamingIntroScreen());
+                    } else if (name == 'Activities') {
+                      Get.to(() => const SymbolActivityScreen());
+                    } else if (name == 'Stories') {
+                      Get.to(() => const LearningPoolLevelScreen());
+                    } else {
+                      Get.snackbar(
+                        'Coming Soon',
+                        '$name goes live in our next update!',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.black87,
+                        colorText: Colors.white,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(cat['color'] as int).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      cat['icon'] as IconData,
+                      color: Color(cat['color'] as int),
+                      size: 28,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),

@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ganithamithura/utils/constants.dart';
-import 'package:ganithamithura/widgets/measurements/measurement_widgets.dart';
-import 'package:ganithamithura/widgets/measurements/ar_challenge_card.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 
-import '../../widgets/shapes/shape_widgets.dart';
 import '../../widgets/shapes/camera_permission_dialog.dart' as camera_permission;
 import 'games/shape_games_screen.dart';
 import 'shapes_selection_screen.dart';
 import 'find_real_shapes_screen.dart';
-import 'learn_shapes.dart';
 import 'ar_hunt_intro_screen.dart';
 import 'widgets/camera_permission_dialog.dart';
 import 'build_and_match_screen.dart';
 
-
-/// ShapeHomeScreen - Main screen for Shape module
+/// Kid-Friendly ShapeHomeScreen
 class ShapeHomeScreen extends StatefulWidget {
   const ShapeHomeScreen({super.key});
 
@@ -29,17 +24,15 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
 
   void _onNavTap(int index) {
     if (index == 0) {
-      // Navigate to home
-      Get.back();
+      if (Navigator.canPop(context)) {
+        Get.back();
+      } else {
+        Get.offAllNamed('/home');
+      }
       return;
     }
+    if (index == _currentNavIndex) return;
 
-    if (index == _currentNavIndex) {
-      // Already on current tab
-      return;
-    }
-
-    // TODO: Navigate to other screens when ready
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',
@@ -50,84 +43,83 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 1 column on phone, 2 on tablet
+    final int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 2 : 1;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFA),
+      backgroundColor: const Color(0xFFF5F5F7), // Standard app background
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Image.asset('assets/images/icegif-5860 1.png'),
-            ),
-            // Main content
+            
             Column(
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          size: 24,
-                          color: Color(AppColors.textBlack),
-                        ),
-                        onPressed: () => Get.back(),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Shapes',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: Color(AppColors.textBlack),
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF2D4059).withOpacity(0.64),
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Scrollable content
+                _buildHeader(),
+                const SizedBox(height: 16),
+                
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(
-                      left: 15,
-                      right: 15,
-                      top: 24,
-                      bottom: 90, // Space for bottom nav
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: GridView.count(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
+                      childAspectRatio: crossAxisCount == 1 ? 2.2 : 1.4,
+                      padding: const EdgeInsets.only(bottom: 160), // Space for bottom image & nav
                       children: [
-                        // AR Challenges Grid
-                        _buildShapeMenuCardGrid(),
-                        const SizedBox(height: 24),
+                        _ShapeCategoryCard(
+                          title: 'Learn Shapes',
+                          subtitle: 'Explore 2D and 3D shapes',
+                          localImage: 'assets/images/Shapes/kids1.png',
+                          color: const Color(0xFF4CAF50), // Green
+                          bgColor: const Color(0xFFC8E6C9),
+                          onTap: () => Get.to(() => const ShapesSelectionScreen(), transition: Transition.rightToLeft),
+                        ),
+                        _ShapeCategoryCard(
+                          title: 'AR Hunt',
+                          subtitle: 'Hunt shapes in AR',
+                          localImage: 'assets/images/Shapes/kids2.png',
+                          color: const Color(0xFFFF9800), // Orange
+                          bgColor: const Color(0xFFFFE0B2),
+                          onTap: () => _showArHuntDialog(),
+                        ),
+                        _ShapeCategoryCard(
+                          title: 'Find Real Shapes',
+                          subtitle: 'Detect shapes around you',
+                          localImage: 'assets/images/Shapes/kids3.png',
+                          color: const Color(0xFFE91E63), // Pink
+                          bgColor: const Color(0xFFF8BBD0),
+                          onTap: () async {
+                            final granted = await camera_permission.showCameraPermissionDialog(context);
+                            if (granted) {
+                              Get.to(() => const FindRealShapesScreen(), transition: Transition.rightToLeft);
+                            }
+                          },
+                        ),
+                        _ShapeCategoryCard(
+                          title: 'Games',
+                          subtitle: 'Play shape games',
+                          localImage: 'assets/images/Shapes/kids4.png',
+                          color: const Color(0xFF2196F3), // Blue
+                          bgColor: const Color(0xFFBBDEFB),
+                          onTap: () => Get.to(() => const GameHomeScreen(), transition: Transition.rightToLeft),
+                        ),
+                        _ShapeCategoryCard(
+                          title: 'Build and Match',
+                          subtitle: 'Draw and create shapes',
+                          localImage: 'assets/images/Shapes/kids5.png',
+                          color: const Color(0xFF9C27B0), // Purple
+                          bgColor: const Color(0xFFE1BEE7),
+                          onTap: () => Get.to(() => const BuildAndMatchScreen(), transition: Transition.rightToLeft),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+            
+            
             // Bottom Navigation Bar
             Positioned(
               left: 0,
@@ -138,128 +130,183 @@ class _ShapeHomeScreenState extends State<ShapeHomeScreen> {
                 onTap: _onNavTap,
               ),
             ),
-            Positioned(
-              bottom: 75,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Image.asset('assets/images/shape_home_img1.png'),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildShapeMenuCardGrid() {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        // First row: Length and Capacity
-        Row(
-          children: [
-            Expanded(
-              child: ShapeMenuCard(
-                title: 'Learn Shapes',
-                subtitle: 'Explore 2D and 3D shapes',
-                icon: 'assets/images/simple-icons_leanpub.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () {
-                  Get.to(() => const ShapesSelectionScreen());
-                },
-              ),
-            ),
-          ],
+  void _showArHuntDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => CameraPermissionDialog(
+        onLetsGo: () {
+          Navigator.pop(context); // Close dialog
+          Get.to(() => const ArHuntIntroScreen(), transition: Transition.rightToLeft);
+        },
+        onGoBack: () {
+          Navigator.pop(context); // Close dialog
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ShapeMenuCard(
-                title: 'AR Hunt',
-                subtitle: 'Hunt shapes in AR',
-                icon: 'assets/images/lucide_camera.png',
-                backgroundColor: const Color(0xFFE76E50),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () {
-                  // Show camera permission dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => CameraPermissionDialog(
-                      onLetsGo: () {
-                        Navigator.pop(context); // Close dialog
-                        Get.to(() => const ArHuntIntroScreen());
-                      },
-                      onGoBack: () {
-                        Navigator.pop(context); // Close dialog
-                      },
-                    ),
-                  );
-                },
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (Navigator.canPop(context)) {
+                Get.back();
+              } else {
+                Get.offAllNamed('/home');
+              }
+            },
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
               ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ShapeMenuCard(
-                title: 'Find Real Shapes',
-                subtitle: 'Detect shapes around you',
-                icon: 'assets/images/bx_search.png',
-                backgroundColor: const Color(0xFFE9638F),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () async {
-                  // Show camera permission dialog
-                  final granted = await camera_permission.showCameraPermissionDialog(context);
-                  if (granted) {
-                    Get.to(() => const FindRealShapesScreen());
-                  }
-                },
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Shapes',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    height: 1.1,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Explore the world of shapes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShapeCategoryCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String localImage;
+  final Color color;
+  final Color bgColor;
+  final VoidCallback onTap;
+
+  const _ShapeCategoryCard({
+    required this.title,
+    required this.subtitle,
+    required this.localImage,
+    required this.color,
+    required this.bgColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.8, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) => Transform.scale(
+        scale: value,
+        child: child,
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: Image.asset(
+                    localImage,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ShapeMenuCard(
-                title: 'Games',
-                subtitle: 'Play shape games',
-                icon: 'assets/images/dashicons_games.png',
-                backgroundColor: const Color(0xFF4799EB),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () {
-                  Get.to(() => const GameHomeScreen());
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ShapeMenuCard(
-                title: 'Build and Match',
-                subtitle: 'Draw and create shapes',
-                icon: 'assets/images/build_match.png',
-                backgroundColor: const Color(0xFF36D399),
-                borderColor: const Color(AppColors.numberBorder),
-                onTap: () {
-                  Get.to(() => const BuildAndMatchScreen());
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Second row: Area and Weight
-      ],
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:ganithamithura/utils/constants.dart';
 import 'package:ganithamithura/utils/kids_theme.dart';
 import 'package:ganithamithura/widgets/home/home_widgets.dart';
 import 'package:ganithamithura/screens/measurements/learn/units/unit_home_screen.dart';
-
 import 'package:ganithamithura/services/unit_progress_service.dart';
 import 'package:ganithamithura/services/user_service.dart';
 import 'package:ganithamithura/models/unit_models.dart';
@@ -22,7 +21,7 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
   
   Map<String, dynamic> _lengthProgress = {};
   Map<String, dynamic> _areaProgress = {};
-  Map<String, dynamic> _capacityProgress = {};
+  Map<String, dynamic> _volumeProgress = {};
   Map<String, dynamic> _weightProgress = {};
   bool _isLoadingProgress = true;
   int _currentGrade = 1;
@@ -33,24 +32,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     _loadGradeAndProgress();
   }
 
-  /// Get available topics based on grade level
-  /// Grade 1: Length only
-  /// Grade 2: Length, Area
-  /// Grade 3: Length, Area, Weight, Capacity
-  /// Grade 4: All topics
   List<String> _getAvailableTopics(int grade) {
-    switch (grade) {
-      case 1:
-        return ['Length'];
-      case 2:
-        return ['Length', 'Area'];
-      case 3:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
-      case 4:
-        return ['Length', 'Area', 'Weight', 'Capacity'];
-      default:
-        return ['Length'];
-    }
+    if (grade == 1) return ['Length'];
+    if (grade == 2) return ['Length', 'Area'];
+    return ['Length', 'Area', 'Weight', 'Volume'];
   }
 
   Future<void> _loadGradeAndProgress() async {
@@ -58,14 +43,9 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     setState(() => _isLoadingProgress = true);
     
     try {
-      // Load current grade
       final grade = await UserService.getGrade();
-      
       if (!mounted) return;
-      setState(() {
-        _currentGrade = grade;
-      });
-      
+      setState(() => _currentGrade = grade);
       await _loadAllProgress();
     } catch (e) {
       debugPrint('Error loading grade: $e');
@@ -79,18 +59,16 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     setState(() => _isLoadingProgress = true);
     
     try {
-      // Load from backend (syncs with local cache)
       await _progressService.loadFromBackend();
-      
       final lengthProgress = await _progressService.getTopicProgress('Length');
       final areaProgress = await _progressService.getTopicProgress('Area');
-      final capacityProgress = await _progressService.getTopicProgress('Capacity');
+      final volumeProgress = await _progressService.getTopicProgress('Volume');
       final weightProgress = await _progressService.getTopicProgress('Weight');
       
       setState(() {
         _lengthProgress = lengthProgress;
         _areaProgress = areaProgress;
-        _capacityProgress = capacityProgress;
+        _volumeProgress = volumeProgress;
         _weightProgress = weightProgress;
         _isLoadingProgress = false;
       });
@@ -102,17 +80,11 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
 
   void _onNavItemTapped(int index) {
     if (index == 0) {
-      // Go back to home
       Get.back();
       return;
     }
+    if (index == 1) return;
     
-    if (index == 1) {
-      // Already on Learn/Units screen
-      return;
-    }
-    
-    // TODO: Navigate to other tabs when ready
     Get.snackbar(
       'Coming Soon',
       'This feature will be available soon',
@@ -123,148 +95,55 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Determine cross axis count for responsive grid
+    final int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 2 : 1;
+
     return Scaffold(
-      backgroundColor: const Color(AppColors.backgroundColor),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(KidsSpacing.screenPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: KidsShadows.soft,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        size: 24,
-                        color: KidsColors.textPrimary,
-                      ),
-                      onPressed: () => Get.back(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ),
-                  const SizedBox(width: KidsSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _buildProgressSummary(),
+                    if (!_isLoadingProgress && _hasProgress()) const SizedBox(height: 24),
+                    Row(
                       children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00BCD4),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+                        ),
+                        const SizedBox(width: 14),
                         const Text(
-                          'Measurement Units',
+                          'Practice by Topic',
                           style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: KidsColors.textPrimary,
-                            height: 1.2,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    KidsColors.primaryAccent,
-                                    KidsColors.primaryAccent.withOpacity(0.8),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: KidsColors.primaryAccent.withOpacity(0.3),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                'Grade $_currentGrade',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: KidsSpacing.xxl),
-              
-              // Overall Progress Summary
-              _buildProgressSummary(),
-              
-              const SizedBox(height: KidsSpacing.xl),
-              
-              
-              
-              const SizedBox(height: KidsSpacing.xl),
-              
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          KidsColors.secondaryAccent,
-                          KidsColors.secondaryAccent.withOpacity(0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: KidsColors.secondaryAccent.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: _isLoadingProgress
+                          ? const Center(child: CircularProgressIndicator())
+                          : _buildUnitsGrid(crossAxisCount),
                     ),
-                    child: const Icon(
-                      Icons.category_rounded,
-                      size: 24,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Practice by Topic',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: KidsColors.textPrimary,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: KidsSpacing.cardMarginLarge),
-              
-              // Content - Measurement Units Grid
-              Expanded(
-                child: _isLoadingProgress
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildUnitsGrid(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavBar(
@@ -274,20 +153,95 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     );
   }
 
-  Widget _buildUnitsGrid() {
+  bool _hasProgress() {
+    final tQ = (_lengthProgress['questionsAnswered'] ?? 0) +
+        (_areaProgress['questionsAnswered'] ?? 0) +
+        (_volumeProgress['questionsAnswered'] ?? 0) +
+        (_weightProgress['questionsAnswered'] ?? 0);
+    return tQ > 0;
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFE8E8F0),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.black, size: 28),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Learn Units',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9800),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Grade $_currentGrade',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Image.asset('assets/vectors/kid3.png', height: 75),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnitsGrid(int columns) {
     final availableTopics = _getAvailableTopics(_currentGrade);
-    
-    // Build cards only for available topics
     final List<Widget> cards = [];
     
     if (availableTopics.contains('Length')) {
       cards.add(_buildUnitCard(
         title: 'Length',
         subtitle: 'cm, m, km',
-        icon: Icons.straighten,
-        color: const Color(AppColors.measurementColor),
-        borderColor: const Color(AppColors.measurementBorder),
-        iconColor: const Color(AppColors.measurementIcon),
+        icon: Icons.straighten_rounded,
+        color: const Color(0xFF2196F3),
+        bgColor: const Color(0xFFBBDEFB),
+        image: 'assets/vectors/stitch1.png',
         progress: _lengthProgress,
         onTap: () {
           Get.to(() => UnitHomeScreen(
@@ -299,7 +253,7 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               description: 'Learn to measure length using centimeters and meters',
               iconName: 'straighten',
             ),
-          ))?.then((_) => _loadGradeAndProgress());
+          ), transition: Transition.rightToLeft)?.then((_) => _loadGradeAndProgress());
         },
       ));
     }
@@ -308,10 +262,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       cards.add(_buildUnitCard(
         title: 'Area',
         subtitle: 'cm², m², km²',
-        icon: Icons.crop_square,
-        color: const Color(AppColors.measurementColor),
-        borderColor: const Color(AppColors.measurementBorder),
-        iconColor: const Color(AppColors.measurementIcon),
+        icon: Icons.crop_square_rounded,
+        color: const Color(0xFF4CAF50),
+        bgColor: const Color(0xFFC8E6C9),
+        image: 'assets/vectors/stitch2.png',
         progress: _areaProgress,
         onTap: () {
           Get.to(() => UnitHomeScreen(
@@ -323,31 +277,31 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               description: 'Understand how to calculate area of shapes',
               iconName: 'crop_square',
             ),
-          ))?.then((_) => _loadGradeAndProgress());
+          ), transition: Transition.rightToLeft)?.then((_) => _loadGradeAndProgress());
         },
       ));
     }
     
-    if (availableTopics.contains('Capacity')) {
+    if (availableTopics.contains('Volume')) {
       cards.add(_buildUnitCard(
-        title: 'Capacity',
+        title: 'Volume',
         subtitle: 'ml, l',
-        icon: Icons.local_drink,
-        color: const Color(AppColors.measurementColor),
-        borderColor: const Color(AppColors.measurementBorder),
-        iconColor: const Color(AppColors.measurementIcon),
-        progress: _capacityProgress,
+        icon: Icons.local_drink_rounded,
+        color: const Color(0xFF00BCD4),
+        bgColor: const Color(0xFFB2EBF2),
+        image: 'assets/vectors/stitch3.png',
+        progress: _volumeProgress,
         onTap: () {
           Get.to(() => UnitHomeScreen(
             unit: Unit(
-              id: 'unit_capacity_$_currentGrade',
-              name: 'Capacity – ml and l',
-              topic: 'Capacity',
+              id: 'unit_volume_$_currentGrade',
+              name: 'Volume – ml and l',
+              topic: 'Volume',
               grade: _currentGrade,
-              description: 'Learn about volume and capacity measurements',
+              description: 'Learn about volume and liquid measurements',
               iconName: 'local_drink',
             ),
-          ))?.then((_) => _loadGradeAndProgress());
+          ), transition: Transition.rightToLeft)?.then((_) => _loadGradeAndProgress());
         },
       ));
     }
@@ -356,10 +310,10 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
       cards.add(_buildUnitCard(
         title: 'Weight',
         subtitle: 'g, kg',
-        icon: Icons.fitness_center,
-        color: const Color(AppColors.measurementColor),
-        borderColor: const Color(AppColors.measurementBorder),
-        iconColor: const Color(AppColors.measurementIcon),
+        icon: Icons.scale_rounded,
+        color: const Color(0xFFFF9800),
+        bgColor: const Color(0xFFFFE0B2),
+        image: 'assets/vectors/stitch4.png',
         progress: _weightProgress,
         onTap: () {
           Get.to(() => UnitHomeScreen(
@@ -371,104 +325,76 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
               description: 'Understand weight measurements in grams and kilograms',
               iconName: 'fitness_center',
             ),
-          ))?.then((_) => _loadGradeAndProgress());
+          ), transition: Transition.rightToLeft)?.then((_) => _loadGradeAndProgress());
         },
       ));
     }
     
     return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: KidsSpacing.cardMarginLarge,
-      mainAxisSpacing: KidsSpacing.cardMarginLarge,
-      childAspectRatio: 0.95,
+      crossAxisCount: columns,
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
+      childAspectRatio: columns == 1 ? 1.8 : 1.2,
+      padding: const EdgeInsets.only(bottom: 24),
       children: cards,
     );
   }
 
   Widget _buildProgressSummary() {
-    if (_isLoadingProgress) {
-      return const SizedBox.shrink();
-    }
+    if (_isLoadingProgress) return const SizedBox.shrink();
 
     final totalQuestions = (_lengthProgress['questionsAnswered'] ?? 0) +
         (_areaProgress['questionsAnswered'] ?? 0) +
-        (_capacityProgress['questionsAnswered'] ?? 0) +
+        (_volumeProgress['questionsAnswered'] ?? 0) +
         (_weightProgress['questionsAnswered'] ?? 0);
 
     final totalCorrect = (_lengthProgress['correctAnswers'] ?? 0) +
         (_areaProgress['correctAnswers'] ?? 0) +
-        (_capacityProgress['correctAnswers'] ?? 0) +
+        (_volumeProgress['correctAnswers'] ?? 0) +
         (_weightProgress['correctAnswers'] ?? 0);
 
-    if (totalQuestions == 0) {
-      return const SizedBox.shrink();
-    }
+    if (totalQuestions == 0) return const SizedBox.shrink();
 
     final overallAccuracy = (totalCorrect / totalQuestions * 100);
 
     return Container(
-      padding: const EdgeInsets.all(KidsSpacing.cardPaddingLarge),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            KidsColors.successLight,
-            KidsColors.secondaryBackground,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-        border: Border.all(
-          color: KidsColors.success,
-          width: 2,
-        ),
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF4CAF50), width: 3),
       ),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: KidsColors.success.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
+              color: const Color(0xFF4CAF50),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.trending_up_rounded,
-              color: KidsColors.success,
-              size: 28,
-            ),
+            child: const Icon(Icons.star_rounded, color: Colors.white, size: 36),
           ),
-          const SizedBox(width: KidsSpacing.lg),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Your Progress',
+                  'Great Job!',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: KidsColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2E7D32),
                   ),
                 ),
-                const SizedBox(height: KidsSpacing.sm),
-                Wrap(
-                  spacing: KidsSpacing.sm,
-                  runSpacing: KidsSpacing.sm,
+                const SizedBox(height: 8),
+                Row(
                   children: [
-                    _buildStatChip(
-                      icon: Icons.quiz_rounded,
-                      label: '$totalQuestions',
-                      color: KidsColors.primaryAccent,
-                    ),
-                    _buildStatChip(
-                      icon: Icons.check_circle_rounded,
-                      label: '$totalCorrect',
-                      color: KidsColors.success,
-                    ),
-                    _buildStatChip(
-                      icon: Icons.percent_rounded,
-                      label: '${overallAccuracy.toStringAsFixed(0)}%',
-                      color: KidsColors.highlightAccent,
-                    ),
+                    _buildStatChip(icon: Icons.quiz_rounded, label: '$totalQuestions Q', color: const Color(0xFF2196F3)),
+                    const SizedBox(width: 8),
+                    _buildStatChip(icon: Icons.check_circle_rounded, label: '$totalCorrect OK', color: const Color(0xFF4CAF50)),
+                    const SizedBox(width: 8),
+                    _buildStatChip(icon: Icons.percent_rounded, label: '${overallAccuracy.toStringAsFixed(0)}%', color: const Color(0xFF9C27B0)),
                   ],
                 ),
               ],
@@ -479,39 +405,25 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     );
   }
 
-  Widget _buildStatChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
+  Widget _buildStatChip({required IconData icon, required String label, required Color color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: KidsSpacing.sm,
-        vertical: KidsSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(KidsSpacing.sm),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: KidsSpacing.xs),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
           ),
         ],
       ),
     );
-  }
-
-
   }
 
   Widget _buildUnitCard({
@@ -519,111 +431,123 @@ class _UnitCardScreenState extends State<UnitCardScreen> {
     required String subtitle,
     required IconData icon,
     required Color color,
-    required Color borderColor,
-    required Color iconColor,
+    required Color bgColor,
+    required String image,
     required Map<String, dynamic> progress,
     required VoidCallback onTap,
   }) {
     final questionsAnswered = progress['questionsAnswered'] ?? 0;
     final accuracy = progress['accuracy'] ?? 0.0;
     final hasProgress = questionsAnswered > 0;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color,
-          border: Border.all(color: borderColor, width: 2),
-          borderRadius: BorderRadius.circular(KidsSpacing.radiusMedium),
-          boxShadow: KidsShadows.soft,
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(KidsSpacing.cardPadding),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: borderColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(KidsSpacing.radiusSmall),
-              ),
-              child: Icon(
-                icon,
-                size: 28,
-                color: iconColor,
-              ),
-            ),
-            const Spacer(),
-            // Title
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: KidsColors.textPrimary,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: KidsSpacing.xs),
-            // Subtitle
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: KidsColors.textSecondary,
-                height: 1.3,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (hasProgress) ...[
-              const SizedBox(height: KidsSpacing.sm),
-              // Progress stats
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: KidsSpacing.sm,
-                  vertical: KidsSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: borderColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(KidsSpacing.sm),
-                ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: iconColor,
-                    ),
-                    const SizedBox(width: KidsSpacing.xs),
-                    Text(
-                      '$questionsAnswered Q',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: iconColor,
+                    // Text details
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(icon, color: Colors.white, size: 28),
+                          ),
+                          const Spacer(),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black87,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                          if (hasProgress) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle_rounded, size: 16, color: color),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$questionsAnswered Qs',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${accuracy.toStringAsFixed(0)}%',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(width: KidsSpacing.sm),
-                    Text(
-                      '${accuracy.toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: iconColor,
+                    const SizedBox(width: 12),
+                    // Image element
+                    Expanded(
+                      flex: 2,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.8, end: 1.0),
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: child,
+                          );
+                        },
+                        child: Image.asset(image, fit: BoxFit.contain),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
-
+}
