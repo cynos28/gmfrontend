@@ -49,7 +49,7 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
     with TickerProviderStateMixin {
 
   // ─── IRT State ─────────────────────────────────────────────────────────────
-  String _studentId        = 'default_student';
+  String _studentId        = 'student_001';
   double _theta            = 0.0;
   int _irtDifficultyLevel  = 1;
   int _irtRoundsPlayed     = 0;
@@ -124,7 +124,7 @@ class _MagicScaleGameScreenState extends State<MagicScaleGameScreen>
 
   Future<void> _fetchIRTState() async {
     final prefs = await SharedPreferences.getInstance();
-    _studentId = prefs.getString('student_id') ?? 'default_student';
+    _studentId = prefs.getString('student_id') ?? 'student_001';
     final variant = widget.mode == GameMode.matchTarget ? 'W-W1' : 'W-W2';
 
     final state = await GamesApiService.getIRTState(

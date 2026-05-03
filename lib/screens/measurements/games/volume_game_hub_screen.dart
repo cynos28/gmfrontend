@@ -63,7 +63,7 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
   late Animation<double> _bounceAnimation;
 
   Map<String, int> _irtLevels = {'V-V1': 1, 'V-V2': 1};
-  String _studentId = 'default_student';
+  String _studentId = 'student_001';
 
   @override
   void initState() {
@@ -86,7 +86,7 @@ class _VolumeGameHubScreenState extends State<VolumeGameHubScreen>
 
   Future<void> _loadParams() async {
     final prefs = await SharedPreferences.getInstance();
-    _studentId = prefs.getString('student_id') ?? 'default_student';
+    _studentId = prefs.getString('student_id') ?? 'student_001';
 
     final vv1State = await GamesApiService.getIRTState(
       studentId: _studentId, domain: 'volume', variant: 'V-V1',

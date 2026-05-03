@@ -9,12 +9,17 @@ import 'package:ganithamithura/services/api/games_api_service.dart';
 class MeasurementProgressScreen extends StatefulWidget {
   const MeasurementProgressScreen({super.key});
 
+  // RouteObserver registered in main.dart so the screen reloads when navigated back to
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   @override
   State<MeasurementProgressScreen> createState() =>
       _MeasurementProgressScreenState();
 }
 
-class _MeasurementProgressScreenState extends State<MeasurementProgressScreen> {
+class _MeasurementProgressScreenState extends State<MeasurementProgressScreen>
+    with RouteAware, WidgetsBindingObserver {
   bool _loading = true;
   Map<String, dynamic> _progressData = {};
   String? _selectedDomain; // null = overview, else "length"/"area"/...
@@ -54,21 +59,53 @@ class _MeasurementProgressScreenState extends State<MeasurementProgressScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProgress();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route observer so we get didPopNext when returning to this screen
+    MeasurementProgressScreen.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    MeasurementProgressScreen.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// Called when a route above this one is popped (i.e. user navigates back to this screen)
+  @override
+  void didPopNext() {
+    _loadProgress();
+  }
+
+  /// Called when the app resumes from background
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadProgress();
+    }
+  }
+
   Future<void> _loadProgress() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final studentId = prefs.getString('student_id') ?? 'student_001';
       final data =
           await GamesApiService.getMeasurementProgress(studentId: studentId);
+      if (!mounted) return;
       setState(() {
         _progressData = data;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
     }
   }

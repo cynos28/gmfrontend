@@ -27,7 +27,7 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
   bool _showFinishScreen = false;
 
   // ─── IRT State ──────────────────────────────────────────────────────────────
-  String _studentId = 'default_student';
+  String _studentId = 'student_001';
   double _theta = 0.0;
   int _irtDifficultyLevel = 1;
   int _irtRoundsPlayed = 0;
@@ -61,7 +61,7 @@ class _VolumeCompareGameScreenState extends State<VolumeCompareGameScreen>
 
   Future<void> _fetchIRTState() async {
     final prefs = await SharedPreferences.getInstance();
-    _studentId = prefs.getString('student_id') ?? 'default_student';
+    _studentId = prefs.getString('student_id') ?? 'student_001';
 
     final state = await GamesApiService.getIRTState(
       studentId: _studentId,
