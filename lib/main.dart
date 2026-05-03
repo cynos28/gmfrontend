@@ -11,6 +11,7 @@ import 'package:ganithamithura/screens/symbol/symbol_home_screen.dart';
 import 'package:ganithamithura/screens/splash/splash_screen.dart';
 import 'package:ganithamithura/screens/measurements/ar_challenges/ar_measurement_screen.dart';
 import 'package:ganithamithura/screens/measurements/ar_challenges/ar_questions_screen.dart';
+import 'package:ganithamithura/screens/progress/measurement_progress_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,7 @@ class _GanithamithuraAppState extends State<GanithamithuraApp> with WidgetsBindi
     return GetMaterialApp(
       title: 'Ganitha Mithura',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [MeasurementProgressScreen.routeObserver],
       theme: ThemeData(
         primaryColor: Color(AppColors.infoColor),
         scaffoldBackgroundColor: Color(AppColors.backgroundColor),

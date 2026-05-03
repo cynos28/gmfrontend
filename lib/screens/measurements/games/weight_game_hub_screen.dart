@@ -87,7 +87,7 @@ class _WeightGameHubScreenState extends State<WeightGameHubScreen>
 
   Future<void> _loadParams() async {
     final prefs = await SharedPreferences.getInstance();
-    final studentId = prefs.getString('student_id') ?? 'default_student';
+    final studentId = prefs.getString('student_id') ?? 'student_001';
 
     final results = await Future.wait([
       GamesApiService.getIRTState(studentId: studentId, domain: 'weight', variant: 'W-W1'),
